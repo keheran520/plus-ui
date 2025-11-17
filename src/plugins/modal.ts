@@ -1,22 +1,23 @@
 import { MessageBoxData } from 'element-plus';
 import { LoadingInstance } from 'element-plus/es/components/loading/src/loading';
+
 let loadingInstance: LoadingInstance;
 export default {
   // 消息提示
   msg(content: any) {
-    ElMessage.info(content);
+    ElMessage({ message: content, type: 'info', plain: true });
   },
   // 错误消息
   msgError(content: any) {
-    ElMessage.error(content);
+    ElMessage({ message: content, type: 'error', plain: true });
   },
   // 成功消息
   msgSuccess(content: any) {
-    ElMessage.success(content);
+    ElMessage({ message: content, type: 'success', plain: true });
   },
   // 警告消息
   msgWarning(content: any) {
-    ElMessage.warning(content);
+    ElMessage({ message: content, type: 'warning', plain: true });
   },
   // 弹出提示
   alert(content: any) {

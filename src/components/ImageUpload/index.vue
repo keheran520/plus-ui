@@ -73,7 +73,7 @@ const props = defineProps({
 });
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'upload-success']);
 const number = ref(0);
 const uploadList = ref<any[]>([]);
 const dialogImageUrl = ref('');
@@ -175,6 +175,8 @@ const handleExceed = () => {
 const handleUploadSuccess = (res: any, file: UploadFile) => {
   if (res.code === 200) {
     uploadList.value.push({ name: res.data.fileName, url: res.data.url, ossId: res.data.ossId });
+    // 向外部发送上传成功事件，传递上传结果数据
+    emit('upload-success', res.data);
     uploadedSuccessfully();
   } else {
     number.value--;

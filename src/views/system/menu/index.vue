@@ -3,17 +3,17 @@
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
-          <el-form ref="queryFormRef" :model="queryParams" :inline="true">
+          <el-form ref="queryFormRef" :inline="true" :model="queryParams">
             <el-form-item label="菜单名称" prop="menuName">
-              <el-input v-model="queryParams.menuName" placeholder="请输入菜单名称" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.menuName" clearable placeholder="请输入菜单名称" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="状态" prop="status">
-              <el-select v-model="queryParams.status" placeholder="菜单状态" clearable>
+              <el-select v-model="queryParams.status" clearable placeholder="菜单状态">
                 <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+              <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
@@ -25,10 +25,12 @@
       <template #header>
         <el-row :gutter="10">
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:menu:add']" type="primary" plain icon="Plus" @click="handleAdd()">新增</el-button>
+            <el-button v-hasPermi="['system:menu:add']" icon="Plus" plain type="primary" @click="handleAdd()">新增 </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:menu:remove']" type="danger" plain icon="Delete" @click="handleCascadeDelete" :loading="deleteLoading">级联删除</el-button>
+            <el-button v-hasPermi="['system:menu:remove']" :loading="deleteLoading" icon="Delete" plain type="danger" @click="handleCascadeDelete"
+              >级联删除
+            </el-button>
           </el-col>
           <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
         </el-row>
@@ -38,29 +40,29 @@
         ref="menuTableRef"
         v-loading="loading"
         :data="menuList"
-        row-key="menuId"
-        border
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         :default-expand-all="false"
-        lazy
-        :load="getChildrenList"
         :expand-change="expandMenuHandle"
+        :load="getChildrenList"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        border
+        lazy
+        row-key="menuId"
       >
-        <el-table-column prop="menuName" label="菜单名称" :show-overflow-tooltip="true" width="160"></el-table-column>
-        <el-table-column prop="icon" label="图标" align="center" width="100">
+        <el-table-column :show-overflow-tooltip="true" label="菜单名称" prop="menuName" width="160"></el-table-column>
+        <el-table-column align="center" label="图标" prop="icon" width="100">
           <template #default="scope">
             <svg-icon :icon-class="scope.row.icon" />
           </template>
         </el-table-column>
-        <el-table-column prop="orderNum" label="排序" width="60"></el-table-column>
-        <el-table-column prop="perms" label="权限标识" :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="component" label="组件路径" :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column label="排序" prop="orderNum" width="60"></el-table-column>
+        <el-table-column :show-overflow-tooltip="true" label="权限标识" prop="perms"></el-table-column>
+        <el-table-column :show-overflow-tooltip="true" label="组件路径" prop="component"></el-table-column>
+        <el-table-column label="状态" prop="status" width="80">
           <template #default="scope">
             <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime">
+        <el-table-column align="center" label="创建时间" prop="createTime">
           <template #default="scope">
             <span>{{ scope.row.createTime }}</span>
           </template>
@@ -68,20 +70,20 @@
         <el-table-column fixed="right" label="操作" width="180">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
-              <el-button v-hasPermi="['system:menu:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)" />
+              <el-button v-hasPermi="['system:menu:edit']" icon="Edit" link type="primary" @click="handleUpdate(scope.row)" />
             </el-tooltip>
             <el-tooltip content="新增" placement="top">
-              <el-button v-hasPermi="['system:menu:add']" link type="primary" icon="Plus" @click="handleAdd(scope.row)" />
+              <el-button v-hasPermi="['system:menu:add']" icon="Plus" link type="primary" @click="handleAdd(scope.row)" />
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-              <el-button v-hasPermi="['system:menu:remove']" link type="primary" icon="Delete" @click="handleDelete(scope.row)" />
+              <el-button v-hasPermi="['system:menu:remove']" icon="Delete" link type="primary" @click="handleDelete(scope.row)" />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.title" destroy-on-close append-to-bod width="750px">
+    <el-dialog v-model="dialog.visible" :title="dialog.title" append-to-bod destroy-on-close width="750px">
       <el-form ref="menuFormRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="24">
@@ -90,9 +92,9 @@
                 v-model="form.parentId"
                 :data="menuOptions"
                 :props="{ value: 'menuId', label: 'menuName', children: 'children' } as any"
-                value-key="menuId"
-                placeholder="选择上级菜单"
                 check-strictly
+                placeholder="选择上级菜单"
+                value-key="menuId"
               />
             </el-form-item>
           </el-col>
@@ -118,7 +120,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="显示排序" prop="orderNum">
-              <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
+              <el-input-number v-model="form.orderNum" :min="0" controls-position="right" />
             </el-form-item>
           </el-col>
           <el-col v-if="form.menuType !== 'F'" :span="12">
@@ -170,7 +172,7 @@
           </el-col>
           <el-col v-if="form.menuType !== 'M'" :span="12">
             <el-form-item>
-              <el-input v-model="form.perms" placeholder="请输入权限标识" maxlength="100" />
+              <el-input v-model="form.perms" maxlength="100" placeholder="请输入权限标识" />
               <template #label>
                 <span>
                   <el-tooltip content="控制器中定义的权限字符，如：@SaCheckPermission('system:user:list')" placement="top">
@@ -185,7 +187,7 @@
           </el-col>
           <el-col v-if="form.menuType === 'C'" :span="12">
             <el-form-item>
-              <el-input v-model="form.queryParam" placeholder="请输入路由参数" maxlength="255" />
+              <el-input v-model="form.queryParam" maxlength="255" placeholder="请输入路由参数" />
               <template #label>
                 <span>
                   <el-tooltip content='访问路由的默认传递参数，如：`{"id": 1, "name": "ry"}`' placement="top">
@@ -262,21 +264,21 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="deleteDialog.visible" :title="deleteDialog.title" destroy-on-close append-to-bod width="750px">
+    <el-dialog v-model="deleteDialog.visible" :title="deleteDialog.title" append-to-bod destroy-on-close width="750px">
       <el-tree
         ref="menuTreeRef"
-        class="tree-border"
-        :data="menuOptions"
-        show-checkbox
-        node-key="menuId"
         :check-strictly="false"
-        empty-text="加载中，请稍候"
+        :data="menuOptions"
         :default-expanded-keys="[0]"
         :props="{ value: 'menuId', label: 'menuName', children: 'children' } as any"
+        class="tree-border"
+        empty-text="加载中，请稍候"
+        node-key="menuId"
+        show-checkbox
       />
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitDeleteForm" :loading="deleteLoading">确 定</el-button>
+          <el-button :loading="deleteLoading" type="primary" @click="submitDeleteForm">确 定</el-button>
           <el-button @click="cancelCascade">取 消</el-button>
         </div>
       </template>
@@ -284,7 +286,7 @@
   </div>
 </template>
 
-<script setup name="Menu" lang="ts">
+<script lang="ts" name="Menu" setup>
 import { addMenu, cascadeDelMenu, delMenu, getMenu, listMenu, updateMenu } from '@/api/system/menu';
 import { MenuForm, MenuQuery, MenuVO } from '@/api/system/menu/types';
 import { MenuTypeEnum } from '@/enums/MenuTypeEnum';
@@ -517,7 +519,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .tree-border {
   height: 300px;
   overflow: auto;

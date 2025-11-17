@@ -16,7 +16,13 @@ export default defineConfigWithVueTs(
   },
   {
     languageOptions: {
-      globals: globals.browser
+      globals: {
+        ...globals.browser,
+        // Vue custom directives
+        hasPermi: 'readonly',
+        hasRoles: 'readonly',
+        copyText: 'readonly'
+      }
     }
   },
   pluginVue.configs['flat/essential'],
