@@ -1,5 +1,63 @@
 // 全局SCSS变量
 :root {
+  /* 主色调 - 使用知乎蓝作为基础 */
+  --primary-color: #0066ff; /* 主题色 */
+  --primary-hover: #0052cc; /* 悬浮状态 */
+  --primary-active: #004299; /* 激活状态 */
+  --primary-light: #f0f7ff; /* 浅色背景 */
+  --primary-lighter: #e6f0ff; /* 更浅色背景 */
+
+  /* 功能色 */
+  --success-color: #00b578; /* 成功 */
+  --success-light: #f0fff7; /* 成功浅色 */
+  --success-lighter: #e6fff0; /* 成功更浅色 */
+
+  --warning-color: #ff8f1f; /* 警告 */
+  --warning-light: #fff7f0; /* 警告浅色 */
+  --warning-lighter: #fff0e6; /* 警告更浅色 */
+
+  --danger-color: #ff3141; /* 危险 */
+  --danger-light: #fff0f0; /* 危险浅色 */
+  --danger-lighter: #ffe6e6; /* 危险更浅色 */
+
+  --info-color: #00b7ff; /* 信息 */
+  --info-light: #f0faff; /* 信息浅色 */
+  --info-lighter: #e6f7ff; /* 信息更浅色 */
+
+  /* 中性色 */
+  --text-primary: #1f2329; /* 主要文字 */
+  --text-secondary: #646a73; /* 次要文字 */
+  --text-disabled: #999999; /* 禁用文字 */
+  --text-light: #86909c; /* 浅色文字 */
+
+  /* 背景色 */
+  --bg-main: #f7f8fa; /* 主背景 */
+  --bg-white: #ffffff; /* 白色背景 */
+  --bg-hover: #f5f6f7; /* 悬浮背景 */
+  --bg-active: #e6e8ea; /* 激活背景 */
+
+  /* 边框色 */
+  --border-color: #e5e6eb; /* 边框颜色 */
+  --border-light: #f0f0f0; /* 浅色边框 */
+
+  /* 圆角 */
+  --radius-lg: 12px; /* 大圆角 */
+  --radius-md: 6px; /* 中圆角 */
+  --radius-sm: 4px; /* 小圆角 */
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.1);
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
   --menuBg: #1f2d3d;
   --menuColor: #bfcbd9;
   --menuActiveText: #f4f4f5;
@@ -11,9 +69,9 @@
   --subMenuTitleHover: #293444;
 
   // 菜单栏缩进
-  --el-menu-base-level-padding: 12px;
-  --el-menu-level-padding: 8px;
-  --el-menu-item-height: 50px;
+  --el-menu-base-level-padding: 18px;
+  --el-menu-level-padding: 10px;
+  --el-menu-item-height: 45px;
 
   --fixedHeaderBg: #ffffff;
   --tableHeaderBg: #f8f8f9;
@@ -25,6 +83,32 @@
   // 添加 tag 相关变量
   --tags-view-active-bg: var(--el-color-primary);
   --tags-view-active-border-color: var(--el-color-primary);
+}
+/* Element Plus 主题覆盖 */
+:root {
+  --el-color-primary: var(--primary-color);
+  --el-color-success: var(--success-color);
+  --el-color-warning: var(--warning-color);
+  --el-color-danger: var(--danger-color);
+
+  --el-border-radius-base: var(--radius-md);
+  --el-border-radius-small: var(--radius-sm);
+  --el-border-radius-round: var(--radius-lg);
+
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-light);
+  --el-text-color-placeholder: var(--text-disabled);
+
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-light);
+
+  --el-bg-color: var(--bg-white);
+  --el-bg-color-page: var(--bg-main);
+
+  --el-box-shadow: var(--shadow-sm);
+  --el-box-shadow-light: var(--shadow-md);
+  --el-box-shadow-lighter: var(--shadow-lg);
 }
 
 html.dark {
@@ -47,10 +131,10 @@ html.dark {
     --el-color-primary-light-9: #262727;
   }
 
-  .el-button--primary {
-    --el-button-bg-color: var(--el-color-primary-dark-6);
-    --el-button-border-color: var(--el-color-primary-light-2);
-  }
+  //.el-button--primary {
+  //  --el-button-bg-color: var(--el-color-primary-dark-6);
+  //  --el-button-border-color: var(--el-color-primary-light-2);
+  //}
 
   .el-switch {
     --el-switch-on-color: var(--el-color-primary-dark-6);
@@ -117,7 +201,7 @@ $--color-warning: #e6a23c;
 $--color-danger: #f56c6c;
 $--color-info: #909399;
 
-$base-sidebar-width: 200px;
+$base-sidebar-width: 230px;
 
 // the :export directive is the magic sauce for webpack
 // https://www.bluematador.com/blog/how-to-share-variables-between-js-and-sass

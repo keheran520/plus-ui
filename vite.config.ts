@@ -34,8 +34,8 @@ export default defineConfig(({ mode, command }) => {
     css: {
       preprocessorOptions: {
         scss: {
-          // additionalData: '@use "@/assets/styles/variables.module.scss as *";'
-          // javascriptEnabled: true
+          // 不使用 additionalData，避免与文件中的 @use 冲突
+          // Element Plus 变量通过 variables.scss 的 @forward 已经正确配置
           api: 'modern-compiler'
         }
       },

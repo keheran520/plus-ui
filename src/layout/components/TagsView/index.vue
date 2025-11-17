@@ -242,11 +242,7 @@ onMounted(() => {
 .tags-view-container {
   height: 34px;
   width: 100%;
-  background-color: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-light);
-  box-shadow:
-    0 1px 3px 0 rgba(0, 0, 0, 0.12),
-    0 0 3px 0 rgba(0, 0, 0, 0.04);
+
   .tags-view-wrapper {
     .tags-view-item {
       display: inline-block;

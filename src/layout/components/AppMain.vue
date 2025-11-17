@@ -58,8 +58,13 @@ function addIframe() {
   width: 100%;
   position: relative;
   overflow: hidden;
+  background: #fafbfc;
 }
-
+html.dark{
+  .app-main {
+    background: black;
+  }
+}
 .fixed-header + .app-main {
   padding-top: 50px;
 }

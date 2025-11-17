@@ -4,6 +4,9 @@ import 'virtual:uno.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 import '@/assets/styles/index.scss';
 
+// 自定义样式
+import '@/assets/styles/element-plus-theme/index.scss';
+
 // App、router、store
 import App from './App.vue';
 import store from './store';

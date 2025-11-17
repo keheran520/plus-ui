@@ -111,7 +111,7 @@
     & .el-sub-menu .el-menu-item {
       min-width: calc($base-sidebar-width - 20px) !important;
       border-radius: 8px;
-      height: 45px;
+      height: 45px !important;
       margin: 1px 5px 1px 5px;
       &:not(.is-active):hover {
         background-color: rgba(0, 0, 0, 0.1) !important;
@@ -122,12 +122,12 @@
     & .theme-dark .el-sub-menu .el-menu-item {
       background-color: $base-sub-menu-background !important;
       border-radius: 8px;
-      height: 45px;
+      height: 45px !important;
       margin: 1px 5px 1px 5px;
 
       &.is-active {
-        background-color: var(--el-menu-active-color) !important;
-        color: #fff;
+        background-color: var(--el-color-primary-light-9) !important;
+        color:var(--el-color-primary);
       }
       &:not(.is-active):hover {
         // you can use $sub-menuHover
@@ -138,12 +138,12 @@
     & .theme-dark .nest-menu .el-sub-menu > .el-sub-menu__title,
     & .theme-dark .el-menu-item {
       border-radius: 8px;
-      height: 45px;
+      height: 45px !important;
       margin: 1px 5px 1px 5px;
 
       &.is-active {
-        background-color: var(--el-menu-active-color) !important;
-        color: #fff;
+        background-color: var(--el-color-primary-light-9) !important;
+        color: var(--el-color-primary);
       }
       &:not(.is-active):hover {
         // you can use $sub-menuHover
@@ -154,12 +154,12 @@
     & .nest-menu .el-sub-menu > .el-sub-menu__title,
     & .el-menu-item {
       border-radius: 8px;
-      height: 45px;
+      height: 45px !important;
       margin: 1px 5px 1px 5px;
 
       &.is-active {
-        background-color: var(--el-menu-active-color) !important;
-        color: #fff;
+        background-color: var(--el-color-primary-light-9) !important;
+        color: var(--el-color-primary);
       }
       &:not(.is-active):hover {
         // you can use $sub-menuHover
@@ -184,8 +184,8 @@
       height: 45px;
       // 选中状态的菜单
       &.is-active {
-        background-color: var(--el-menu-active-color) !important;
-        color: #fff !important;
+        //background-color: var(--el-color-primary-light-9) !important;
+        color: var(--el-color-primary) !important;
       }
 
       .el-tooltip {
@@ -204,7 +204,8 @@
 
       // 选中状态的菜单
       &.is-active .el-sub-menu__title.el-tooltip__trigger {
-        background-color: var(--el-menu-active-color) !important;
+        background-color: var(--el-color-primary-light-9) !important;
+        color: var(--el-color-primary) !important;
       }
 
 
@@ -215,7 +216,8 @@
 
     .el-menu--collapse {
       .is-active .svg-icon {
-        fill: #fff;
+        //fill: #fff;
+        color: var(--el-color-primary) !important;
       }
       .svg-icon {
         display: flex;
@@ -251,7 +253,7 @@
   // mobile responsive
   .mobile {
     .main-container {
-      margin-left: 0px;
+      margin-left: 0;
     }
 
     .sidebar-container {
