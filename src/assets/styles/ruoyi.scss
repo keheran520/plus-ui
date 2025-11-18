@@ -9,48 +9,63 @@
 .pt5 {
   padding-top: 5px;
 }
+
 .pr5 {
   padding-right: 5px;
 }
+
 .pb5 {
   padding-bottom: 5px;
 }
+
 .mt5 {
   margin-top: 5px;
 }
+
 .mr5 {
   margin-right: 5px;
 }
+
 .mb5 {
   margin-bottom: 5px;
 }
+
 .mb8 {
   margin-bottom: 8px;
 }
+
 .ml5 {
   margin-left: 5px;
 }
+
 .mt10 {
   margin-top: 10px;
 }
+
 .mr10 {
   margin-right: 10px;
 }
+
 .mb10 {
   margin-bottom: 10px;
 }
+
 .ml10 {
   margin-left: 10px;
 }
+
 .mt20 {
   margin-top: 20px;
 }
+
 .mr20 {
   margin-right: 20px;
 }
+
 .mb20 {
   margin-bottom: 20px;
 }
+
 .ml20 {
   margin-left: 20px;
 }
@@ -76,16 +91,17 @@ h6 {
 .el-form .el-form-item__label {
   font-weight: 700;
 }
-.el-dialog:not(.is-fullscreen) {
-  margin-top: 6vh !important;
-}
 
-.el-dialog.scrollbar .el-dialog__body {
-  overflow: auto;
-  overflow-x: hidden;
-  max-height: 70vh;
-  padding: 10px 20px 0;
-}
+//.el-dialog:not(.is-fullscreen) {
+//  margin-top: 6vh !important;
+//}
+//
+//.el-dialog.scrollbar .el-dialog__body {
+//  overflow: auto;
+//  overflow-x: hidden;
+//  max-height: 70vh;
+//  padding: 10px 20px 0;
+//}
 
 .el-table {
   .el-table__header-wrapper,
@@ -98,6 +114,7 @@ h6 {
       font-size: 13px;
     }
   }
+
   .el-table__body-wrapper {
     .el-button [class*='el-icon-'] + span {
       margin-left: 1px;
@@ -187,14 +204,14 @@ h6 {
   float: right !important;
 }
 
-.el-card__header {
-  padding: 14px 15px 7px !important;
-  min-height: 40px;
-}
-
-.el-card__body {
-  padding: 15px 20px 20px 20px !important;
-}
+//.el-card__header {
+//  padding: 14px 15px 7px !important;
+//  min-height: 40px;
+//}
+//
+//.el-card__body {
+//  padding: 15px 20px 20px 20px !important;
+//}
 
 .card-box {
   margin-bottom: 10px;

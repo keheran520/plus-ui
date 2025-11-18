@@ -49,6 +49,9 @@
             <el-button v-hasPermi="['picturebed:image:add']" icon="Plus" plain type="primary" @click="handleAdd">新增 </el-button>
           </el-col>
           <el-col :span="1.5">
+            <el-button v-hasPermi="['picturebed:image:add']" icon="Upload" plain type="primary" @click="uploadVisible = true">批量上传 </el-button>
+          </el-col>
+          <el-col :span="1.5">
             <el-button v-hasPermi="['picturebed:image:edit']" :disabled="single" icon="Edit" plain type="success" @click="handleUpdate()"
               >修改
             </el-button>
@@ -249,6 +252,13 @@
         </div>
       </template>
     </el-drawer>
+
+    <!-- 批量上传组件 -->
+    <BatchUpload
+      v-model="uploadVisible"
+      title="批量上传图片"
+      @success="handleUploadSuccess"
+    />
   </div>
 </template>
 
@@ -262,6 +272,7 @@ import { ImageAlbumVO } from '@/api/picturebed/imageAlbum/types';
 import { listImageTag, listImageTagByCategory } from '@/api/picturebed/imageTag';
 import { ImageTagVO } from '@/api/picturebed/imageTag/types';
 import ImagePreview from '@/components/ImagePreview/index.vue';
+import BatchUpload from '@/components/ImageUpload/BatchUpload.vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_normal_disable, sys_yes_no } = toRefs<any>(proxy?.useDict('sys_normal_disable', 'sys_yes_no'));
@@ -274,6 +285,7 @@ const ids = ref<Array<string | number>>([]);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
+const uploadVisible = ref(false);
 
 // 下拉选项
 const categoryOptions = ref<ImageCategoryVO[]>([]);
@@ -379,8 +391,14 @@ const handleTagChange = (value: Array<string | number>) => {
 
 /** 图片上传成功回调 */
 const handleUploadSuccess = (response: any) => {
+  // 单张上传（image-upload组件）
   if (response && response.ossId) {
     form.value.ossId = response.ossId;
+  }
+  // 批量上传（BatchUpload组件）
+  else if (Array.isArray(response)) {
+    proxy?.$modal.msgSuccess(`成功上传 ${response.length} 张图片`);
+    getList();
   }
 };
 

@@ -61,3 +61,18 @@ export const delImage = (imageId: string | number | Array<string | number>) => {
     method: 'delete'
   });
 };
+
+/**
+ * 批量上传图片
+ * @param formData
+ */
+export const batchUploadImages = (formData: FormData): AxiosPromise<ImageVO[]> => {
+  return request({
+    url: '/picturebed/image/batchUpload',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+};

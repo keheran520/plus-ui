@@ -88,6 +88,40 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
+  },
+  {
+    path: '/picturebed/home',
+    component: () => import('@/views/picturebed/home/index.vue'),
+    name: 'PictureBedHome',
+    hidden: true,
+    meta: { title: '图床首页' }
+  },
+  {
+    path: '/picturebed/square',
+    component: () => import('@/views/picturebed/square/index.vue'),
+    name: 'PictureBedSquare',
+    hidden: true,
+    meta: { title: '图片广场' }
+  },
+  {
+    path: '/picturebed',
+    component: Layout,
+    hidden: true,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: 'imageAlbum/gallery',
+        component: () => import('@/views/picturebed/imageAlbum/gallery.vue'),
+        name: 'AlbumGallery',
+        meta: { title: '相册管理', icon: 'picture' }
+      },
+      {
+        path: 'imageAlbum/detail/:id',
+        component: () => import('@/views/picturebed/imageAlbum/detail.vue'),
+        name: 'AlbumDetail',
+        meta: { title: '相册详情', icon: 'picture', activeMenu: '/picturebed/imageAlbum/gallery' }
+      }
+    ]
   }
 ];
 

@@ -11,7 +11,7 @@ import { usePermissionStore } from '@/store/modules/permission';
 import { ElMessage } from 'element-plus/es';
 
 NProgress.configure({ showSpinner: false });
-const whiteList = ['/login', '/register', '/social-callback', '/register*', '/register/*'];
+const whiteList = ['/login', '/register', '/social-callback', '/register*', '/register/*', '/picturebed/home', '/picturebed/square'];
 
 const isWhiteList = (path: string) => {
   return whiteList.some((pattern) => isPathMatch(pattern, path));
@@ -23,7 +23,7 @@ router.beforeEach(async (to, from, next) => {
     to.meta.title && useSettingsStore().setTitle(to.meta.title as string);
     /* has token*/
     if (to.path === '/login') {
-      next({ path: '/' });
+      next({ path: '/index' });
       NProgress.done();
     } else if (isWhiteList(to.path)) {
       next();
@@ -57,6 +57,10 @@ router.beforeEach(async (to, from, next) => {
     if (isWhiteList(to.path)) {
       // 在免登录白名单，直接进入
       next();
+    } else if (to.path === '/' || to.path === '/index') {
+      // 访问根路径时跳转到首页
+      next('/picturebed/home');
+      NProgress.done();
     } else {
       const redirect = encodeURIComponent(to.fullPath || '/');
       next(`/login?redirect=${redirect}`); // 否则全部重定向到登录页

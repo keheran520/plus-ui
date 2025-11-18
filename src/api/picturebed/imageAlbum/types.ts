@@ -54,6 +54,46 @@ export interface ImageAlbumVO {
    */
   remark: string;
 
+  /**
+   * OSS ID
+   */
+  ossId?: string;
+
+  /**
+   * 封面图片列表
+   */
+  coverImages?: string[];
+
+  /**
+   * 创建人 ID
+   */
+  createBy?: number;
+
+  /**
+   * 创建人名称
+   */
+  createByName?: string;
+
+  /**
+   * 创建时间
+   */
+  createTime?: string;
+
+  /**
+   * 更新人 ID
+   */
+  updateBy?: number;
+
+  /**
+   * 更新人名称
+   */
+  updateByName?: string;
+
+  /**
+   * 更新时间
+   */
+  updateTime?: string;
+
 }
 
 export interface ImageAlbumForm extends BaseEntity {
@@ -111,6 +151,11 @@ export interface ImageAlbumForm extends BaseEntity {
    * 备注
    */
   remark?: string;
+
+  /**
+   * OSS ID
+   */
+  ossId?: string;
 
 }
 

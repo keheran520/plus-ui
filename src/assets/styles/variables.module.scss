@@ -36,6 +36,10 @@
   --bg-hover: #f5f6f7; /* 悬浮背景 */
   --bg-active: #e6e8ea; /* 激活背景 */
 
+  --bg-gray-600: #4b5563cc; /* 激活背景 */
+
+  --bg-gray-hover: #6b728099; /* 激活背景 */
+
   /* 边框色 */
   --border-color: #e5e6eb; /* 边框颜色 */
   --border-light: #f0f0f0; /* 浅色边框 */
@@ -84,6 +88,7 @@
   --tags-view-active-bg: var(--el-color-primary);
   --tags-view-active-border-color: var(--el-color-primary);
 }
+
 /* Element Plus 主题覆盖 */
 :root {
   --el-color-primary: var(--primary-color);
