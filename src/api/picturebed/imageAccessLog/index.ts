@@ -61,3 +61,23 @@ export const delImageAccessLog = (logId: string | number | Array<string | number
     method: 'delete'
   });
 };
+
+/**
+ * 清空所有访问日志
+ */
+export const clearImageAccessLog = () => {
+  return request({
+    url: '/picturebed/imageAccessLog/clear',
+    method: 'delete'
+  });
+};
+
+/**
+ * 获取访问日志统计数据
+ */
+export const getAccessLogStatistics = (): AxiosPromise<any> => {
+  return request({
+    url: '/picturebed/imageAccessLog/statistics',
+    method: 'get'
+  });
+};

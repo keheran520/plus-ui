@@ -70,27 +70,27 @@ export interface ImageVO {
   remark: string;
 
   // ========== OSS 关联信息 ==========
-  
+
   /**
    * 文件名
    */
   fileName?: string;
-  
+
   /**
    * 原始文件名
    */
   originalName?: string;
-  
+
   /**
    * 文件后缀
    */
   fileSuffix?: string;
-  
+
   /**
    * 文件URL
    */
   url?: string;
-  
+
   /**
    * OSS扩展信息
    */
@@ -102,24 +102,24 @@ export interface ImageVO {
     width?: number;
     height?: number;
   };
-  
+
   /**
    * 服务商
    */
   service?: string;
 
   // ========== 关联信息 ==========
-  
+
   /**
    * 分类名称
    */
   categoryName?: string;
-  
+
   /**
    * 相册名称
    */
   albumName?: string;
-  
+
   /**
    * 标签列表
    */
@@ -130,7 +130,7 @@ export interface ImageVO {
     tagColor?: string;
     tagIcon?: string;
   }>;
-  
+
   /**
    * 标签名称（逗号分隔）
    */
@@ -241,6 +241,11 @@ export interface ImageForm extends BaseEntity {
 
 export interface ImageQuery extends PageQuery {
   /**
+   * 图片ID
+   */
+  imageId?: string;
+
+  /**
    * OSS文件ID(关联sys_oss表)
    */
   ossId?: string | number;
@@ -289,6 +294,11 @@ export interface ImageQuery extends PageQuery {
    * 排序号
    */
   sortOrder?: number;
+
+  /**
+   * 关键字
+   */
+  keyword?: any;
 
   /**
    * 日期范围参数

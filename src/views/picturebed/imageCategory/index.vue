@@ -4,6 +4,9 @@
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :inline="true" :model="queryParams">
+            <el-form-item label="分类ID" prop="categoryId">
+              <el-input v-model="queryParams.categoryId" clearable placeholder="请输入分类ID" @keyup.enter="handleQuery" />
+            </el-form-item>
             <el-form-item label="分类名称" prop="categoryName">
               <el-input v-model="queryParams.categoryName" clearable placeholder="请输入分类名称" @keyup.enter="handleQuery" />
             </el-form-item>
@@ -45,7 +48,11 @@
         border
         row-key="categoryCode"
       >
-        <el-table-column align="center" label="分类名称" prop="categoryName" />
+        <el-table-column align="center" label="分类名称" prop="categoryName">
+          <template #default="{ row }">
+            {{ row.categoryName }}
+          </template>
+        </el-table-column>
         <el-table-column align="center" label="分类编码" prop="categoryCode" />
         <el-table-column align="center" label="分类图标" prop="categoryIcon">
           <template #default="scope">
@@ -256,6 +263,7 @@ const initFormData: ImageCategoryForm = {
 const data = reactive<PageData<ImageCategoryForm, ImageCategoryQuery>>({
   form: { ...initFormData },
   queryParams: {
+    categoryId: undefined,
     parentId: undefined,
     categoryName: undefined,
     categoryCode: undefined,

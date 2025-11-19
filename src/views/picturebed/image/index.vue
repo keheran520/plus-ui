@@ -4,21 +4,76 @@
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :inline="true" :model="queryParams">
-            <el-form-item label="OSSID" prop="ossId">
-              <el-input v-model="queryParams.ossId" clearable placeholder="请输入OSSID" @keyup.enter="handleQuery" />
+            <el-form-item label="图片ID" prop="imageId">
+              <el-input v-model="queryParams.imageId" clearable placeholder="请输入图片ID" @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="分类ID" prop="categoryId">
-              <el-input v-model="queryParams.categoryId" clearable placeholder="请输入分类ID" @keyup.enter="handleQuery" />
+            <el-form-item label="关键字" prop="keyword">
+              <el-autocomplete
+                v-model="queryParams.keyword"
+                :fetch-suggestions="querySearchAsync"
+                clearable
+                placeholder="搜索图片名称或描述"
+                style="width: 240px"
+                @select="handleSelect"
+                @keyup.enter="handleQuery"
+              >
+                <template #prefix>
+                  <el-icon class="el-input__icon">
+                    <Search />
+                  </el-icon>
+                </template>
+                <template #default="{ item }">
+                  <!-- 空状态 -->
+                  <div v-if="item.type === 'empty'" class="flex items-center justify-center text-gray-400 py-2">
+                    <el-icon>
+                      <InfoFilled />
+                    </el-icon>
+                    <span class="ml-2">{{ item.value }}</span>
+                  </div>
+                  <!-- 错误状态 -->
+                  <div v-else-if="item.type === 'error'" class="flex items-center justify-center text-red-400 py-2">
+                    <el-icon>
+                      <CircleCloseFilled />
+                    </el-icon>
+                    <span class="ml-2">{{ item.value }}</span>
+                  </div>
+                  <!-- 正常建议 -->
+                  <div v-else class="flex items-center justify-between w-full">
+                    <div class="flex items-center flex-1 min-w-0">
+                      <!-- 热门标签图标 -->
+                      <el-icon v-if="item.isHot" class="text-red-500 mr-1 flex-shrink-0">
+                        <Promotion />
+                      </el-icon>
+                      <span
+                        class="text-sm truncate"
+                        v-html="highlightKeyword(item.isHot ? item.displayValue : item.value, queryParams.keyword)"
+                      ></span>
+                    </div>
+                    <el-tag v-if="item.type === 'name'" class="ml-2 flex-shrink-0" size="small" type="primary"> 图片名称 </el-tag>
+                    <el-tag v-else-if="item.type === 'category'" class="ml-2 flex-shrink-0" size="small" type="warning"> 分类 </el-tag>
+                    <el-tag v-else-if="item.type === 'tag'" class="ml-2 flex-shrink-0" size="small" type="danger">
+                      {{ item.isHot ? '热门标签' : '标签' }}
+                    </el-tag>
+                    <el-tag v-else class="ml-2 flex-shrink-0" size="small" type="success">描述</el-tag>
+                  </div>
+                </template>
+              </el-autocomplete>
             </el-form-item>
-            <el-form-item label="相册ID" prop="albumId">
-              <el-input v-model="queryParams.albumId" clearable placeholder="请输入相册ID" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="标签(逗号分隔ID)" prop="tags">
-              <el-input v-model="queryParams.tags" clearable placeholder="请输入标签(逗号分隔ID)" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="图片描述" prop="description">
-              <el-input v-model="queryParams.description" clearable placeholder="请输入图片描述" @keyup.enter="handleQuery" />
-            </el-form-item>
+            <!--            <el-form-item label="OSSID" prop="ossId">-->
+            <!--                          <el-input v-model="queryParams.ossId" clearable placeholder="请输入OSSID" @keyup.enter="handleQuery" />-->
+            <!--            </el-form-item>-->
+            <!--            <el-form-item label="分类ID" prop="categoryId">-->
+            <!--              <el-input v-model="queryParams.categoryId" clearable placeholder="请输入分类ID" @keyup.enter="handleQuery" />-->
+            <!--            </el-form-item>-->
+            <!--            <el-form-item label="相册ID" prop="albumId">-->
+            <!--              <el-input v-model="queryParams.albumId" clearable placeholder="请输入相册ID" @keyup.enter="handleQuery" />-->
+            <!--            </el-form-item>-->
+            <!--            <el-form-item label="标签" prop="tags">-->
+            <!--              <el-input v-model="queryParams.tags" clearable placeholder="请输入标签" @keyup.enter="handleQuery" />-->
+            <!--            </el-form-item>-->
+            <!--            <el-form-item label="图片描述" prop="description">-->
+            <!--              <el-input v-model="queryParams.description" clearable placeholder="请输入图片描述" @keyup.enter="handleQuery" />-->
+            <!--            </el-form-item>-->
             <!--            <el-form-item label="浏览次数" prop="viewCount">-->
             <!--              <el-input v-model="queryParams.viewCount" clearable placeholder="请输入浏览次数" @keyup.enter="handleQuery" />-->
             <!--            </el-form-item>-->
@@ -70,7 +125,7 @@
 
       <el-table v-loading="loading" :data="imageList" border @selection-change="handleSelectionChange">
         <el-table-column align="center" type="selection" width="55" />
-        <el-table-column v-if="false" align="center" label="图片ID" prop="imageId" />
+        <el-table-column v-if="true" align="center" label="图片ID" prop="imageId" />
         <el-table-column align="center" label="图片" prop="url" width="120">
           <template #default="scope">
             <ImagePreview v-if="scope.row.url" :height="80" :preview-src-list="[scope.row.url]" :src="scope.row.url" :width="80" />
@@ -83,16 +138,22 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="图片名称" prop="imageName" min-width="150">
+        <el-table-column align="center" label="图片名称" min-width="150" prop="imageName" show-overflow-tooltip>
           <template #default="scope">
-            <div class="text-sm font-medium truncate" :title="scope.row.imageName">
-              {{ scope.row.imageName || scope.row.originalName || '-' }}
-            </div>
+            <div
+              :title="scope.row.imageName"
+              class="text-sm font-medium truncate"
+              v-html="
+                queryParams.keyword
+                  ? highlightKeyword(scope.row.imageName || scope.row.originalName || '-', queryParams.keyword)
+                  : scope.row.imageName || scope.row.originalName || '-'
+              "
+            ></div>
           </template>
         </el-table-column>
         <el-table-column align="center" label="文件信息" min-width="180">
           <template #default="scope">
-            <div class="text-left">
+            <div class="text-center">
               <div class="text-xs text-gray-500">
                 <span v-if="scope.row.ossExt?.fileSize">
                   {{ formatFileSize(scope.row.ossExt.fileSize) }}
@@ -130,15 +191,24 @@
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="图片描述" prop="description" />
+        <el-table-column align="center" label="图片描述" min-width="150" prop="description">
+          <template #default="scope">
+            <div
+              :title="scope.row.description"
+              class="text-sm truncate"
+              v-html="
+                queryParams.keyword && scope.row.description
+                  ? highlightKeyword(scope.row.description, queryParams.keyword)
+                  : scope.row.description || '-'
+              "
+            ></div>
+          </template>
+        </el-table-column>
         <el-table-column align="center" label="浏览次数" prop="viewCount" width="100" />
         <el-table-column align="center" label="下载次数" prop="downloadCount" width="100" />
         <el-table-column align="center" label="点赞数" prop="likeCount" width="100">
           <template #default="scope">
-            <el-tag type="danger" size="small">
-              <i class="el-icon-star-on" style="margin-right: 4px"></i>
-              {{ scope.row.likeCount || 0 }}
-            </el-tag>
+            {{ scope.row.likeCount || 0 }}
           </template>
         </el-table-column>
         <el-table-column align="center" label="是否公开" prop="isPublic">
@@ -254,16 +324,12 @@
     </el-drawer>
 
     <!-- 批量上传组件 -->
-    <BatchUpload
-      v-model="uploadVisible"
-      title="批量上传图片"
-      @success="handleUploadSuccess"
-    />
+    <BatchUpload v-model="uploadVisible" title="批量上传图片" @success="handleUploadSuccess" />
   </div>
 </template>
 
 <script lang="ts" name="Image" setup>
-import { addImage, delImage, getImage, listImage, updateImage } from '@/api/picturebed/image';
+import { addImage, delImage, getHotTags, getImage, getSearchSuggestions, listImage, updateImage } from '@/api/picturebed/image';
 import { ImageForm, ImageQuery, ImageVO } from '@/api/picturebed/image/types';
 import { listImageCategory } from '@/api/picturebed/imageCategory';
 import { ImageCategoryVO } from '@/api/picturebed/imageCategory/types';
@@ -322,6 +388,8 @@ const data = reactive<PageData<ImageForm, ImageQuery>>({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
+    keyword: undefined,
+    imageId: undefined,
     ossId: undefined,
     categoryId: undefined,
     albumId: undefined,
@@ -402,6 +470,65 @@ const handleUploadSuccess = (response: any) => {
   }
 };
 
+/** 搜索建议 - 异步查询（调用后端接口） */
+const querySearchAsync = async (queryString: string, cb: (suggestions: any[]) => void) => {
+  try {
+    // 如果没有输入，显示热门标签
+    if (!queryString || queryString.trim() === '') {
+      const hotRes = await getHotTags(10);
+      if (hotRes.code === 200 && hotRes.data && hotRes.data.length > 0) {
+        // 添加热门标签标识
+        const hotTags = hotRes.data.map((item: any) => ({
+          ...item,
+          isHot: true,
+          displayValue: `${item.value} (${item.count})`
+        }));
+        cb(hotTags);
+      } else {
+        cb([]);
+      }
+      return;
+    }
+
+    // 有输入时，调用搜索建议接口
+    const res = await getSearchSuggestions(queryString, 10);
+    if (res.code === 200 && res.data && res.data.length > 0) {
+      cb(res.data);
+    } else {
+      // 没有搜索结果，返回空状态提示
+      cb([
+        {
+          value: '暂无相关搜索建议',
+          type: 'empty',
+          disabled: true
+        }
+      ]);
+    }
+  } catch (error) {
+    console.error('搜索建议失败:', error);
+    cb([
+      {
+        value: '搜索建议加载失败',
+        type: 'error',
+        disabled: true
+      }
+    ]);
+  }
+};
+
+/** 选择搜索建议 */
+const handleSelect = (item: any) => {
+  queryParams.value.keyword = item.value;
+  handleQuery();
+};
+
+/** 高亮关键字 */
+const highlightKeyword = (text: string, keyword: string) => {
+  if (!keyword || !text) return text;
+  const regex = new RegExp(`(${keyword})`, 'gi');
+  return text.replace(regex, '<span style="color: #409eff; font-weight: bold;">$1</span>');
+};
+
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
@@ -426,7 +553,7 @@ const handleCategoryChange = async (categoryId: number | null) => {
   // 清空已选标签
   selectedTags.value = [];
   form.value.tags = undefined;
-  
+
   if (categoryId) {
     // 根据分类ID加载对应的标签
     try {

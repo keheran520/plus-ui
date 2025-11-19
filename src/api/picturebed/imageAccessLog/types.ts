@@ -7,7 +7,7 @@ export interface ImageAccessLogVO {
   /**
    * 图片ID
    */
-  imageId: string | number;
+  imageId: string;
 
   /**
    * 访问类型(1查看 2下载)
@@ -32,8 +32,17 @@ export interface ImageAccessLogVO {
   /**
    * 用户ID
    */
-  userId: string | number;
+  userId: string;
 
+  /**
+   * 访问时间
+   */
+  loginTime: any;
+
+  /**
+   * 创建时间
+   */
+  createTime: any;
 }
 
 export interface ImageAccessLogForm extends BaseEntity {
@@ -71,11 +80,9 @@ export interface ImageAccessLogForm extends BaseEntity {
    * 用户ID
    */
   userId?: string | number;
-
 }
 
 export interface ImageAccessLogQuery extends PageQuery {
-
   /**
    * 图片ID
    */

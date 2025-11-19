@@ -175,19 +175,19 @@
             </div>
             <!-- 状态标签 -->
             <div class="album-badges">
-              <el-tag v-if="album.isPublic === 'Y'" effect="dark" size="small" type="success">
+              <el-tag v-if="album.isPublic === 'Y'" size="small" type="success">
                 <el-icon class="mr-1">
                   <Unlock />
                 </el-icon>
                 公开
               </el-tag>
-              <el-tag v-else-if="album.isPublic === 'N'" effect="dark" size="small" type="info">
+              <el-tag v-else-if="album.isPublic === 'N'" size="small" type="info">
                 <el-icon class="mr-1">
                   <Lock />
                 </el-icon>
                 私密
               </el-tag>
-              <el-tag v-if="album.status === '1'" effect="dark" size="small" type="danger">已停用</el-tag>
+              <el-tag v-if="album.status === '1'" size="small" type="danger">已停用</el-tag>
             </div>
 
             <!-- 封面图 -->
@@ -810,7 +810,6 @@ onMounted(() => {
     width: 100%;
     height: 200px;
     overflow: hidden;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     cursor: pointer;
 
     // 多图封面网格

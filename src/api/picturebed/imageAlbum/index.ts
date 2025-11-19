@@ -1,6 +1,7 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
 import { ImageAlbumVO, ImageAlbumForm, ImageAlbumQuery } from '@/api/picturebed/imageAlbum/types';
+import { ImageVO } from '@/api/picturebed/image/types';
 
 /**
  * 查询图片相册列表
@@ -59,5 +60,18 @@ export const delImageAlbum = (albumId: string | number | Array<string | number>)
   return request({
     url: '/picturebed/imageAlbum/' + albumId,
     method: 'delete'
+  });
+};
+
+/**
+ * 获取相册的图片列表
+ * @param albumId 相册ID
+ * @param query 查询参数
+ */
+export const getAlbumImages = (albumId: string | number, query?: any): AxiosPromise<ImageVO[]> => {
+  return request({
+    url: `/picturebed/imageAlbum/${albumId}/images`,
+    method: 'get',
+    params: query
   });
 };

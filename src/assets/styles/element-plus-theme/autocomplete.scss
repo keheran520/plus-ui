@@ -18,8 +18,10 @@
   }
 
   .el-autocomplete-suggestion li {
+    display: flex;
+    justify-content: center;
     height: eleVar('autocomplete', 'item-height');
-    line-height: eleVar('autocomplete', 'item-height');
+    //line-height: eleVar('autocomplete', 'item-height');
     padding: eleVar('autocomplete', 'item-padding');
     border-radius: eleVar('autocomplete', 'item-radius');
     transition: (color $transition-base, background-color $transition-base);

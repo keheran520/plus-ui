@@ -6,9 +6,9 @@
 
       <!-- 左上角：创建人信息 -->
       <div class="viewer-header-left">
-        <el-avatar :size="24" :src="currentImage?.createByAvatar" icon="UserFilled" />
+        <el-avatar :size="24" :src="currentImage?.createByUser?.avatar" icon="UserFilled" />
         <div class="creator-info">
-          <div class="creator-name">{{ currentImage?.createByName || '游客' }}</div>
+          <div class="creator-name">{{ currentImage?.createByUser?.nickName || '游客' }}</div>
         </div>
       </div>
 
@@ -21,7 +21,7 @@
           </el-icon>
         </el-button>
         <!--        <el-button :icon="Warning" circle @click="handleReport"></el-button>-->
-        <el-button :icon="InfoFilled" circle @click="showInfo = !showInfo"></el-button>
+        <el-button :icon="InfoFilled" :loading="detailLoading" circle @click="handleToggleInfo"></el-button>
         <el-button :icon="Close" circle @click="handleClose"></el-button>
       </div>
 
@@ -106,11 +106,11 @@
             <div class="uploader-section">
               <h4>上传者</h4>
               <div class="uploader-card">
-                <el-avatar :size="50" :src="currentImage?.createByAvatar">
-                  {{ currentImage?.createByName?.charAt(0) }}
+                <el-avatar :size="50" :src="currentImage?.createByUser?.avatar">
+                  {{ currentImage?.createByUser?.nickName?.charAt(0) || '游' }}
                 </el-avatar>
                 <div class="uploader-info">
-                  <div class="uploader-name">{{ currentImage?.createByName || '游客' }}</div>
+                  <div class="uploader-name">{{ currentImage?.createByUser?.nickName || '游客' }}</div>
                   <div class="uploader-stats">
                     <span>上传于 {{ formatTime(currentImage?.createTime) }}</span>
                   </div>
@@ -143,6 +143,7 @@
 import { computed, ref, watch } from 'vue';
 import { ArrowLeft, ArrowRight, Close, InfoFilled, Star, StarFilled, Warning } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import { getPublicImageDetail } from '@/api/picturebed/open';
 
 interface Props {
   modelValue: boolean;
@@ -173,10 +174,13 @@ const showInfo = ref(false);
 const isLiked = ref(false);
 const scale = ref(1);
 const rotate = ref(0);
+const detailLoading = ref(false);
+const imageDetail = ref<any>(null);
 
 // 当前图片
 const currentImage = computed(() => {
-  return props.imageList[currentIndex.value];
+  // 如果已加载详情，使用详情数据，否则使用列表数据
+  return imageDetail.value || props.imageList[currentIndex.value];
 });
 
 // 是否有上一张/下一张
@@ -195,6 +199,15 @@ watch(
   (val) => {
     currentIndex.value = val;
     resetImageState();
+    imageDetail.value = null; // 重置详情数据
+  }
+);
+
+// 监听当前索引变化，重置详情数据
+watch(
+  () => currentIndex.value,
+  () => {
+    imageDetail.value = null; // 切换图片时重置详情
   }
 );
 
@@ -207,6 +220,26 @@ const resetImageState = () => {
 // 处理图片加载
 const handleImageLoad = () => {
   // 图片加载完成
+};
+
+// 加载图片详情
+const loadImageDetail = async () => {
+  const image = props.imageList[currentIndex.value];
+  if (!image?.imageId) {
+    return;
+  }
+
+  try {
+    detailLoading.value = true;
+    const res = await getPublicImageDetail(image.imageId);
+    if (res.code === 200 && res.data) {
+      imageDetail.value = res.data;
+    }
+  } catch (error) {
+    console.error('加载图片详情失败:', error);
+  } finally {
+    detailLoading.value = false;
+  }
 };
 
 // 切换图片
@@ -274,9 +307,21 @@ const handleDownload = () => {
   window.open(currentImage.value?.url, '_blank');
 };
 
+// 切换详情面板
+const handleToggleInfo = async () => {
+  if (!showInfo.value) {
+    // 打开详情面板时，如果没有详情数据则加载
+    if (!imageDetail.value) {
+      await loadImageDetail();
+    }
+  }
+  showInfo.value = !showInfo.value;
+};
+
 // 关闭
 const handleClose = () => {
   visible.value = false;
+  imageDetail.value = null; // 关闭时清空详情数据
 };
 
 // 格式化文件大小

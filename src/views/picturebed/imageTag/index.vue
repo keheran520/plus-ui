@@ -4,6 +4,9 @@
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :inline="true" :model="queryParams">
+            <el-form-item label="标签ID" prop="tagId">
+              <el-input v-model="queryParams.tagId" clearable placeholder="请输入标签ID" @keyup.enter="handleQuery" />
+            </el-form-item>
             <el-form-item label="标签名称" prop="tagName">
               <el-input v-model="queryParams.tagName" clearable placeholder="请输入标签名称" @keyup.enter="handleQuery" />
             </el-form-item>
@@ -44,16 +47,13 @@
 
       <el-table v-loading="loading" :data="imageTagList" border @selection-change="handleSelectionChange">
         <el-table-column align="center" type="selection" width="55" />
-        <el-table-column v-if="false" align="center" label="标签ID" prop="tagId" />
+        <el-table-column v-if="true" align="center" label="标签ID" prop="tagId" />
         <el-table-column align="center" label="标签名称" prop="tagName" />
         <el-table-column align="center" label="标签编码" prop="tagCode" />
         <el-table-column align="center" label="标签颜色" prop="tagColor">
           <template #default="scope">
             <div v-if="scope.row.tagColor" class="flex items-center justify-center gap-2">
-              <div
-                :style="{ backgroundColor: scope.row.tagColor }"
-                class="w-6 h-6 rounded border border-gray-300"
-              ></div>
+              <div :style="{ backgroundColor: scope.row.tagColor }" class="w-6 h-6 rounded border border-gray-300"></div>
               <span>{{ scope.row.tagColor }}</span>
             </div>
             <span v-else class="text-gray-400">未设置</span>
@@ -91,7 +91,7 @@
         </el-form-item>
         <el-form-item label="标签颜色" prop="tagColor">
           <div class="flex items-center gap-2">
-            <el-color-picker v-model="form.tagColor" show-alpha />
+            <el-color-picker v-model="form.tagColor" />
             <el-input v-model="form.tagColor" placeholder="请选择或输入颜色值（如：#FF5733）" style="flex: 1" />
           </div>
         </el-form-item>
@@ -162,6 +162,7 @@ const data = reactive<PageData<ImageTagForm, ImageTagQuery>>({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
+    tagId: undefined,
     tagName: undefined,
     tagCode: undefined,
     tagColor: undefined,

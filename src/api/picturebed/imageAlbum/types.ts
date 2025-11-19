@@ -65,6 +65,11 @@ export interface ImageAlbumVO {
   coverImages?: string[];
 
   /**
+   * 图片列表
+   */
+  imageList?: any[];
+
+  /**
    * 创建人 ID
    */
   createBy?: number;

@@ -1,18 +1,17 @@
 <template>
   <div class="album-detail-container">
-    <!-- 顶部面包屑和操作栏 -->
-    <div class="detail-header mb-4">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/picturebed/imageAlbum/gallery' }">相册管理</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ albumInfo.albumName || '相册详情' }}</el-breadcrumb-item>
-      </el-breadcrumb>
-
-      <div class="header-actions">
-        <el-button :icon="Upload" type="primary" @click="uploadVisible = true">批量上传图片</el-button>
-        <el-button :icon="Edit" @click="handleEdit">编辑相册</el-button>
-        <el-button :icon="ArrowLeft" @click="handleBack">返回</el-button>
-      </div>
-    </div>
+    <!-- 页头 -->
+    <el-page-header @back="handleBack" class="mb-4 p-3">
+      <template #content>
+        <span class="text-large font-600 mr-3">{{ albumInfo.albumName || '相册详情' }}</span>
+      </template>
+      <template #extra>
+        <div class="header-actions">
+          <el-button :icon="Upload" type="primary" @click="uploadVisible = true">批量上传图片</el-button>
+          <el-button :icon="Plus" type="success" @click="addImageVisible = true">添加已有图片</el-button>
+        </div>
+      </template>
+    </el-page-header>
 
     <!-- 相册信息卡片 -->
     <el-card class="album-info-card mb-4" shadow="never">
@@ -53,20 +52,20 @@
           </div>
 
           <div class="album-tags">
-            <el-tag v-if="albumInfo.isPublic === 'Y'" effect="dark" type="success">
+            <el-tag v-if="albumInfo.isPublic === 'Y'"  type="success">
               <el-icon class="mr-1">
                 <Unlock />
               </el-icon>
               公开
             </el-tag>
-            <el-tag v-else effect="dark" type="info">
+            <el-tag v-else  type="info">
               <el-icon class="mr-1">
                 <Lock />
               </el-icon>
               私密
             </el-tag>
-            <el-tag v-if="albumInfo.status === '0'" effect="dark" type="success">正常</el-tag>
-            <el-tag v-else effect="dark" type="danger">已停用</el-tag>
+            <el-tag v-if="albumInfo.status === '0'" type="success">正常</el-tag>
+            <el-tag v-else  type="danger">已停用</el-tag>
           </div>
         </div>
       </div>
@@ -122,11 +121,11 @@
                       </span>
                       <span class="image-size">{{ formatSize(image.ossExt?.fileSize || 0) }}</span>
                     </p>
-                    <p class="image-author" v-if="image.createByName">
+                    <p class="image-author" v-if="image.createByUser">
                       <el-icon>
                         <User />
                       </el-icon>
-                      {{ image.createByName }}
+                      {{ image.createByUser.nickName }}
                     </p>
                   </div>
 
@@ -166,7 +165,7 @@
                 <template #default="{ row }">
                   <el-button :icon="View" link type="primary" @click="handlePreview(row)">预览</el-button>
                   <el-button :icon="Download" link type="success" @click="handleDownload(row)">下载</el-button>
-                  <el-button :icon="Delete" link type="danger" @click="handleDeleteImage(row)">删除</el-button>
+                  <el-button :icon="Delete" link type="danger" @click="handleRemoveImage(row)">移除</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -174,22 +173,18 @@
 
           <!-- 空状态 -->
           <el-empty v-if="!loading && imageList.length === 0" description="暂无图片">
-            <el-button :icon="Upload" type="primary" @click="handleUploadImage">上传图片</el-button>
+            <el-button :icon="Upload" type="primary" @click="uploadVisible = true">上传图片</el-button>
           </el-empty>
 
           <!-- 分页（仅列表视图显示） -->
-          <div v-if="viewMode === 'list' && total > 0" class="pagination-container mt-4">
-            <el-pagination
-              v-model:current-page="queryParams.pageNum"
-              v-model:page-size="queryParams.pageSize"
-              :background="true"
-              :page-sizes="[20, 40, 60, 80]"
-              :total="total"
-              layout="total, sizes, prev, pager, next, jumper"
-              @size-change="getImageList"
-              @current-change="getImageList"
-            />
-          </div>
+          <pagination
+            v-if="viewMode === 'list'"
+            v-show="total > 0"
+            v-model:limit="listParams.pageSize"
+            v-model:page="listParams.pageNum"
+            :total="total"
+            @pagination="getImageList"
+          />
 
           <!-- 加载更多提示（网格视图） -->
           <div v-if="viewMode === 'grid' && hasMore" class="load-more-tip">
@@ -245,11 +240,14 @@
 
     <!-- 批量上传组件 -->
     <BatchUpload v-model="uploadVisible" :album-id="albumInfo.albumId" title="批量上传图片到相册" @success="handleUploadSuccess" />
+
+    <!-- 添加已有图片弹窗 -->
+    <AddImageToAlbum v-model="addImageVisible" :album-id="albumInfo.albumId" @success="handleAddImageSuccess" />
   </div>
 </template>
 
 <script lang="ts" name="AlbumDetail" setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
@@ -257,23 +255,25 @@ import {
   Clock,
   Delete,
   Download,
-  Edit,
   Folder,
   Grid,
   List,
   Lock,
   Picture,
+  Plus,
   Search,
   Unlock,
   Upload,
   User,
   View
 } from '@element-plus/icons-vue';
-import { getImageAlbum } from '@/api/picturebed/imageAlbum';
+import { getImageAlbum, getAlbumImages } from '@/api/picturebed/imageAlbum';
+import { removeFromAlbum } from '@/api/picturebed/image';
 import type { ImageAlbumVO } from '@/api/picturebed/imageAlbum/types';
 import BatchUpload from '@/components/ImageUpload/BatchUpload.vue';
 import ImagePreview from '@/components/ImagePreview/index.vue';
 import ImageViewer from '@/components/ImageViewer/index.vue';
+import AddImageToAlbum from './components/AddImageToAlbum.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -289,19 +289,27 @@ const previewVisible = ref(false);
 const previewIndex = ref(0); // 预览图片的索引
 const currentImage = ref<any>({});
 const uploadVisible = ref(false);
+const addImageVisible = ref(false);
 const hasMore = ref(true); // 是否还有更多数据
 const isLoadingMore = ref(false); // 是否正在加载更多
 
-// 查询参数
-const queryParams = ref({
+// 网格视图查询参数（无限滚动）
+const gridParams = ref({
   pageNum: 1,
   pageSize: 20,
   albumId: route.params.id
 });
 
-// 所有图片的URL列表（用于预览）- 使用后端返回的数据
-const allImageUrls = computed(() => {
-  return albumInfo.value.allImageUrls || [];
+// 列表视图查询参数（分页器）
+const listParams = ref({
+  pageNum: 1,
+  pageSize: 20,
+  albumId: route.params.id
+});
+
+// 当前使用的查询参数（根据视图模式动态切换）
+const queryParams = computed(() => {
+  return viewMode.value === 'grid' ? gridParams.value : listParams.value;
 });
 
 // 时间轴数据
@@ -331,37 +339,22 @@ const timelineData = computed(() => {
 
 // 获取相册详情
 const getAlbumDetail = async () => {
-  try {
     const res = await getImageAlbum(route.params.id as string);
     albumInfo.value = res.data;
-    // 如果后端返回了图片列表，使用它
-    if (res.data.imageList && res.data.imageList.length > 0) {
-      imageList.value = res.data.imageList;
-      total.value = res.data.imageList.length;
-    }
-  } catch (error) {
-    ElMessage.error('获取相册详情失败');
-  }
 };
 
 // 获取图片列表
 const getImageList = async () => {
   loading.value = true;
   try {
-    // TODO: 调用获取图片列表的API
-    // const res = await listImage(queryParams.value);
-    // imageList.value = res.rows;
-    // total.value = res.total;
+    const params = viewMode.value === 'grid' ? gridParams.value : listParams.value;
+    const res = await getAlbumImages(route.params.id as string, params);
+    imageList.value = res.rows || [];
+    total.value = res.total || 0;
 
-    // 临时使用相册详情中的图片列表
-    if (albumInfo.value.imageList) {
-      const start = (queryParams.value.pageNum - 1) * queryParams.value.pageSize;
-      const end = start + queryParams.value.pageSize;
-      imageList.value = albumInfo.value.imageList.slice(start, end);
-      total.value = albumInfo.value.imageList.length;
-    }
-  } catch (error) {
-    ElMessage.error('获取图片列表失败');
+    // 更新是否还有更多数据（用于网格视图）
+    const totalPages = Math.ceil(total.value / params.pageSize);
+    hasMore.value = params.pageNum < totalPages;
   } finally {
     loading.value = false;
   }
@@ -369,7 +362,11 @@ const getImageList = async () => {
 
 // 搜索
 const handleSearch = () => {
-  queryParams.value.pageNum = 1;
+  if (viewMode.value === 'grid') {
+    gridParams.value.pageNum = 1;
+  } else {
+    listParams.value.pageNum = 1;
+  }
   getImageList();
 };
 
@@ -378,14 +375,16 @@ const handleBack = () => {
   router.back();
 };
 
-// 编辑相册
-const handleEdit = () => {
-  ElMessage.info('编辑功能开发中...');
+// 添加图片成功处理
+const handleAddImageSuccess = () => {
+  // 刷新相册详情和图片列表
+  getAlbumDetail();
+  getImageList();
 };
 
 // 上传成功处理
 const handleUploadSuccess = (data: any) => {
-  ElMessage.success(`成功上传 ${data.length} 张图片`);
+  ElMessage({message:`成功上传 ${data.length} 张图片`,type:'success',plain:true});
   // 刷新图片列表
   getImageList();
 };
@@ -420,21 +419,25 @@ const handleDownload = (image: any) => {
   window.open(image.imageUrl, '_blank');
 };
 
-// 删除图片
-const handleDeleteImage = (image: any) => {
-  ElMessageBox.confirm(`确定要删除图片"${image.imageName}"吗？`, '提示', {
+// 从相册移除图片
+const handleRemoveImage = (image: any) => {
+  ElMessageBox.confirm(`确定要从相册中移除图片“${image.imageName}”吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
     .then(async () => {
       try {
-        // TODO: 调用删除图片的API
-        // await delImage(image.imageId);
-        ElMessage.success('删除成功');
+        await removeFromAlbum({
+          imageIds: String(image.imageId),
+          albumId: route.params.id as string
+        });
+        ElMessage({ message: '移除成功', type: 'success', plain: true });
+        // 刷新相册详情和图片列表
+        getAlbumDetail();
         getImageList();
       } catch (error) {
-        ElMessage.error('删除失败');
+        ElMessage({ message: '移除失败', type: 'error', plain: true });
       }
     })
     .catch(() => {});
@@ -493,25 +496,27 @@ const loadMore = async () => {
   if (isLoadingMore.value || !hasMore.value || viewMode.value !== 'grid') return;
 
   isLoadingMore.value = true;
-  queryParams.value.pageNum++;
+  gridParams.value.pageNum++;
 
   try {
-    // TODO: 调用API加载下一页
-    if (albumInfo.value.imageList) {
-      const start = (queryParams.value.pageNum - 1) * queryParams.value.pageSize;
-      const end = start + queryParams.value.pageSize;
-      const newImages = albumInfo.value.imageList.slice(start, end);
+    // 调用API加载下一页
+    const res = await getAlbumImages(route.params.id as string, gridParams.value);
+    const newImages = res.rows || [];
 
-      if (newImages.length > 0) {
-        imageList.value.push(...newImages);
-      }
-
-      // 检查是否还有更多数据
-      hasMore.value = end < albumInfo.value.imageList.length;
+    if (newImages.length > 0) {
+      // 追加新图片到列表
+      imageList.value.push(...newImages);
     }
+
+    // 更新总数
+    total.value = res.total || 0;
+
+    // 检查是否还有更多数据
+    const totalPages = Math.ceil(total.value / gridParams.value.pageSize);
+    hasMore.value = gridParams.value.pageNum < totalPages;
   } catch (error) {
-    ElMessage.error('加载更多失败');
-    queryParams.value.pageNum--; // 回退页码
+    ElMessage({ message: '加载更多失败', type: 'error', plain: true });
+    gridParams.value.pageNum--; // 回退页码
   } finally {
     isLoadingMore.value = false;
   }
@@ -530,6 +535,21 @@ const handleScroll = () => {
     loadMore();
   }
 };
+
+// 监听视图模式切换
+watch(viewMode, (newMode, oldMode) => {
+  if (newMode !== oldMode) {
+    // 切换视图时重置当前视图的分页参数
+    if (newMode === 'grid') {
+      gridParams.value.pageNum = 1;
+    } else {
+      listParams.value.pageNum = 1;
+    }
+    // 重新加载数据
+    imageList.value = [];
+    getImageList();
+  }
+});
 
 onMounted(() => {
   getAlbumDetail();
@@ -552,20 +572,10 @@ onUnmounted(() => {
   min-height: calc(100vh - 120px);
 }
 
-// 顶部面包屑和操作栏
-.detail-header {
+// 页头操作按钮
+.header-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-  .header-actions {
-    display: flex;
-    gap: 12px;
-  }
+  gap: 12px;
 }
 
 // 相册信息卡片

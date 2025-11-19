@@ -73,6 +73,9 @@
               <router-link v-if="!dynamic" to="/user/profile">
                 <el-dropdown-item>{{ proxy.$t('navbar.personalCenter') }}</el-dropdown-item>
               </router-link>
+              <el-dropdown-item command="goToPictureBedHome">
+                <span>图床首页</span>
+              </el-dropdown-item>
               <el-dropdown-item v-if="settingsStore.showSettings" command="setLayout">
                 <span>{{ proxy.$t('navbar.layoutSetting') }}</span>
               </el-dropdown-item>
@@ -179,10 +182,20 @@ const emits = defineEmits(['setLayout']);
 const setLayout = () => {
   emits('setLayout');
 };
+
+// 打开图床首页（新窗口）
+const goToPictureBedHome = () => {
+  const routeUrl = router.resolve({
+    path: '/picturebed/home'
+  });
+  window.open(routeUrl.href, '_blank');
+};
+
 // 定义Command方法对象 通过key直接调用方法
 const commandMap: { [key: string]: any } = {
   setLayout,
-  logout
+  logout,
+  goToPictureBedHome
 };
 const handleCommand = (command: string) => {
   // 判断是否存在该方法

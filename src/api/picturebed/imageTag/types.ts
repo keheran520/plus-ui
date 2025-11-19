@@ -115,10 +115,13 @@ export interface ImageTagForm extends BaseEntity {
    * 状态
    */
   status?: string;
-
 }
 
 export interface ImageTagQuery extends PageQuery {
+  /**
+   * 标签ID
+   */
+  tagId?: string;
 
   /**
    * 标签名称

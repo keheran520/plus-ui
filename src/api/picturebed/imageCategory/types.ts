@@ -178,6 +178,11 @@ export interface ImageCategoryForm extends BaseEntity {
 
 export interface ImageCategoryQuery {
   /**
+   * 分类ID
+   */
+  categoryId?: string;
+
+  /**
    * 父分类ID
    */
   parentId?: string | number;

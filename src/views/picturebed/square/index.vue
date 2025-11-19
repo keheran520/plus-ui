@@ -3,9 +3,62 @@
     <!-- 顶部导航 -->
     <div class="square-header">
       <div class="header-content">
-        <div class="header-left">
+        <div class="header-left" @click="goToHome">
           <h1 class="page-title">图片广场</h1>
-          <p class="page-subtitle">发现精彩瞬间</p>
+        </div>
+        <div class="header-center">
+          <!-- 搜索框 -->
+          <el-autocomplete
+            v-model="searchKeyword"
+            :fetch-suggestions="querySearchAsync"
+            class="search-input"
+            clearable
+            placeholder="搜索图片名称、分类、标签..."
+            @clear="handleClearSearch"
+            @select="handleSearchSelect"
+            @keyup.enter="handleSearch"
+          >
+            <template #prefix>
+              <el-icon class="el-input__icon">
+                <Search />
+              </el-icon>
+            </template>
+            <template #suffix>
+              <el-button :icon="Search" link type="primary" @click="handleSearch">搜索</el-button>
+            </template>
+            <template #default="{ item }">
+              <!-- 空状态 -->
+              <div v-if="item.type === 'empty'" class="flex items-center justify-center text-gray-400 py-2">
+                <el-icon>
+                  <InfoFilled />
+                </el-icon>
+                <span class="ml-2">{{ item.value }}</span>
+              </div>
+              <!-- 错误状态 -->
+              <div v-else-if="item.type === 'error'" class="flex items-center justify-center text-red-400 py-2">
+                <el-icon>
+                  <CircleCloseFilled />
+                </el-icon>
+                <span class="ml-2">{{ item.value }}</span>
+              </div>
+              <!-- 正常建议 -->
+              <div v-else class="flex items-center justify-between w-full">
+                <div class="flex items-center flex-1 min-w-0">
+                  <!-- 热门标签图标 -->
+                  <el-icon v-if="item.isHot" class="text-red-500 mr-1 flex-shrink-0">
+                    <Promotion />
+                  </el-icon>
+                  <span class="text-sm truncate" v-html="highlightKeyword(item.isHot ? item.displayValue : item.value, searchKeyword)"></span>
+                </div>
+                <el-tag v-if="item.type === 'name'" class="ml-2 flex-shrink-0" size="small" type="primary">图片名称 </el-tag>
+                <el-tag v-else-if="item.type === 'category'" class="ml-2 flex-shrink-0" size="small" type="warning"> 分类 </el-tag>
+                <el-tag v-else-if="item.type === 'tag'" class="ml-2 flex-shrink-0" size="small" type="danger">
+                  {{ item.isHot ? '热门标签' : '标签' }}
+                </el-tag>
+                <el-tag v-else class="ml-2 flex-shrink-0" size="small" type="success">描述</el-tag>
+              </div>
+            </template>
+          </el-autocomplete>
         </div>
         <div class="header-right">
           <el-button :icon="HomeFilled" @click="goToHome">返回首页</el-button>
@@ -38,7 +91,7 @@
                   <el-icon>
                     <User />
                   </el-icon>
-                  <span>{{ image?.createByName || '游客' }}</span>
+                  <span>{{ image?.createByUser?.nickName || '游客' }}</span>
                 </p>
               </div>
             </div>
@@ -67,11 +120,15 @@
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { HomeFilled, User } from '@element-plus/icons-vue';
+import { CircleCloseFilled, HomeFilled, InfoFilled, Promotion, Search, User } from '@element-plus/icons-vue';
 import ImageViewer from '@/components/ImageViewer/index.vue';
 import { getPublicImages } from '@/api/picturebed/open';
+import { getHotTags, getSearchSuggestions } from '@/api/picturebed/image';
 
 const router = useRouter();
+
+// 搜索关键字
+const searchKeyword = ref('');
 
 // 图片列表
 const imageList = ref<any[]>([]);
@@ -79,7 +136,8 @@ const loading = ref(false);
 const hasMore = ref(true);
 const queryParams = ref({
   pageNum: 1,
-  pageSize: 20
+  pageSize: 20,
+  keyword: undefined as string | undefined
 });
 
 // 预览
@@ -162,6 +220,84 @@ const goToLogin = () => {
   router.push('/login');
 };
 
+/** 搜索建议 - 异步查询（调用后端接口） */
+const querySearchAsync = async (queryString: string, cb: (suggestions: any[]) => void) => {
+  try {
+    // 如果没有输入，显示热门标签
+    if (!queryString || queryString.trim() === '') {
+      const hotRes = await getHotTags(10);
+      if (hotRes.code === 200 && hotRes.data && hotRes.data.length > 0) {
+        // 添加热门标签标识
+        const hotTags = hotRes.data.map((item: any) => ({
+          ...item,
+          isHot: true,
+          displayValue: `${item.value} (${item.count})`
+        }));
+        cb(hotTags);
+      } else {
+        cb([]);
+      }
+      return;
+    }
+
+    // 有输入时，调用搜索建议接口
+    const res = await getSearchSuggestions(queryString, 10);
+    if (res.code === 200 && res.data && res.data.length > 0) {
+      cb(res.data);
+    } else {
+      // 没有搜索结果，返回空状态提示
+      cb([
+        {
+          value: '暂无相关搜索建议',
+          type: 'empty',
+          disabled: true
+        }
+      ]);
+    }
+  } catch (error) {
+    console.error('搜索建议失败:', error);
+    cb([
+      {
+        value: '搜索建议加载失败',
+        type: 'error',
+        disabled: true
+      }
+    ]);
+  }
+};
+
+/** 选择搜索建议 */
+const handleSearchSelect = (item: any) => {
+  if (item.disabled) return;
+  searchKeyword.value = item.value;
+  handleSearch();
+};
+
+/** 执行搜索 */
+const handleSearch = () => {
+  // 重置列表
+  imageList.value = [];
+  queryParams.value.pageNum = 1;
+  queryParams.value.keyword = searchKeyword.value || undefined;
+  hasMore.value = true;
+
+  // 重新加载
+  getImageList();
+};
+
+/** 清空搜索 */
+const handleClearSearch = () => {
+  searchKeyword.value = '';
+  handleSearch();
+};
+
+/** 高亮关键字 */
+const highlightKeyword = (text: string, keyword: string) => {
+  if (!keyword || !text) return text;
+  const regex = new RegExp(`(${keyword})`, 'gi');
+  return text.replace(regex, '<span style="color: #409eff; font-weight: bold;">$1</span>');
+};
+
 onMounted(() => {
   getImageList();
   window.addEventListener('scroll', handleScroll);
@@ -191,11 +327,14 @@ onUnmounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1600px;
     margin: 0 auto;
     padding: 20px 40px;
+    gap: 20px;
 
     .header-left {
+      flex-shrink: 0;
+      cursor: pointer;
+
       .page-title {
         margin: 0 0 4px;
         font-size: 24px;
@@ -210,18 +349,37 @@ onUnmounted(() => {
       }
     }
 
+    .header-center {
+      flex: 1;
+      max-width: 600px;
+
+      .search-input {
+        width: 100%;
+
+        :deep(.el-input__wrapper) {
+          border-radius: 20px;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s;
+
+          &:hover {
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
+          }
+        }
+      }
+    }
+
     .header-right {
       display: flex;
       gap: 12px;
+      flex-shrink: 0;
     }
   }
 }
 
 // 内容区域
 .square-content {
-  max-width: 1600px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 10px;
 }
 
 // 瀑布流布局
