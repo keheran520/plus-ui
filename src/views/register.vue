@@ -67,23 +67,34 @@
     </el-form>
     <!--  底部  -->
     <div class="el-register-footer">
-      <span>Copyright © 2018-2025 疯狂的狮子Li All Rights Reserved.</span>
+      <div v-if="websiteConfig.copyright" class="footer-content">
+        <p>{{ websiteConfig.copyright }}</p>
+        <p v-if="websiteConfig.icp">{{ websiteConfig.icp }}</p>
+      </div>
+      <div v-else class="footer-content">
+        <span>Copyright © 2018-2025 疯狂的狮子Li All Rights Reserved.</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { getCodeImg, register, getTenantList } from '@/api/login';
+import { useWebsiteStore } from '@/store/modules/website';
 import { RegisterForm, TenantVO } from '@/api/types';
 import { to } from 'await-to-js';
 import { useI18n } from 'vue-i18n';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
-const title = import.meta.env.VITE_APP_TITLE;
+const websiteStore = useWebsiteStore();
 const router = useRouter();
 
 const { t } = useI18n();
+
+// 获取网站配置
+const websiteConfig = computed(() => websiteStore.config);
+const title = computed(() => websiteStore.config.name || import.meta.env.VITE_APP_TITLE);
 
 const registerForm = ref<RegisterForm>({
   tenantId: '',
@@ -174,9 +185,13 @@ const initTenantList = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   getCode();
   initTenantList();
+  // 加载网站配置
+  if (!websiteStore.config.name) {
+    await websiteStore.fetchWebsiteConfig();
+  }
 });
 </script>
 
@@ -244,8 +259,9 @@ onMounted(() => {
 }
 
 .el-register-footer {
-  height: 40px;
-  line-height: 40px;
+  height: auto;
+  min-height: 40px;
+  padding: 10px 0;
   position: fixed;
   bottom: 0;
   width: 100%;
@@ -254,6 +270,16 @@ onMounted(() => {
   font-family: Arial, serif;
   font-size: 12px;
   letter-spacing: 1px;
+
+  .footer-content {
+    margin: 0;
+    padding: 0;
+
+    p {
+      margin: 5px 0;
+      line-height: 1.5;
+    }
+  }
 }
 
 .register-code-img {

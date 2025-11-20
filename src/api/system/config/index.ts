@@ -72,3 +72,11 @@ export function refreshCache() {
     method: 'delete'
   });
 }
+
+// 获取网站配置信息
+export function getWebsiteConfig() {
+  return request({
+    url: '/',
+    method: 'get'
+  });
+}

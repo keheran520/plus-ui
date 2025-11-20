@@ -4,6 +4,11 @@ export interface ConfigVO extends BaseEntity {
   configKey: string;
   configValue: string;
   configType: string;
+  configCategory: string;
+  configDescription: string;
+  defaultValue: string;
+  valueType: string;
+  sortOrder: number;
   remark: string;
 }
 
@@ -13,6 +18,11 @@ export interface ConfigForm {
   configKey: string;
   configValue: string;
   configType: string;
+  configCategory: string;
+  configDescription: string;
+  defaultValue: string;
+  valueType: string;
+  sortOrder: number;
   remark: string;
 }
 
@@ -20,4 +30,5 @@ export interface ConfigQuery extends PageQuery {
   configName: string;
   configKey: string;
   configType: string;
+  configCategory: string;
 }

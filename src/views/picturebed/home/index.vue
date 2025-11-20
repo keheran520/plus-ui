@@ -20,15 +20,9 @@
 
       <!-- 操作按钮 -->
       <div class="hero-actions">
-        <el-button type="primary" size="large" :icon="Upload" @click="showUploadDialog = true">
-          游客上传
-        </el-button>
-        <el-button type="success" size="large" :icon="Picture" @click="goToSquare">
-          图片广场
-        </el-button>
-        <el-button size="large" :icon="User" @click="goToLogin">
-          登录/注册
-        </el-button>
+        <el-button :icon="Upload" round size="large" type="primary" @click="showUploadDialog = true"> 游客上传 </el-button>
+        <el-button :icon="Picture" round size="large" type="success" @click="goToSquare"> 图片广场</el-button>
+        <el-button :icon="User" round size="large" @click="goToLogin"> 登录/注册</el-button>
       </div>
 
       <!-- 特性介绍 -->
@@ -63,10 +57,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { Upload, Picture, User, Link } from '@element-plus/icons-vue';
+import { Link, Picture, Upload, User } from '@element-plus/icons-vue';
 import BatchUpload from '@/components/ImageUpload/BatchUpload.vue';
 import { getStatistics } from '@/api/picturebed/open';
 
@@ -208,47 +202,6 @@ onMounted(() => {
   display: flex;
   gap: 16px;
   margin-bottom: 80px;
-
-  .el-button {
-    padding: 16px 32px;
-    font-size: 16px;
-    border-radius: 50px;
-    backdrop-filter: blur(10px);
-
-    &.el-button--primary {
-      background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
-      border: none;
-
-      &:hover {
-        background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(64, 158, 255, 0.4);
-      }
-    }
-
-    &.el-button--success {
-      background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
-      border: none;
-
-      &:hover {
-        background: linear-gradient(135deg, #85ce61 0%, #67c23a 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(103, 194, 58, 0.4);
-      }
-    }
-
-    &:not(.el-button--primary):not(.el-button--success) {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.5);
-        transform: translateY(-2px);
-      }
-    }
-  }
 }
 
 // 特性介绍

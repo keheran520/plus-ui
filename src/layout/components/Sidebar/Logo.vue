@@ -23,8 +23,9 @@
 
 <script setup lang="ts">
 import variables from '@/assets/styles/variables.module.scss';
-import logo from '@/assets/logo/logo.png';
+import defaultLogo from '@/assets/logo/logo.png';
 import { useSettingsStore } from '@/store/modules/settings';
+import { useWebsiteStore } from '@/store/modules/website';
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 defineProps({
@@ -34,9 +35,20 @@ defineProps({
   }
 });
 
-const title = import.meta.env.VITE_APP_LOGO_TITLE;
 const settingsStore = useSettingsStore();
+const websiteStore = useWebsiteStore();
 const sideTheme = computed(() => settingsStore.sideTheme);
+
+// 获取logo和title，优先使用网站配置，否则使用默认值
+const logo = computed(() => websiteStore.config.logo || defaultLogo);
+const title = computed(() => websiteStore.config.name || import.meta.env.VITE_APP_LOGO_TITLE);
+
+// 初始化时加载网站配置
+onMounted(async () => {
+  if (!websiteStore.config.name) {
+    await websiteStore.fetchWebsiteConfig();
+  }
+});
 </script>
 
 <style lang="scss" scoped>

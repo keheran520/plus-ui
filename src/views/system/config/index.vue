@@ -10,6 +10,11 @@
             <el-form-item label="参数键名" prop="configKey">
               <el-input v-model="queryParams.configKey" placeholder="请输入参数键名" clearable @keyup.enter="handleQuery" />
             </el-form-item>
+            <el-form-item label="配置类别" prop="configCategory">
+              <el-select v-model="queryParams.configCategory" placeholder="请选择配置类别" clearable>
+                <el-option v-for="dict in sys_config_category" :key="dict.value" :label="dict.label" :value="dict.value" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="系统内置" prop="configType">
               <el-select v-model="queryParams.configType" placeholder="系统内置" clearable>
                 <el-option v-for="dict in sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -62,17 +67,27 @@
 
       <el-table v-loading="loading" border :data="configList" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column v-if="false" label="参数主键" align="center" prop="configId" />
-        <el-table-column label="参数名称" align="center" prop="configName" :show-overflow-tooltip="true" />
-        <el-table-column label="参数键名" align="center" prop="configKey" :show-overflow-tooltip="true" />
-        <el-table-column label="参数键值" align="center" prop="configValue" :show-overflow-tooltip="true" />
-        <el-table-column label="系统内置" align="center" prop="configType">
+        <el-table-column label="排序" align="center" prop="sortOrder" width="80" />
+        <el-table-column label="参数名称" align="center" prop="configName" :show-overflow-tooltip="true" min-width="120" />
+        <el-table-column label="参数键名" align="center" prop="configKey" :show-overflow-tooltip="true" min-width="150" />
+        <el-table-column label="参数键值" align="center" prop="configValue" :show-overflow-tooltip="true" min-width="120" />
+        <el-table-column label="配置类别" align="center" prop="configCategory" width="100">
+          <template #default="scope">
+            <dict-tag :options="sys_config_category" :value="scope.row.configCategory" />
+          </template>
+        </el-table-column>
+        <el-table-column label="值类型" align="center" prop="valueType" width="90">
+          <template #default="scope">
+            <dict-tag :options="sys_config_value_type" :value="scope.row.valueType" size="small" />
+          </template>
+        </el-table-column>
+        <el-table-column label="配置描述" align="center" prop="configDescription" :show-overflow-tooltip="true" min-width="150" />
+        <el-table-column label="系统内置" align="center" prop="configType" width="90">
           <template #default="scope">
             <dict-tag :options="sys_yes_no" :value="scope.row.configType" />
           </template>
         </el-table-column>
-        <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
-        <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+        <el-table-column label="创建时间" align="center" prop="createTime" width="160">
           <template #default="scope">
             <span>{{ proxy.parseTime(scope.row.createTime) }}</span>
           </template>
@@ -92,24 +107,67 @@
     </el-card>
 
     <!-- 添加或修改参数配置对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
-      <el-form ref="configFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="参数名称" prop="configName">
-          <el-input v-model="form.configName" placeholder="请输入参数名称" />
-        </el-form-item>
-        <el-form-item label="参数键名" prop="configKey">
-          <el-input v-model="form.configKey" placeholder="请输入参数键名" />
-        </el-form-item>
-        <el-form-item label="参数键值" prop="configValue">
-          <el-input v-model="form.configValue" type="textarea" placeholder="请输入参数键值" />
-        </el-form-item>
-        <el-form-item label="系统内置" prop="configType">
-          <el-radio-group v-model="form.configType">
-            <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
-          </el-radio-group>
+    <el-dialog v-model="dialog.visible" :title="dialog.title" width="700px" append-to-body>
+      <el-form ref="configFormRef" :model="form" :rules="rules" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="参数名称" prop="configName">
+              <el-input v-model="form.configName" placeholder="请输入参数名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="参数键名" prop="configKey">
+              <el-input v-model="form.configKey" placeholder="请输入参数键名" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="配置类别" prop="configCategory" required>
+              <el-select v-model="form.configCategory" placeholder="请选择配置类别" style="width: 100%">
+                <el-option v-for="dict in sys_config_category" :key="dict.value" :label="dict.label" :value="dict.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="值类型" prop="valueType" required>
+              <el-select v-model="form.valueType" placeholder="请选择值类型" style="width: 100%">
+                <el-option v-for="dict in sys_config_value_type" :key="dict.value" :label="dict.label" :value="dict.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="参数键值" prop="configValue">
+              <el-input v-model="form.configValue" placeholder="请输入参数键值" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="默认值" prop="defaultValue" required>
+              <el-input v-model="form.defaultValue" placeholder="请输入默认值" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="排序" prop="sortOrder">
+              <el-input-number v-model="form.sortOrder" :min="0" :max="9999" controls-position="right" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="系统内置" prop="configType">
+              <el-radio-group v-model="form.configType">
+                <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="配置描述" prop="configDescription">
+          <el-input v-model="form.configDescription" type="textarea" :rows="2" placeholder="请输入配置描述" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -127,7 +185,9 @@ import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache
 import { ConfigForm, ConfigQuery, ConfigVO } from '@/api/system/config/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
-const { sys_yes_no } = toRefs<any>(proxy?.useDict('sys_yes_no'));
+const { sys_yes_no, sys_config_category, sys_config_value_type } = toRefs<any>(
+  proxy?.useDict('sys_yes_no', 'sys_config_category', 'sys_config_value_type')
+);
 
 const configList = ref<ConfigVO[]>([]);
 const loading = ref(true);
@@ -150,6 +210,11 @@ const initFormData: ConfigForm = {
   configKey: '',
   configValue: '',
   configType: 'Y',
+  configCategory: 'system',
+  configDescription: '',
+  defaultValue: '',
+  valueType: 'string',
+  sortOrder: 0,
   remark: ''
 };
 const data = reactive<PageData<ConfigForm, ConfigQuery>>({
@@ -159,12 +224,16 @@ const data = reactive<PageData<ConfigForm, ConfigQuery>>({
     pageSize: 10,
     configName: '',
     configKey: '',
-    configType: ''
+    configType: '',
+    configCategory: ''
   },
   rules: {
     configName: [{ required: true, message: '参数名称不能为空', trigger: 'blur' }],
     configKey: [{ required: true, message: '参数键名不能为空', trigger: 'blur' }],
-    configValue: [{ required: true, message: '参数键值不能为空', trigger: 'blur' }]
+    configValue: [{ required: true, message: '参数键值不能为空', trigger: 'blur' }],
+    configCategory: [{ required: true, message: '配置类别不能为空', trigger: 'change' }],
+    valueType: [{ required: true, message: '值类型不能为空', trigger: 'change' }],
+    defaultValue: [{ required: true, message: '默认值不能为空', trigger: 'blur' }]
   }
 });
 

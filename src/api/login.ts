@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { LoginData, LoginResult, VerifyCodeResult, TenantInfo } from './types';
+import { LoginData, LoginResult, TenantInfo, VerifyCodeResult } from './types';
 import { UserInfo } from '@/api/system/user/types';
 
 // pc端固定客户端授权id
@@ -73,6 +73,21 @@ export function getCodeImg(): AxiosPromise<VerifyCodeResult> {
       isToken: false
     },
     method: 'get',
+    timeout: 20000
+  });
+}
+
+/**
+ * 获取验证码
+ */
+export function sendEmailVerifyCode(email: string): AxiosPromise<VerifyCodeResult> {
+  return request({
+    url: '/resource/email/code',
+    headers: {
+      isToken: false
+    },
+    method: 'get',
+    params: { email },
     timeout: 20000
   });
 }

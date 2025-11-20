@@ -2,27 +2,63 @@
 :root {
   /* 主色调 - 使用知乎蓝作为基础 */
   --primary-color: #0066ff; /* 主题色 */
-  --primary-hover: #0052cc; /* 悬浮状态 */
-  --primary-active: #004299; /* 激活状态 */
-  --primary-light: #f0f7ff; /* 浅色背景 */
-  --primary-lighter: #e6f0ff; /* 更浅色背景 */
+  --primary-hover: #3385ff; /* 悬浮状态 */
+  --primary-active: #0052cc; /* 激活状态 */
+  --primary-disabled: #80b3ff; /* 禁用状态 */
+  --primary-light-9: #e6f0ff; /* 浅色背景 9 */
+  --primary-light-8: #cce0ff; /* 浅色背景 8 */
+  --primary-light-7: #b3d1ff; /* 浅色背景 7 */
+  --primary-light-5: #80b3ff; /* 浅色背景 5 */
+  --primary-light-3: #4d94ff; /* 浅色背景 3 */
+  --primary-dark-2: #0052cc; /* 深色 2 */
 
-  /* 功能色 */
-  --success-color: #00b578; /* 成功 */
-  --success-light: #f0fff7; /* 成功浅色 */
-  --success-lighter: #e6fff0; /* 成功更浅色 */
+  /* 成功色 - 基于主题色设计的绿色系 */
+  --success-color: #00c853; /* 成功 - 鲜明的绿色 */
+  --success-hover: #33d470; /* 悬浮状态 */
+  --success-active: #00a344; /* 激活状态 */
+  --success-disabled: #80e4a9; /* 禁用状态 */
+  --success-light-9: #e6f9f0; /* 浅色背景 9 */
+  --success-light-8: #ccf3e0; /* 浅色背景 8 */
+  --success-light-7: #b3edd1; /* 浅色背景 7 */
+  --success-light-5: #80e4a9; /* 浅色背景 5 */
+  --success-light-3: #4ddb82; /* 浅色背景 3 */
+  --success-dark-2: #00a344; /* 深色 2 */
 
-  --warning-color: #ff8f1f; /* 警告 */
-  --warning-light: #fff7f0; /* 警告浅色 */
-  --warning-lighter: #fff0e6; /* 警告更浅色 */
+  /* 警告色 - 基于主题色设计的橙色系 */
+  --warning-color: #ff9800; /* 警告 - 醒目的橙色 */
+  --warning-hover: #ffac33; /* 悬浮状态 */
+  --warning-active: #cc7a00; /* 激活状态 */
+  --warning-disabled: #ffcb80; /* 禁用状态 */
+  --warning-light-9: #fff3e6; /* 浅色背景 9 */
+  --warning-light-8: #ffe7cc; /* 浅色背景 8 */
+  --warning-light-7: #ffdbb3; /* 浅色背景 7 */
+  --warning-light-5: #ffcb80; /* 浅色背景 5 */
+  --warning-light-3: #ffbb4d; /* 浅色背景 3 */
+  --warning-dark-2: #cc7a00; /* 深色 2 */
 
-  --danger-color: #ff3141; /* 危险 */
-  --danger-light: #fff0f0; /* 危险浅色 */
-  --danger-lighter: #ffe6e6; /* 危险更浅色 */
+  /* 危险色 - 基于主题色设计的红色系 */
+  --danger-color: #ff4757; /* 危险 - 鲜艳的红色 */
+  --danger-hover: #ff6b79; /* 悬浮状态 */
+  --danger-active: #cc3946; /* 激活状态 */
+  --danger-disabled: #ffa3ab; /* 禁用状态 */
+  --danger-light-9: #ffebee; /* 浅色背景 9 */
+  --danger-light-8: #ffd7dc; /* 浅色背景 8 */
+  --danger-light-7: #ffc3cb; /* 浅色背景 7 */
+  --danger-light-5: #ffa3ab; /* 浅色背景 5 */
+  --danger-light-3: #ff8390; /* 浅色背景 3 */
+  --danger-dark-2: #cc3946; /* 深色 2 */
 
-  --info-color: #00b7ff; /* 信息 */
-  --info-light: #f0faff; /* 信息浅色 */
-  --info-lighter: #e6f7ff; /* 信息更浅色 */
+  /* 信息色 - 中性灰色系 */
+  --info-color: #909399; /* 信息 - 中性灰 */
+  --info-hover: #a6a9ad; /* 悬浮状态 */
+  --info-active: #82848a; /* 激活状态 */
+  --info-disabled: #c8c9cc; /* 禁用状态 */
+  --info-light-9: #f4f4f5; /* 浅色背景 9 */
+  --info-light-8: #e9e9eb; /* 浅色背景 8 */
+  --info-light-7: #dedfe0; /* 浅色背景 7 */
+  --info-light-5: #c8c9cc; /* 浅色背景 5 */
+  --info-light-3: #b1b3b8; /* 浅色背景 3 */
+  --info-dark-2: #82848a; /* 深色 2 */
 
   /* 中性色 */
   --text-primary: #1f2329; /* 主要文字 */
@@ -93,29 +129,92 @@
 
 /* Element Plus 主题覆盖 */
 :root {
+  /* 主色 */
   --el-color-primary: var(--primary-color);
-  --el-color-success: var(--success-color);
-  --el-color-warning: var(--warning-color);
-  --el-color-danger: var(--danger-color);
+  --el-color-primary-light-3: var(--primary-light-3);
+  --el-color-primary-light-5: var(--primary-light-5);
+  --el-color-primary-light-7: var(--primary-light-7);
+  --el-color-primary-light-8: var(--primary-light-8);
+  --el-color-primary-light-9: var(--primary-light-9);
+  --el-color-primary-dark-2: var(--primary-dark-2);
 
+  /* 成功色 */
+  --el-color-success: var(--success-color);
+  --el-color-success-light-3: var(--success-light-3);
+  --el-color-success-light-5: var(--success-light-5);
+  --el-color-success-light-7: var(--success-light-7);
+  --el-color-success-light-8: var(--success-light-8);
+  --el-color-success-light-9: var(--success-light-9);
+  --el-color-success-dark-2: var(--success-dark-2);
+
+  /* 警告色 */
+  --el-color-warning: var(--warning-color);
+  --el-color-warning-light-3: var(--warning-light-3);
+  --el-color-warning-light-5: var(--warning-light-5);
+  --el-color-warning-light-7: var(--warning-light-7);
+  --el-color-warning-light-8: var(--warning-light-8);
+  --el-color-warning-light-9: var(--warning-light-9);
+  --el-color-warning-dark-2: var(--warning-dark-2);
+
+  /* 危险色 */
+  --el-color-danger: var(--danger-color);
+  --el-color-danger-light-3: var(--danger-light-3);
+  --el-color-danger-light-5: var(--danger-light-5);
+  --el-color-danger-light-7: var(--danger-light-7);
+  --el-color-danger-light-8: var(--danger-light-8);
+  --el-color-danger-light-9: var(--danger-light-9);
+  --el-color-danger-dark-2: var(--danger-dark-2);
+
+  /* 信息色 */
+  --el-color-info: var(--info-color);
+  --el-color-info-light-3: var(--info-light-3);
+  --el-color-info-light-5: var(--info-light-5);
+  --el-color-info-light-7: var(--info-light-7);
+  --el-color-info-light-8: var(--info-light-8);
+  --el-color-info-light-9: var(--info-light-9);
+  --el-color-info-dark-2: var(--info-dark-2);
+
+  /* 圆角 */
   --el-border-radius-base: var(--radius-md);
   --el-border-radius-small: var(--radius-sm);
   --el-border-radius-round: var(--radius-lg);
 
+  /* 文字颜色 */
   --el-text-color-primary: var(--text-primary);
   --el-text-color-regular: var(--text-secondary);
   --el-text-color-secondary: var(--text-light);
   --el-text-color-placeholder: var(--text-disabled);
+  --el-text-color-disabled: var(--text-disabled);
 
+  /* 边框颜色 */
   --el-border-color: var(--border-color);
   --el-border-color-light: var(--border-light);
+  --el-border-color-lighter: var(--border-light);
+  --el-border-color-extra-light: #f2f2f2;
+  --el-border-color-dark: #d4d4d4;
+  --el-border-color-darker: #ccc;
 
+  /* 背景色 */
   --el-bg-color: var(--bg-white);
   --el-bg-color-page: var(--bg-main);
+  --el-bg-color-overlay: var(--bg-white);
 
+  /* 填充色 */
+  --el-fill-color: #f0f2f5;
+  --el-fill-color-light: #f5f7fa;
+  --el-fill-color-lighter: #fafafa;
+  --el-fill-color-extra-light: #fafcff;
+  --el-fill-color-dark: #ebedf0;
+  --el-fill-color-darker: #e6e8eb;
+  --el-fill-color-blank: #ffffff;
+
+  /* 阴影 */
   --el-box-shadow: var(--shadow-sm);
   --el-box-shadow-light: var(--shadow-md);
   --el-box-shadow-lighter: var(--shadow-lg);
+  --el-box-shadow-dark: 0 2px 8px 0 rgba(0, 0, 0, 0.12);
+
+
 }
 
 html.dark {

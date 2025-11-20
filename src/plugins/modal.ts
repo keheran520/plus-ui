@@ -56,7 +56,7 @@ export default {
     return ElMessageBox.confirm(content, '系统提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
-      type: 'warning'
+      type: 'error'
     });
   },
   // 提交内容
