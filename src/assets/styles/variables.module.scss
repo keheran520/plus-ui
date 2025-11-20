@@ -220,11 +220,11 @@
 html.dark {
   --menuBg: #1d1e1f;
   --menuColor: #bfcbd9;
-  --menuActiveText: #f4f4f5;
+  --menuActiveText: var(--el-color-primary);
   --menuHover: #171819;
 
   --subMenuBg: #1d1e1f;
-  --subMenuActiveText: #1d1e1f;
+  --subMenuActiveText: var(--el-color-primary);
   --subMenuHover: #171819;
   --subMenuTitleHover: #171819;
 

@@ -103,8 +103,31 @@
       }
     }
 
-    & .theme-dark .is-active > .el-sub-menu__title {
+    & .theme-dark .el-sub-menu.is-active > .el-sub-menu__title {
       color: $base-menu-color-active !important;
+      
+      // 父级菜单高亮
+      .svg-icon {
+        color: $base-menu-color-active !important;
+      }
+      
+      // 父级菜单箭头icon高亮
+      .el-sub-menu__icon-arrow {
+        color: $base-menu-color-active !important;
+      }
+    }
+
+    // 浅色主题：父级菜单高亮
+    & .el-sub-menu.is-active > .el-sub-menu__title {
+      color: var(--el-color-primary) !important;
+      
+      .svg-icon {
+        color: var(--el-color-primary) !important;
+      }
+      
+      .el-sub-menu__icon-arrow {
+        color: var(--el-color-primary) !important;
+      }
     }
 
     & .nest-menu .el-sub-menu > .el-sub-menu__title,
