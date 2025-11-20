@@ -109,7 +109,7 @@
         </el-divider>
 
         <div class="image-items">
-          <div v-for="(item, index) in imageItems" :key="index" class="image-item">
+          <div v-for="(item, index) in imageItems" :key="index" :class="`status-${item.uploadStatus}`" class="image-item">
             <!-- 图片预览 -->
             <div class="image-preview">
               <el-image :preview-src-list="[item.preview]" :src="item.preview" fit="cover" style="width: 100%; height: 100%">
@@ -126,19 +126,59 @@
                 <el-icon class="preview-icon" @click="handlePreview(item)">
                   <ZoomIn />
                 </el-icon>
-                <el-icon class="delete-icon" @click="handleDeleteItem(index)">
+                <el-icon v-if="item.uploadStatus !== 'uploading'" class="delete-icon" @click="handleDeleteItem(index)">
                   <Delete />
                 </el-icon>
               </div>
               <div class="image-size">{{ formatSize(item.file.size) }}</div>
+
+              <!-- 上传状态指示 -->
+              <div v-if="item.uploadStatus" :class="item.uploadStatus" class="upload-status-badge">
+                <span v-if="item.uploadStatus === 'uploading'">上传中...</span>
+                <span v-else-if="item.uploadStatus === 'success'">✓ 完成</span>
+                <span v-else-if="item.uploadStatus === 'failed'">✕ 失败</span>
+              </div>
             </div>
 
             <!-- 图片设置 -->
             <div class="image-settings">
-              <el-form label-position="top" size="small">
+              <!-- 上传成功：显示URL和复制按钮 -->
+              <div v-if="item.uploadStatus === 'success'" class="success-info">
+                <div class="success-title">
+                  <el-icon style="color: #67c23a; margin-right: 8px">
+                    <Check />
+                  </el-icon>
+                  <span>{{ item.imageName }}</span>
+                </div>
+                <div class="success-meta">
+                  <span v-if="item.uploadResult?.width && item.uploadResult?.height">
+                    {{ item.uploadResult.width }} × {{ item.uploadResult.height }}
+                  </span>
+                  <span v-if="item.uploadResult?.ossExt?.fileSize">
+                    {{ formatSize(item.uploadResult.ossExt.fileSize) }}
+                  </span>
+                </div>
+                <div class="success-url">
+                  <el-input :model-value="item.uploadResult?.url || ''" readonly size="small">
+                    <template #append>
+                      <el-button :icon="CopyDocument" @click="copyLink(item.uploadResult?.url)">复制</el-button>
+                    </template>
+                  </el-input>
+                </div>
+              </div>
+
+              <!-- 上传中或失败：显示表单 -->
+              <el-form v-else label-position="top" size="small">
                 <!-- 图片名称（必填） -->
                 <el-form-item label="图片名称" required>
-                  <el-input v-model="item.imageName" :placeholder="`图片 ${index + 1}`" clearable maxlength="100" show-word-limit>
+                  <el-input
+                    v-model="item.imageName"
+                    :disabled="item.uploadStatus === 'uploading'"
+                    :placeholder="`图片 ${index + 1}`"
+                    clearable
+                    maxlength="100"
+                    show-word-limit
+                  >
                     <template #suffix>
                       <span class="text-xs text-gray-400">{{ index + 1 }}/{{ imageItems.length }}</span>
                     </template>
@@ -149,6 +189,7 @@
                 <el-form-item label="图片描述">
                   <el-input
                     v-model="item.description"
+                    :disabled="item.uploadStatus === 'uploading'"
                     :rows="2"
                     maxlength="200"
                     placeholder="请输入图片描述（可选）"
@@ -157,13 +198,29 @@
                   />
                 </el-form-item>
 
+                <!-- 上传进度条 -->
+                <div v-if="item.uploadStatus === 'uploading'" class="upload-progress">
+                  <el-progress :percentage="item.uploadProgress || 0" :show-text="true" />
+                </div>
+
+                <!-- 上传错误信息 -->
+                <div v-if="item.uploadStatus === 'failed'" class="upload-error">
+                  <el-alert :closable="false" :title="item.uploadError || '上传失败'" type="error" />
+                </div>
+
                 <!-- 快速操作 -->
                 <div class="quick-actions">
-                  <el-button link size="small" type="primary" @click="copyGlobalSettings(index)">
+                  <el-button v-if="item.uploadStatus !== 'uploading'" link size="small" type="primary" @click="copyGlobalSettings(index)">
                     <el-icon>
                       <CopyDocument />
                     </el-icon>
                     应用全局设置
+                  </el-button>
+                  <el-button v-if="item.uploadStatus === 'failed'" link size="small" type="danger" @click="retryUpload(index)">
+                    <el-icon>
+                      <Refresh />
+                    </el-icon>
+                    重试
                   </el-button>
                 </div>
               </el-form>
@@ -257,9 +314,9 @@
 <script lang="ts" setup>
 import { type ComponentInternalInstance, computed, getCurrentInstance, ref, watch } from 'vue';
 import { ElMessage, ElMessageBox, type UploadFile, type UploadInstance, type UploadUserFile } from 'element-plus';
-import { Check, CopyDocument, Delete, Picture, Setting, Upload, UploadFilled, ZoomIn } from '@element-plus/icons-vue';
-import { batchUploadImages } from '@/api/picturebed/image';
-import { getPublicCategories, getPublicTags, guestUploadImages } from '@/api/picturebed/open';
+import { Check, CopyDocument, Delete, Picture, Refresh, Setting, Upload, UploadFilled, ZoomIn } from '@element-plus/icons-vue';
+import service from '@/utils/request';
+import { getPublicCategories, getPublicTags } from '@/api/picturebed/open';
 import { listImageAlbum } from '@/api/picturebed/imageAlbum';
 import { listImageCategory } from '@/api/picturebed/imageCategory';
 import { listImageTag, listImageTagByCategory } from '@/api/picturebed/imageTag';
@@ -316,9 +373,19 @@ interface ImageItem {
   categoryId?: number | string;
   tagIds: (number | string)[];
   isPublic: string;
+  // 上传状态
+  uploadStatus?: 'pending' | 'uploading' | 'success' | 'failed';
+  uploadProgress?: number; // 0-100
+  uploadError?: string;
+  uploadResult?: any;
 }
 
 const imageItems = ref<ImageItem[]>([]);
+
+// 上传队列配置
+const CONCURRENT_UPLOADS = 2; // 同时上传2个文件
+const uploadQueue = ref<number[]>([]); // 待上传的图片索引队列
+const activeUploads = ref<Set<number>>(new Set()); // 正在上传的图片索引
 
 // 全局设置
 const globalSettings = ref({
@@ -445,6 +512,104 @@ const handlePreview = (item: ImageItem) => {
   previewVisible.value = true;
 };
 
+/**
+ * 上传单个图片
+ */
+const uploadSingleImage = async (index: number) => {
+  const item = imageItems.value[index];
+  if (!item) return;
+
+  item.uploadStatus = 'uploading';
+  item.uploadProgress = 0;
+  item.uploadError = undefined;
+
+  try {
+    const formData = new FormData();
+    formData.append('files', item.file);
+    formData.append('imageNames', item.imageName);
+    formData.append('descriptions', item.description || '');
+
+    let url: string;
+
+    if (props.guestMode) {
+      formData.append('categoryIds', String(item.categoryId || ''));
+      formData.append('tagIdsList', item.tagIds.join(','));
+      url = '/open/picturebed/image/guest/upload';
+    } else {
+      formData.append('albumIds', String(item.albumId || ''));
+      formData.append('categoryIds', String(item.categoryId || ''));
+      formData.append('tagIdsList', item.tagIds.join(','));
+      formData.append('isPublics', item.isPublic);
+      url = '/picturebed/image/batchUpload';
+    }
+
+    // 使用 service 实例上传，自动处理 baseURL 和认证
+    const response = await service.post(url, formData, {
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.lengthComputable) {
+          item.uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+        }
+      }
+    });
+
+    // service 已经处理了响应，直接获取数据
+    item.uploadResult = response?.data?.[0];
+    item.uploadStatus = 'success';
+    item.uploadProgress = 100;
+  } catch (error: any) {
+    item.uploadStatus = 'failed';
+
+    // 详细的错误处理
+    let errorMsg = '上传失败';
+    if (error.response) {
+      // 服务器返回了错误响应
+      errorMsg = error.response.data?.msg || `HTTP ${error.response.status}`;
+    } else if (error.request) {
+      // 请求已发送但没有收到响应
+      errorMsg = '网络错误，请检查连接';
+    } else if (error.message) {
+      // 其他错误
+      errorMsg = error.message;
+    } else {
+      errorMsg = '上传失败';
+    }
+
+    item.uploadError = errorMsg;
+    console.error(`图片 ${index} 上传失败:`, error);
+  }
+};
+
+/**
+ * 处理上传队列
+ */
+const processUploadQueue = async () => {
+  while (uploadQueue.value.length > 0 && activeUploads.value.size < CONCURRENT_UPLOADS) {
+    const index = uploadQueue.value.shift();
+    if (index !== undefined) {
+      activeUploads.value.add(index);
+
+      try {
+        await uploadSingleImage(index);
+      } finally {
+        activeUploads.value.delete(index);
+        // 继续处理队列
+        await processUploadQueue();
+      }
+    }
+  }
+};
+
+/**
+ * 重试上传失败的图片
+ */
+const retryUpload = async (index: number) => {
+  const item = imageItems.value[index];
+  if (!item) return;
+
+  uploadQueue.value.push(index);
+  await processUploadQueue();
+};
+
 // 开始上传
 const handleUpload = async () => {
   // 验证必填项
@@ -471,85 +636,59 @@ const handleUpload = async () => {
   uploading.value = true;
 
   try {
-    // 构建FormData
-    const formData = new FormData();
-
-    // 添加文件
-    imageItems.value.forEach((item) => {
-      formData.append('files', item.file);
+    // 初始化所有图片的上传状态
+    imageItems.value.forEach((item, index) => {
+      item.uploadStatus = 'pending';
+      item.uploadProgress = 0;
+      item.uploadError = undefined;
+      uploadQueue.value.push(index);
     });
 
-    // 添加图片名称（逗号分隔）
-    const imageNames = imageItems.value.map((item) => item.imageName).join(',');
-    formData.append('imageNames', imageNames);
+    // 开始处理上传队列
+    await processUploadQueue();
 
-    let response;
-
-    if (props.guestMode) {
-      // 游客模式：只上传分类和标签
-      // 添加分类ID（逗号分隔）
-      const categoryIds = imageItems.value.map((item) => item.categoryId || '').join(',');
-      formData.append('categoryIds', categoryIds);
-
-      // 添加标签ID列表（分号分隔，每个元素内部逗号分隔）
-      const tagIdsList = imageItems.value.map((item) => item.tagIds.join(',')).join(';');
-      formData.append('tagIdsList', tagIdsList);
-
-      // 调用游客上传API
-      response = await guestUploadImages(formData);
-    } else {
-      // 普通模式：上传所有信息
-      // 添加描述（逗号分隔）
-      const descriptions = imageItems.value.map((item) => item.description || '').join(',');
-      formData.append('descriptions', descriptions);
-
-      // 添加相册ID（逗号分隔）
-      const albumIds = imageItems.value.map((item) => item.albumId || '').join(',');
-      formData.append('albumIds', albumIds);
-
-      // 添加分类ID（逗号分隔）
-      const categoryIds = imageItems.value.map((item) => item.categoryId || '').join(',');
-      formData.append('categoryIds', categoryIds);
-
-      // 添加标签ID列表（分号分隔，每个元素内部逗号分隔）
-      const tagIdsList = imageItems.value.map((item) => item.tagIds.join(',')).join(';');
-      formData.append('tagIdsList', tagIdsList);
-
-      // 添加是否公开（逗号分隔）
-      const isPublics = imageItems.value.map((item) => item.isPublic).join(',');
-      formData.append('isPublics', isPublics);
-
-      // 调用批量上传API
-      response = await batchUploadImages(formData);
+    // 等待所有上传完成
+    while (activeUploads.value.size > 0 || uploadQueue.value.length > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    ElMessage.success(`成功上传 ${response.data.length} 张图片`);
+    // 统计上传结果
+    const successItems = imageItems.value.filter((item) => item.uploadStatus === 'success');
+    const failedItems = imageItems.value.filter((item) => item.uploadStatus === 'failed');
 
-    // 保存上传结果
-    uploadResults.value = response.data;
+    if (successItems.length > 0) {
+      ElMessage.success(`成功上传 ${successItems.length} 张图片`);
+      uploadResults.value = successItems.map((item) => item.uploadResult).filter(Boolean);
+    }
 
-    // 清空图片列表和文件列表
-    imageItems.value.forEach((item) => {
-      URL.revokeObjectURL(item.preview);
-    });
-    imageItems.value = [];
-    fileList.value = [];
+    if (failedItems.length > 0) {
+      ElMessage.warning(`有 ${failedItems.length} 张图片上传失败，可点击重试`);
+    }
 
-    // 重置全局设置（保留分类和标签列表）
-    globalSettings.value = {
-      albumId: props.albumId || undefined,
-      categoryId: undefined,
-      tagIds: [],
-      isPublic: 'Y'
-    };
+    // 如果全部成功，清空图片列表
+    if (failedItems.length === 0) {
+      imageItems.value.forEach((item) => {
+        URL.revokeObjectURL(item.preview);
+      });
+      imageItems.value = [];
+      fileList.value = [];
 
-    // 触发成功事件
-    emit('success', response.data);
+      globalSettings.value = {
+        albumId: props.albumId || undefined,
+        categoryId: undefined,
+        tagIds: [],
+        isPublic: 'Y'
+      };
+
+      emit('success', uploadResults.value);
+    }
   } catch (error) {
     console.error('Upload error:', error);
-    ElMessage.error('上传失败，请重试');
+    ElMessage.error('上传过程出错');
   } finally {
     uploading.value = false;
+    uploadQueue.value = [];
+    activeUploads.value.clear();
   }
 };
 
@@ -1024,6 +1163,132 @@ watch(visible, (val) => {
 
   &:hover {
     background: #c0c4cc;
+  }
+}
+
+// 上传状态样式
+.image-item {
+  &.status-uploading {
+    background: #f0f7ff;
+    border-color: #409eff;
+  }
+
+  &.status-success {
+    background: #f0f9ff;
+    border-color: #67c23a;
+
+    .image-preview {
+      border-color: #67c23a;
+    }
+  }
+
+  &.status-failed {
+    background: #fef0f0;
+    border-color: #f56c6c;
+
+    .image-preview {
+      border-color: #f56c6c;
+    }
+  }
+}
+
+// 上传状态徽章
+.upload-status-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+
+  &.uploading {
+    background: #409eff;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  &.success {
+    background: #67c23a;
+  }
+
+  &.failed {
+    background: #f56c6c;
+  }
+}
+
+// 上传进度条
+.upload-progress {
+  margin: 12px 0;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+
+  :deep(.el-progress) {
+    margin: 0;
+  }
+}
+
+// 上传错误信息
+.upload-error {
+  margin: 12px 0;
+
+  :deep(.el-alert) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+// 成功信息样式
+.success-info {
+  padding: 16px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  border-left: 4px solid #67c23a;
+
+  .success-title {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 8px;
+  }
+
+  .success-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #909399;
+    margin-bottom: 12px;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
+  .success-url {
+    :deep(.el-input__wrapper) {
+      background: white;
+    }
+
+    :deep(.el-input__inner) {
+      font-size: 12px;
+    }
+  }
+}
+
+// 脉冲动画
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 </style>
