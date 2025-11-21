@@ -16,12 +16,12 @@ import Layout from '@/layout/index.vue';
  * roles: ['admin', 'common']       // 访问路由的角色权限
  * permissions: ['a:a:a', 'b:b:b']  // 访问路由的菜单权限
  * meta : {
-    noCache: true                   // 如果设置为true，则不会被 <keep-alive> 缓存(默认 false)
-    title: 'title'                  // 设置该路由在侧边栏和面包屑中展示的名字
-    icon: 'svg-name'                // 设置该路由的图标，对应路径src/assets/icons/svg
-    breadcrumb: false               // 如果设置为false，则不会在breadcrumb面包屑中显示
-    activeMenu: '/system/user'      // 当路由设置了该属性，则会高亮相对应的侧边栏。
-  }
+ noCache: true                   // 如果设置为true，则不会被 <keep-alive> 缓存(默认 false)
+ title: 'title'                  // 设置该路由在侧边栏和面包屑中展示的名字
+ icon: 'svg-name'                // 设置该路由的图标，对应路径src/assets/icons/svg
+ breadcrumb: false               // 如果设置为false，则不会在breadcrumb面包屑中显示
+ activeMenu: '/system/user'      // 当路由设置了该属性，则会高亮相对应的侧边栏。
+ }
  */
 
 // 公共路由
@@ -104,6 +104,19 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: { title: '图片广场' }
   },
   {
+    path: '/system/message/edit',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/system/message/edit.vue'),
+        name: 'MessageEdit',
+        meta: { title: '消息编辑', activeMenu: '/system/message' }
+      }
+    ]
+  },
+  {
     path: '/picturebed',
     component: Layout,
     hidden: true,
@@ -122,13 +135,24 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '相册详情', icon: 'picture', activeMenu: '/picturebed/imageAlbum/gallery' }
       }
     ]
+  },
+  {
+    path: '/system/messageCenter',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/system/messageCenter/index.vue'),
+        name: 'MessageCenter',
+        meta: { title: '消息中心', icon: 'bell' }
+      }
+    ]
   }
 ];
 
 // 动态路由，基于用户权限动态去加载
-export const dynamicRoutes: RouteRecordRaw[] = [
-
-];
+export const dynamicRoutes: RouteRecordRaw[] = [];
 
 /**
  * 创建路由

@@ -43,10 +43,10 @@ const handleTabClick = (name: string) => {
 }
 
 .tabs-sidebar {
-  width: 180px;
+  width: 230px;
   background: var(--el-fill-color-blank);
   border-right: 1px solid var(--el-border-color-light);
-  padding: 16px 0;
+  padding: var(--spacing-md);
   flex-shrink: 0;
 }
 
@@ -58,6 +58,8 @@ const handleTabClick = (name: string) => {
   transition: all 0.3s;
   color: var(--el-text-color-regular);
   position: relative;
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--radius-md);
 
   &:hover {
     background: var(--el-fill-color-light);
@@ -69,17 +71,17 @@ const handleTabClick = (name: string) => {
     color: var(--el-color-primary);
     font-weight: 500;
 
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 20px;
-      background: var(--el-color-primary);
-      border-radius: 0 2px 2px 0;
-    }
+    //&::before {
+    //  content: '';
+    //  position: absolute;
+    //  left: 0;
+    //  top: 50%;
+    //  transform: translateY(-50%);
+    //  width: 3px;
+    //  height: 20px;
+    //  background: var(--el-color-primary);
+    //  border-radius: 0 2px 2px 0;
+    //}
   }
 
   .tab-icon {

@@ -24,6 +24,8 @@
     "@highlightjs/vue-plugin": "2.1.0",
     "@vueup/vue-quill": "1.2.0",
     "@vueuse/core": "13.1.0",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
     "animate.css": "4.1.1",
     "await-to-js": "3.0.0",
     "axios": "1.8.4",

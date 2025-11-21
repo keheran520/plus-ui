@@ -4,7 +4,7 @@
   </el-scrollbar>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { RouteLocationNormalized } from 'vue-router';
 import { useTagsViewStore } from '@/store/modules/tagsView';
 
@@ -92,11 +92,9 @@ defineExpose({
   position: relative;
   overflow: hidden;
   width: 100%;
+
   :deep(.el-scrollbar__bar) {
     bottom: 0px;
-  }
-  :deep(.el-scrollbar__wrap) {
-    height: 49px;
   }
 }
 </style>

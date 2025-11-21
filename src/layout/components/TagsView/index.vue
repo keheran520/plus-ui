@@ -4,15 +4,15 @@
       <router-link
         v-for="tag in visitedViews"
         :key="tag.path"
-        :data-path="tag.path"
         :class="{ 'active': isActive(tag), 'has-icon': tagsIcon }"
+        :data-path="tag.path"
+        :style="activeStyle(tag)"
         :to="{ path: tag.path ? tag.path : '', query: tag.query, fullPath: tag.fullPath ? tag.fullPath : '' }"
         class="tags-view-item"
-        :style="activeStyle(tag)"
         @click.middle="!isAffix(tag) ? closeSelectedTag(tag) : ''"
         @contextmenu.prevent="openMenu(tag, $event)"
       >
-        <svg-icon v-if="tagsIcon && tag.meta && tag.meta.icon && tag.meta.icon !== '#'" :icon-class="tag.meta.icon"/>
+        <svg-icon v-if="tagsIcon && tag.meta && tag.meta.icon && tag.meta.icon !== '#'" :icon-class="tag.meta.icon" />
         <span class="tags-view-item-title">{{ tag.title }}</span>
         <span v-if="!isAffix(tag)" @click.prevent.stop="closeSelectedTag(tag)">
           <close class="el-icon-close" style="width: 1em; height: 1em; vertical-align: middle" />
@@ -20,23 +20,41 @@
       </router-link>
     </scroll-pane>
     <ul v-show="visible" :style="{ left: left + 'px', top: top + 'px' }" class="contextmenu">
-      <li @click="refreshSelectedTag(selectedTag)"><refresh-right style="width: 1em; height: 1em" /> 刷新页面</li>
-      <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)"><close style="width: 1em; height: 1em" /> 关闭当前</li>
-      <li @click="closeOthersTags"><circle-close style="width: 1em; height: 1em" /> 关闭其他</li>
-      <li v-if="!isFirstView()" @click="closeLeftTags"><back style="width: 1em; height: 1em" /> 关闭左侧</li>
-      <li v-if="!isLastView()" @click="closeRightTags"><right style="width: 1em; height: 1em" /> 关闭右侧</li>
-      <li @click="closeAllTags(selectedTag)"><circle-close style="width: 1em; height: 1em" /> 全部关闭</li>
+      <li @click="refreshSelectedTag(selectedTag)">
+        <refresh-right style="width: 1em; height: 1em" />
+        刷新页面
+      </li>
+      <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">
+        <close style="width: 1em; height: 1em" />
+        关闭当前
+      </li>
+      <li @click="closeOthersTags">
+        <circle-close style="width: 1em; height: 1em" />
+        关闭其他
+      </li>
+      <li v-if="!isFirstView()" @click="closeLeftTags">
+        <back style="width: 1em; height: 1em" />
+        关闭左侧
+      </li>
+      <li v-if="!isLastView()" @click="closeRightTags">
+        <right style="width: 1em; height: 1em" />
+        关闭右侧
+      </li>
+      <li @click="closeAllTags(selectedTag)">
+        <circle-close style="width: 1em; height: 1em" />
+        全部关闭
+      </li>
     </ul>
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import ScrollPane from './ScrollPane.vue';
 import { getNormalPath } from '@/utils/ruoyi';
 import { useSettingsStore } from '@/store/modules/settings';
 import { usePermissionStore } from '@/store/modules/permission';
 import { useTagsViewStore } from '@/store/modules/tagsView';
-import { RouteRecordRaw, RouteLocationNormalized } from 'vue-router';
+import { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 
 const visible = ref(false);
 const top = ref(0);
@@ -52,7 +70,7 @@ const router = useRouter();
 const visitedViews = computed(() => useTagsViewStore().getVisitedViews());
 const routes = computed(() => usePermissionStore().getRoutes());
 const theme = computed(() => useSettingsStore().theme);
-const tagsIcon = computed(() => useSettingsStore().tagsIcon)
+const tagsIcon = computed(() => useSettingsStore().tagsIcon);
 
 watch(route, () => {
   addTags();
@@ -242,6 +260,7 @@ onMounted(() => {
 .tags-view-container {
   height: 34px;
   width: 100%;
+  border-bottom: 1px solid var(--border-color);
 
   .tags-view-wrapper {
     .tags-view-item {
@@ -258,39 +277,32 @@ onMounted(() => {
       margin-left: 5px;
       margin-top: 4px;
       border-radius: 4px;
+
       &:hover {
         color: var(--el-color-primary);
       }
+
       &:first-of-type {
         margin-left: 15px;
       }
+
       &:last-of-type {
         margin-right: 15px;
       }
+
       &.active {
         background-color: #42b983;
         color: #fff;
         border-color: #42b983;
-        &::before {
-          content: '';
-          background: #fff;
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          position: relative;
-          margin-right: 5px;
-        }
       }
     }
   }
-  .tags-view-item.active.has-icon::before {
-    content: none !important;
-  }
+
   .tags-view-item-title {
     margin-left: 4px;
     margin-right: 3px;
   }
+
   .contextmenu {
     margin: 0;
     background: var(--el-bg-color);
@@ -302,10 +314,12 @@ onMounted(() => {
     font-size: 12px;
     font-weight: 400;
     box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, 0.3);
+
     li {
       margin: 0;
       padding: 7px 16px;
       cursor: pointer;
+
       &:hover {
         background: #eee;
       }
@@ -326,11 +340,13 @@ onMounted(() => {
       text-align: center;
       transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
       transform-origin: 100% 50%;
+
       &:before {
         transform: scale(0.6);
         display: inline-block;
         vertical-align: -3px;
       }
+
       &:hover {
         background-color: #b4bccc;
         color: #fff;

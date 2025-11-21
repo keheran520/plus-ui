@@ -9,16 +9,18 @@
         <el-select
           v-if="userId === 1 && tenantEnabled"
           v-model="companyName"
+          :placeholder="proxy.$t('navbar.selectTenant')"
           class="min-w-244px"
           clearable
           filterable
           reserve-keyword
-          :placeholder="proxy.$t('navbar.selectTenant')"
           @change="dynamicTenantEvent"
           @clear="dynamicClearEvent"
         >
-          <el-option v-for="item in tenantList" :key="item.tenantId" :label="item.companyName" :value="item.tenantId"> </el-option>
-          <template #prefix><svg-icon icon-class="company" class="el-input__icon input-icon" /></template>
+          <el-option v-for="item in tenantList" :key="item.tenantId" :label="item.companyName" :value="item.tenantId"></el-option>
+          <template #prefix>
+            <svg-icon class="el-input__icon input-icon" icon-class="company" />
+          </template>
         </el-select>
 
         <search-menu ref="searchMenuRef" />
@@ -30,26 +32,20 @@
         <!-- 消息 -->
         <el-tooltip :content="proxy.$t('navbar.message')" effect="dark" placement="bottom">
           <div>
-            <el-popover placement="bottom" trigger="click" transition="el-zoom-in-top" :width="300" :persistent="false">
+            <el-popover :persistent="false" :width="300" placement="bottom" transition="el-zoom-in-top" trigger="hover">
               <template #reference>
-                <el-badge :value="newNotice > 0 ? newNotice : ''" :max="99">
-                  <div class="right-menu-item hover-effect" style="display: block"><svg-icon icon-class="message" /></div>
+                <el-badge :max="99" :value="newNotice > 0 ? newNotice : ''">
+                  <div class="right-menu-item hover-effect" style="display: block" @click="goToMessageCenter">
+                    <svg-icon icon-class="message" />
+                  </div>
                 </el-badge>
               </template>
               <template #default>
-                <notice></notice>
+                <notice ref="noticeRef" @refresh-unread-count="loadUnreadCount"></notice>
               </template>
             </el-popover>
           </div>
         </el-tooltip>
-        <el-tooltip content="Github" effect="dark" placement="bottom">
-          <ruo-yi-git id="ruoyi-git" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
-        <el-tooltip :content="proxy.$t('navbar.document')" effect="dark" placement="bottom">
-          <ruo-yi-doc id="ruoyi-doc" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
         <el-tooltip :content="proxy.$t('navbar.full')" effect="dark" placement="bottom">
           <screenfull id="screenfull" class="right-menu-item hover-effect" />
         </el-tooltip>
@@ -66,20 +62,22 @@
         <el-dropdown class="right-menu-item hover-effect" trigger="click" @command="handleCommand">
           <div class="avatar-wrapper">
             <img :src="userStore.avatar" class="user-avatar" />
-            <el-icon><caret-bottom /></el-icon>
+            <el-icon>
+              <caret-bottom />
+            </el-icon>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
-              <router-link v-if="!dynamic" to="/user/profile">
-                <el-dropdown-item>{{ proxy.$t('navbar.personalCenter') }}</el-dropdown-item>
-              </router-link>
               <el-dropdown-item command="goToPictureBedHome">
                 <span>图床首页</span>
               </el-dropdown-item>
+              <router-link v-if="!dynamic" to="/user/profile">
+                <el-dropdown-item>{{ proxy.$t('navbar.personalCenter') }}</el-dropdown-item>
+              </router-link>
               <el-dropdown-item v-if="settingsStore.showSettings" command="setLayout">
                 <span>{{ proxy.$t('navbar.layoutSetting') }}</span>
               </el-dropdown-item>
-              <el-dropdown-item divided command="logout">
+              <el-dropdown-item command="logout" divided>
                 <span>{{ proxy.$t('navbar.logout') }}</span>
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -90,7 +88,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import SearchMenu from './TopBar/search.vue';
 import { useAppStore } from '@/store/modules/app';
 import { useUserStore } from '@/store/modules/user';
@@ -102,6 +100,8 @@ import { TenantVO } from '@/api/types';
 import notice from './notice/index.vue';
 import router from '@/router';
 import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type';
+import { getUnreadCount } from '@/api/system/messageCenter';
+import { setNavbarInstance } from '@/utils/sse';
 
 const appStore = useAppStore();
 const userStore = useUserStore();
@@ -120,6 +120,8 @@ const dynamic = ref(false);
 const tenantEnabled = ref(true);
 // 搜索菜单
 const searchMenuRef = ref<InstanceType<typeof SearchMenu>>();
+// notice 组件引用
+const noticeRef = ref<any>(null);
 
 const openSearchMenu = () => {
   searchMenuRef.value?.openSearch();
@@ -152,10 +154,6 @@ const initTenantList = async () => {
     tenantList.value = data.voList;
   }
 };
-
-defineExpose({
-  initTenantList
-});
 
 const toggleSideBar = () => {
   appStore.toggleSideBar(false);
@@ -191,6 +189,87 @@ const goToPictureBedHome = () => {
   window.open(routeUrl.href, '_blank');
 };
 
+// 跳转到消息中心
+const goToMessageCenter = () => {
+  router.push('/system/messageCenter');
+};
+
+// 加载未读消息数量
+const loadUnreadCount = async () => {
+  try {
+    console.log('[Navbar] 开始获取未读消息数量...');
+    const { data } = await getUnreadCount();
+    console.log('[Navbar] API返回未读数量:', data);
+    
+    const oldCount = newNotice.value;
+    newNotice.value = data || 0;
+    console.log('[Navbar] 徽章数字更新:', oldCount, '->', newNotice.value);
+    
+    // 同时刷新 notice 组件的消息列表
+    if (noticeRef.value && noticeRef.value.getTableData) {
+      console.log('[Navbar] 刷新notice组件消息列表');
+      noticeRef.value.getTableData();
+    }
+  } catch (error) {
+    console.error('[Navbar] 获取未读消息数量失败:', error);
+  }
+};
+
+// 直接更新未读数量（供SSE调用）
+const updateUnreadCount = (count: number) => {
+  const oldCount = newNotice.value;
+  newNotice.value = count;
+  console.log('[Navbar] 直接更新徽章数字:', oldCount, '->', newNotice.value);
+  
+  // 同时刷新 notice 组件的消息列表
+  if (noticeRef.value && noticeRef.value.getTableData) {
+    console.log('[Navbar] 刷新notice组件消息列表');
+    noticeRef.value.getTableData();
+  }
+};
+
+// 定时刷新未读消息数量
+let unreadCountTimer: any = null;
+
+// 处理自定义事件更新未读数量
+const handleUpdateUnreadCount = (event: CustomEvent) => {
+  const count = event.detail;
+  console.log('[Navbar] 收到消息中心更新事件，未读数量:', count);
+  updateUnreadCount(count);
+};
+
+onMounted(() => {
+  // 注册当前实例到 SSE，使 SSE 能够调用 loadUnreadCount
+  const currentInstance = getCurrentInstance();
+  if (currentInstance) {
+    setNavbarInstance({
+      loadUnreadCount,
+      updateUnreadCount,
+      get newNotice() {
+        return newNotice.value;
+      }
+    });
+  }
+  
+  // 监听自定义事件，从消息中心页面更新徽章数量
+  window.addEventListener('update-unread-count', handleUpdateUnreadCount as EventListener);
+  
+  // 初始加载
+  loadUnreadCount();
+  // 每30秒刷新一次
+  unreadCountTimer = setInterval(loadUnreadCount, 30000);
+});
+
+onUnmounted(() => {
+  if (unreadCountTimer) {
+    clearInterval(unreadCountTimer);
+  }
+  // 移除事件监听
+  window.removeEventListener('update-unread-count', handleUpdateUnreadCount as EventListener);
+  // 清除 SSE 中的实例引用
+  setNavbarInstance(null);
+});
+
 // 定义Command方法对象 通过key直接调用方法
 const commandMap: { [key: string]: any } = {
   setLayout,
@@ -203,14 +282,11 @@ const handleCommand = (command: string) => {
     commandMap[command]();
   }
 };
-//用深度监听 消息
-watch(
-  () => noticeStore.state.value.notices,
-  (newVal) => {
-    newNotice.value = newVal.filter((item: any) => !item.read).length;
-  },
-  { deep: true }
-);
+// 暴露刷新未读数量的方法，供子组件调用
+defineExpose({
+  initTenantList,
+  loadUnreadCount
+});
 </script>
 
 <style lang="scss" scoped>
@@ -234,9 +310,7 @@ watch(
   height: 50px;
   overflow: hidden;
   position: relative;
-  //background: #fff;
-  //box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-  border-bottom: 1px solid rgb(229, 230, 235);
+  border-bottom: 1px solid var(--border-color);
 
   .hamburger-container {
     line-height: 46px;
