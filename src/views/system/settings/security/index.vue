@@ -88,6 +88,12 @@ const defaultData = reactive({
 // 配置ID映射
 const configIds: Record<string, number> = {};
 
+// 原始数据（用于对比是否改变）
+const originalData = reactive({
+  maxRetryCount: 5,
+  lockTime: 10
+});
+
 // 表单验证规则
 const rules = {
   maxRetryCount: [
@@ -118,7 +124,9 @@ const loadConfig = async () => {
     res.rows.forEach((item: any) => {
       const key = configMap[item.configKey];
       if (key) {
-        formData[key] = Number(item.configValue) || (defaultData[key] as number);
+        const value = Number(item.configValue) || (defaultData[key] as number);
+        formData[key] = value;
+        originalData[key] = value; // 保存原始值
         configIds[key] = item.configId;
         // 保存配置描述
         if (item.configDescription) {
@@ -142,6 +150,7 @@ const handleSave = async () => {
   loading.value = true;
   const failedItems: string[] = [];
   const successItems: string[] = [];
+  const changedItems: string[] = [];
 
   try {
     const configMap: Record<string, { key: string; name: string }> = {
@@ -149,14 +158,22 @@ const handleSave = async () => {
       lockTime: { key: 'user.password.lockTime', name: '密码锁定时间' }
     };
 
-    // 使用 updateConfigByKey 接口逐个更新，便于追踪错误
+    // 只更新改变的配置项
     for (const [key, value] of Object.entries(formData)) {
       const config = configMap[key];
       if (!config) continue;
 
+      // 检查值是否改变
+      if (value === originalData[key]) {
+        continue; // 值未改变，跳过
+      }
+
+      changedItems.push(config.name);
+
       try {
         await updateConfigByKey(config.key, String(value));
         successItems.push(config.name);
+        originalData[key] = value; // 更新原始值
       } catch (error) {
         console.error(`保存 ${config.name} 失败:`, error);
         failedItems.push(config.name);
@@ -164,8 +181,11 @@ const handleSave = async () => {
     }
 
     // 根据结果显示不同的提示
-    if (failedItems.length === 0) {
-      proxy?.$modal.msgSuccess('保存成功');
+    if (changedItems.length === 0) {
+      proxy?.$modal.msgInfo('没有配置项发生变化');
+      settingFormRef.value?.exitEditMode();
+    } else if (failedItems.length === 0) {
+      proxy?.$modal.msgSuccess(`成功保存 ${successItems.length} 项配置`);
       settingFormRef.value?.exitEditMode();
       await loadConfig();
     } else if (successItems.length === 0) {

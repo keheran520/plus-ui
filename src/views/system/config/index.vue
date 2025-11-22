@@ -3,36 +3,36 @@
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
-          <el-form ref="queryFormRef" :model="queryParams" :inline="true">
+          <el-form ref="queryFormRef" :inline="true" :model="queryParams">
             <el-form-item label="参数名称" prop="configName">
-              <el-input v-model="queryParams.configName" placeholder="请输入参数名称" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.configName" clearable placeholder="请输入参数名称" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="参数键名" prop="configKey">
-              <el-input v-model="queryParams.configKey" placeholder="请输入参数键名" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.configKey" clearable placeholder="请输入参数键名" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="配置类别" prop="configCategory">
-              <el-select v-model="queryParams.configCategory" placeholder="请选择配置类别" clearable>
+              <el-select v-model="queryParams.configCategory" clearable placeholder="请选择配置类别">
                 <el-option v-for="dict in sys_config_category" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="系统内置" prop="configType">
-              <el-select v-model="queryParams.configType" placeholder="系统内置" clearable>
+              <el-select v-model="queryParams.configType" clearable placeholder="系统内置">
                 <el-option v-for="dict in sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间" style="width: 308px">
               <el-date-picker
                 v-model="dateRange"
-                value-format="YYYY-MM-DD HH:mm:ss"
-                type="daterange"
+                :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
+                end-placeholder="结束日期"
                 range-separator="-"
                 start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
+                type="daterange"
+                value-format="YYYY-MM-DD HH:mm:ss"
               ></el-date-picker>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+              <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
@@ -43,72 +43,72 @@
       <template #header>
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:config:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
+            <el-button v-hasPermi="['system:config:add']" icon="Plus" plain type="primary" @click="handleAdd">新增 </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:config:edit']" type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()">
+            <el-button v-hasPermi="['system:config:edit']" :disabled="single" icon="Edit" plain type="success" @click="handleUpdate()">
               修改
             </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:config:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
+            <el-button v-hasPermi="['system:config:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">
               删除
             </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:config:export']" type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+            <el-button v-hasPermi="['system:config:export']" icon="Download" plain type="warning" @click="handleExport"> 导出 </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:config:remove']" type="danger" plain icon="Refresh" @click="handleRefreshCache">刷新缓存</el-button>
+            <el-button v-hasPermi="['system:config:remove']" icon="Refresh" plain type="danger" @click="handleRefreshCache">刷新缓存 </el-button>
           </el-col>
           <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
         </el-row>
       </template>
 
-      <el-table v-loading="loading" border :data="configList" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="排序" align="center" prop="sortOrder" width="80" />
-        <el-table-column label="参数名称" align="center" prop="configName" :show-overflow-tooltip="true" min-width="120" />
-        <el-table-column label="参数键名" align="center" prop="configKey" :show-overflow-tooltip="true" min-width="150" />
-        <el-table-column label="参数键值" align="center" prop="configValue" :show-overflow-tooltip="true" min-width="120" />
-        <el-table-column label="配置类别" align="center" prop="configCategory" width="100">
+      <el-table v-loading="loading" :data="configList" border @selection-change="handleSelectionChange">
+        <el-table-column align="center" type="selection" width="55" />
+        <el-table-column align="center" label="排序" prop="sortOrder" width="80" />
+        <el-table-column :show-overflow-tooltip="true" align="center" label="参数名称" min-width="120" prop="configName" />
+        <el-table-column :show-overflow-tooltip="true" align="center" label="参数键名" min-width="150" prop="configKey" />
+        <el-table-column :show-overflow-tooltip="true" align="center" label="参数键值" min-width="120" prop="configValue" />
+        <el-table-column align="center" label="配置类别" prop="configCategory" width="100">
           <template #default="scope">
             <dict-tag :options="sys_config_category" :value="scope.row.configCategory" />
           </template>
         </el-table-column>
-        <el-table-column label="值类型" align="center" prop="valueType" width="90">
+        <el-table-column align="center" label="值类型" prop="valueType" width="90">
           <template #default="scope">
             <dict-tag :options="sys_config_value_type" :value="scope.row.valueType" size="small" />
           </template>
         </el-table-column>
-        <el-table-column label="配置描述" align="center" prop="configDescription" :show-overflow-tooltip="true" min-width="150" />
-        <el-table-column label="系统内置" align="center" prop="configType" width="90">
+        <el-table-column :show-overflow-tooltip="true" align="center" label="配置描述" min-width="150" prop="configDescription" />
+        <el-table-column align="center" label="系统内置" prop="configType" width="90">
           <template #default="scope">
             <dict-tag :options="sys_yes_no" :value="scope.row.configType" />
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+        <el-table-column align="center" label="创建时间" prop="createTime" width="160">
           <template #default="scope">
             <span>{{ proxy.parseTime(scope.row.createTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
+        <el-table-column align="center" class-name="small-padding fixed-width" label="操作" width="150">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
-              <el-button v-hasPermi="['system:config:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button v-hasPermi="['system:config:edit']" icon="Edit" link type="primary" @click="handleUpdate(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-              <el-button v-hasPermi="['system:config:remove']" link type="primary" icon="Delete" @click="handleDelete(scope.row)"></el-button>
+              <el-button v-hasPermi="['system:config:remove']" icon="Delete" link type="primary" @click="handleDelete(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
     </el-card>
 
     <!-- 添加或修改参数配置对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="700px" append-to-body>
-      <el-form ref="configFormRef" :model="form" :rules="rules" label-width="100px">
+    <el-drawer v-model="dialog.visible" :title="dialog.title" append-to-body size="500">
+      <el-form ref="configFormRef" :model="form" :rules="rules" label-position="top" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="参数名称" prop="configName">
@@ -149,25 +149,14 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="排序" prop="sortOrder">
-              <el-input-number v-model="form.sortOrder" :min="0" :max="9999" controls-position="right" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="系统内置" prop="configType">
-              <el-radio-group v-model="form.configType">
-                <el-radio v-for="dict in sys_yes_no" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-form-item label="排序" prop="sortOrder">
+          <el-input-number v-model="form.sortOrder" :max="9999" :min="0" controls-position="right" style="width: 100%" />
+        </el-form-item>
         <el-form-item label="配置描述" prop="configDescription">
-          <el-input v-model="form.configDescription" type="textarea" :rows="2" placeholder="请输入配置描述" />
+          <el-input v-model="form.configDescription" :rows="2" placeholder="请输入配置描述" type="textarea" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="请输入备注" />
+          <el-input v-model="form.remark" :rows="2" placeholder="请输入备注" type="textarea" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -176,12 +165,12 @@
           <el-button @click="cancel">取 消</el-button>
         </div>
       </template>
-    </el-dialog>
+    </el-drawer>
   </div>
 </template>
 
-<script setup name="Config" lang="ts">
-import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache } from '@/api/system/config';
+<script lang="ts" name="Config" setup>
+import { addConfig, delConfig, getConfig, listConfig, refreshCache, updateConfig } from '@/api/system/config';
 import { ConfigForm, ConfigQuery, ConfigVO } from '@/api/system/config/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -209,7 +198,6 @@ const initFormData: ConfigForm = {
   configName: '',
   configKey: '',
   configValue: '',
-  configType: 'Y',
   configCategory: 'system',
   configDescription: '',
   defaultValue: '',
@@ -232,7 +220,6 @@ const data = reactive<PageData<ConfigForm, ConfigQuery>>({
     configKey: [{ required: true, message: '参数键名不能为空', trigger: 'blur' }],
     configValue: [{ required: true, message: '参数键值不能为空', trigger: 'blur' }],
     configCategory: [{ required: true, message: '配置类别不能为空', trigger: 'change' }],
-    valueType: [{ required: true, message: '值类型不能为空', trigger: 'change' }],
     defaultValue: [{ required: true, message: '默认值不能为空', trigger: 'blur' }]
   }
 });

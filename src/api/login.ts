@@ -64,6 +64,19 @@ export function logout() {
 }
 
 /**
+ * 获取验证码配置
+ */
+export function getCaptchaConfig(): AxiosPromise<any> {
+  return request({
+    url: '/captchaConfig',
+    headers: {
+      isToken: false
+    },
+    method: 'get'
+  });
+}
+
+/**
  * 获取验证码
  */
 export function getCodeImg(): AxiosPromise<VerifyCodeResult> {
@@ -78,7 +91,7 @@ export function getCodeImg(): AxiosPromise<VerifyCodeResult> {
 }
 
 /**
- * 获取验证码
+ * 获取邮箱验证码
  */
 export function sendEmailVerifyCode(email: string): AxiosPromise<VerifyCodeResult> {
   return request({
@@ -88,6 +101,24 @@ export function sendEmailVerifyCode(email: string): AxiosPromise<VerifyCodeResul
     },
     method: 'get',
     params: { email },
+    timeout: 20000
+  });
+}
+
+/**
+ * 获取号码认证验证码
+ */
+export function sendPhoneVerifyCode(phonenumber: string, businessType?: string): AxiosPromise<any> {
+  return request({
+    url: '/resource/phoneverify/code',
+    headers: {
+      isToken: false
+    },
+    method: 'get',
+    params: { 
+      phonenumber,
+      businessType: businessType || 'login'
+    },
     timeout: 20000
   });
 }

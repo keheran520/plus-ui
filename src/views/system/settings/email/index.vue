@@ -230,6 +230,21 @@ const defaultData = reactive({
 // 配置ID映射
 const configIds: Record<string, number> = {};
 
+// 原始数据（用于对比是否改变）
+const originalData = reactive({
+  enabled: 'true',
+  host: '',
+  port: 465,
+  user: '',
+  pass: '',
+  from: '',
+  auth: 'true',
+  starttlsEnable: 'false',
+  sslEnable: 'true',
+  timeout: 25000,
+  connectionTimeout: 25000
+});
+
 // 表单验证规则
 const rules = {
   host: [{ required: true, message: '请输入SMTP服务器地址', trigger: 'blur' }],
@@ -270,11 +285,14 @@ const loadConfig = async () => {
       const key = configMap[item.configKey];
       if (key) {
         // 处理数字类型
+        let value: any;
         if (['port', 'timeout', 'connectionTimeout'].includes(key)) {
-          formData[key] = Number(item.configValue) || (defaultData[key] as number);
+          value = Number(item.configValue) || (defaultData[key] as number);
         } else {
-          formData[key] = item.configValue || (defaultData[key] as string);
+          value = item.configValue || (defaultData[key] as string);
         }
+        formData[key] = value;
+        originalData[key] = value; // 保存原始值
         configIds[key] = item.configId;
         // 保存配置描述
         if (item.configDescription) {
@@ -302,6 +320,7 @@ const handleSave = async () => {
   loading.value = true;
   const failedItems: string[] = [];
   const successItems: string[] = [];
+  const changedItems: string[] = [];
 
   try {
     const configMap: Record<string, { key: string; name: string }> = {
@@ -318,14 +337,22 @@ const handleSave = async () => {
       connectionTimeout: { key: 'mail.connectionTimeout', name: '连接超时' }
     };
 
-    // 使用 updateConfigByKey 接口逐个更新
+    // 只更新改变的配置项
     for (const [key, value] of Object.entries(formData)) {
       const config = configMap[key];
       if (!config) continue;
 
+      // 检查值是否改变
+      if (value === originalData[key]) {
+        continue; // 值未改变，跳过
+      }
+
+      changedItems.push(config.name);
+
       try {
         await updateConfigByKey(config.key, String(value));
         successItems.push(config.name);
+        originalData[key] = value; // 更新原始值
       } catch (error) {
         console.error(`保存 ${config.name} 失败:`, error);
         failedItems.push(config.name);
@@ -333,8 +360,11 @@ const handleSave = async () => {
     }
 
     // 根据结果显示不同的提示
-    if (failedItems.length === 0) {
-      proxy?.$modal.msgSuccess('保存成功');
+    if (changedItems.length === 0) {
+      proxy?.$modal.msgInfo('没有配置项发生变化');
+      settingFormRef.value?.exitEditMode();
+    } else if (failedItems.length === 0) {
+      proxy?.$modal.msgSuccess(`成功保存 ${successItems.length} 项配置`);
       settingFormRef.value?.exitEditMode();
       showMoreConfig.value = false;
       await loadConfig();

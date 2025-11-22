@@ -9,10 +9,10 @@
       <el-segmented v-model="loginType" :options="loginTypeOptions" class="login-type-switch mb-4" />
 
       <el-form-item v-if="tenantEnabled" prop="tenantId">
-        <el-select v-model="loginForm.tenantId" filterable :placeholder="proxy.$t('login.selectPlaceholder')" style="width: 100%">
+        <el-select v-model="loginForm.tenantId" :placeholder="proxy.$t('login.selectPlaceholder')" filterable style="width: 100%">
           <el-option v-for="item in tenantList" :key="item.tenantId" :label="item.companyName" :value="item.tenantId"></el-option>
           <template #prefix>
-            <svg-icon icon-class="company" class="el-input__icon input-icon" />
+            <svg-icon class="el-input__icon input-icon" icon-class="company" />
           </template>
         </el-select>
       </el-form-item>
@@ -20,37 +20,37 @@
       <!-- 密码登录表单 -->
       <template v-if="loginType === 'password'">
         <el-form-item prop="username">
-          <el-input v-model="loginForm.username" type="text" size="large" auto-complete="off" :placeholder="proxy.$t('login.username')">
+          <el-input v-model="loginForm.username" :placeholder="proxy.$t('login.username')" auto-complete="off" size="large" type="text">
             <template #prefix>
-              <svg-icon icon-class="user" class="el-input__icon input-icon" />
+              <svg-icon class="el-input__icon input-icon" icon-class="user" />
             </template>
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
           <el-input
             v-model="loginForm.password"
-            type="password"
-            size="large"
-            auto-complete="off"
             :placeholder="proxy.$t('login.password')"
+            auto-complete="off"
+            size="large"
+            type="password"
             @keyup.enter="handleLogin"
           >
             <template #prefix>
-              <svg-icon icon-class="password" class="el-input__icon input-icon" />
+              <svg-icon class="el-input__icon input-icon" icon-class="password" />
             </template>
           </el-input>
         </el-form-item>
         <el-form-item v-if="captchaEnabled" prop="code">
           <el-input
             v-model="loginForm.code"
-            size="large"
-            auto-complete="off"
             :placeholder="proxy.$t('login.code')"
+            auto-complete="off"
+            size="large"
             style="width: 63%"
             @keyup.enter="handleLogin"
           >
             <template #prefix>
-              <svg-icon icon-class="validCode" class="el-input__icon input-icon" />
+              <svg-icon class="el-input__icon input-icon" icon-class="validCode" />
             </template>
           </el-input>
           <div class="login-code">
@@ -67,8 +67,23 @@
         <el-form-item prop="emailCode">
           <div class="verify-code-wrapper">
             <el-input v-model="loginForm.emailCode" placeholder="请输入邮箱验证码" prefix-icon="Message" size="large" @keyup.enter="handleLogin" />
-            <el-button :disabled="emailCountdown > 0" class="code-btn" size="large" @click="sendEmailCode" :loading="sendEmailCodeLoading">
+            <el-button :disabled="emailCountdown > 0" :loading="sendEmailCodeLoading" class="code-btn" size="large" @click="sendEmailCode">
               {{ emailCountdown > 0 ? `${emailCountdown}s` : '获取验证码' }}
+            </el-button>
+          </div>
+        </el-form-item>
+      </template>
+
+      <!-- 号码登录表单 -->
+      <template v-if="loginType === 'phoneverify'">
+        <el-form-item prop="phonenumber">
+          <el-input v-model="loginForm.phonenumber" maxlength="11" placeholder="请输入手机号" prefix-icon="Iphone" size="large" />
+        </el-form-item>
+        <el-form-item prop="verifyCode">
+          <div class="verify-code-wrapper">
+            <el-input v-model="loginForm.verifyCode" placeholder="请输入验证码" prefix-icon="ChatDotSquare" size="large" @keyup.enter="handleLogin" />
+            <el-button :disabled="phoneCountdown > 0" :loading="sendPhoneCodeLoading" class="code-btn" size="large" @click="sendPhoneCode">
+              {{ phoneCountdown > 0 ? `${phoneCountdown}s` : '获取验证码' }}
             </el-button>
           </div>
         </el-form-item>
@@ -76,29 +91,29 @@
 
       <el-checkbox v-model="loginForm.rememberMe" style="margin: 0 0 25px 0">{{ proxy.$t('login.rememberPassword') }} </el-checkbox>
       <el-form-item style="float: right">
-        <el-button circle :title="proxy.$t('login.social.wechat')" @click="doSocialLogin('wechat')">
+        <el-button :title="proxy.$t('login.social.wechat')" circle @click="doSocialLogin('wechat')">
           <svg-icon icon-class="wechat" />
         </el-button>
-        <el-button circle :title="proxy.$t('login.social.maxkey')" @click="doSocialLogin('maxkey')">
+        <el-button :title="proxy.$t('login.social.maxkey')" circle @click="doSocialLogin('maxkey')">
           <svg-icon icon-class="maxkey" />
         </el-button>
-        <el-button circle :title="proxy.$t('login.social.topiam')" @click="doSocialLogin('topiam')">
+        <el-button :title="proxy.$t('login.social.topiam')" circle @click="doSocialLogin('topiam')">
           <svg-icon icon-class="topiam" />
         </el-button>
-        <el-button circle :title="proxy.$t('login.social.gitee')" @click="doSocialLogin('gitee')">
+        <el-button :title="proxy.$t('login.social.gitee')" circle @click="doSocialLogin('gitee')">
           <svg-icon icon-class="gitee" />
         </el-button>
-        <el-button circle :title="proxy.$t('login.social.github')" @click="doSocialLogin('github')">
+        <el-button :title="proxy.$t('login.social.github')" circle @click="doSocialLogin('github')">
           <svg-icon icon-class="github" />
         </el-button>
       </el-form-item>
       <el-form-item style="width: 100%">
-        <el-button :loading="loading" size="large" type="primary" style="width: 100%" @click.prevent="handleLogin">
+        <el-button :loading="loading" size="large" style="width: 100%" type="primary" @click.prevent="handleLogin">
           <span v-if="!loading">{{ proxy.$t('login.login') }}</span>
           <span v-else>{{ proxy.$t('login.logging') }}</span>
         </el-button>
         <div v-if="register" style="float: right">
-          <router-link class="link-type" :to="'/register'">{{ proxy.$t('login.switchRegisterPage') }}</router-link>
+          <router-link :to="'/register'" class="link-type">{{ proxy.$t('login.switchRegisterPage') }}</router-link>
         </div>
       </el-form-item>
     </el-form>
@@ -112,8 +127,8 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { getCodeImg, getTenantList, sendEmailVerifyCode } from '@/api/login';
+<script lang="ts" setup>
+import { getCaptchaConfig, getCodeImg, getTenantList, sendEmailVerifyCode, sendPhoneVerifyCode } from '@/api/login';
 import { authBinding } from '@/api/system/social/auth';
 import { useUserStore } from '@/store/modules/user';
 import { useWebsiteStore } from '@/store/modules/website';
@@ -143,7 +158,10 @@ const loginForm = ref<LoginData>({
   code: '',
   uuid: '',
   email: '',
-  emailCode: ''
+  emailCode: '',
+  phonenumber: '',
+  verifyCode: '',
+  businessType: 'login'
 } as LoginData);
 
 const loginRules: ElFormRules = {
@@ -155,7 +173,12 @@ const loginRules: ElFormRules = {
     { required: true, trigger: 'blur', message: '请输入邮箱地址' },
     { type: 'email', trigger: 'blur', message: '请输入正确的邮箱地址' }
   ],
-  emailCode: [{ required: true, trigger: 'blur', message: '请输入邮箱验证码' }]
+  emailCode: [{ required: true, trigger: 'blur', message: '请输入邮箱验证码' }],
+  phonenumber: [
+    { required: true, trigger: 'blur', message: '请输入手机号' },
+    { pattern: /^1[3-9]\d{9}$/, trigger: 'blur', message: '请输入正确的手机号' }
+  ],
+  verifyCode: [{ required: true, trigger: 'blur', message: '请输入验证码' }]
 };
 
 const codeUrl = ref('');
@@ -173,15 +196,21 @@ const loginRef = ref<ElFormInstance>();
 const tenantList = ref<TenantVO[]>([]);
 
 // 登录方式
-const loginType = ref<'password' | 'email'>('password');
+const loginType = ref<'password' | 'email' | 'phoneverify'>('password');
 const loginTypeOptions = [
   { label: '密码登录', value: 'password' },
-  { label: '邮箱登录', value: 'email' }
+  { label: '邮箱登录', value: 'email' },
+  { label: '号码登录', value: 'phoneverify' }
 ];
 
 // 邮箱验证码倒计时
 const emailCountdown = ref(0);
 let emailCountdownTimer: NodeJS.Timeout | null = null;
+
+// 号码验证码倒计时
+const phoneCountdown = ref(0);
+let phoneCountdownTimer: NodeJS.Timeout | null = null;
+const sendPhoneCodeLoading = ref(false);
 
 watch(
   () => router.currentRoute.value,
@@ -196,7 +225,13 @@ const handleLogin = () => {
     if (valid) {
       loading.value = true;
       // 设置授权类型
-      loginForm.value.grantType = loginType.value === 'password' ? 'password' : 'email';
+      if (loginType.value === 'password') {
+        loginForm.value.grantType = 'password';
+      } else if (loginType.value === 'email') {
+        loginForm.value.grantType = 'email';
+      } else if (loginType.value === 'phoneverify') {
+        loginForm.value.grantType = 'phoneverify';
+      }
 
       // 勾选了需要记住密码设置在 localStorage 中设置记住用户名和密码
       if (loginForm.value.rememberMe) {
@@ -231,14 +266,30 @@ const handleLogin = () => {
 };
 
 /**
+ * 获取验证码配置
+ */
+const getCaptchaConfigInfo = async () => {
+  try {
+    const res = await getCaptchaConfig();
+    if (res.code === 200 && res.data) {
+      captchaEnabled.value = res.data.captchaEnabled === undefined ? true : res.data.captchaEnabled;
+    }
+  } catch (error) {
+    console.error('获取验证码配置失败:', error);
+    // 失败时默认开启验证码
+    captchaEnabled.value = true;
+  }
+};
+
+/**
  * 获取验证码
  */
 const getCode = async () => {
-  const res = await getCodeImg();
-  const { data } = res;
-  captchaEnabled.value = data.captchaEnabled === undefined ? true : data.captchaEnabled;
   if (captchaEnabled.value) {
-    codeUrl.value = 'data:image/gif;base64,' + data.img;
+    const res = await getCodeImg();
+    const { data } = res;
+    // Kaptcha 生成的是 PNG 格式，且后端已经包含了 data:image/png;base64, 前缀
+    codeUrl.value = data.img;
     loginForm.value.uuid = data.uuid;
   }
 };
@@ -330,6 +381,8 @@ const doSocialLogin = (type: string) => {
 };
 
 onMounted(async () => {
+  // 先获取验证码配置
+  await getCaptchaConfigInfo();
   getCode();
   initTenantList();
   getLoginData();
@@ -339,11 +392,60 @@ onMounted(async () => {
   }
 });
 
+/**
+ * 发送号码验证码
+ */
+const sendPhoneCode = async () => {
+  // 先验证手机号格式
+  if (!loginForm.value.phonenumber) {
+    ElMessage.warning('请输入手机号');
+    return;
+  }
+
+  // 验证手机号格式
+  const phoneRegex = /^1[3-9]\d{9}$/;
+  if (!phoneRegex.test(loginForm.value.phonenumber)) {
+    ElMessage.warning('请输入正确的手机号');
+    return;
+  }
+
+  sendPhoneCodeLoading.value = true;
+  try {
+    // 调用发送号码验证码的接口
+    const res = await sendPhoneVerifyCode(loginForm.value.phonenumber, 'login');
+    if (res.code === HttpStatus.SUCCESS && res.data?.success) {
+      ElMessage.success('验证码已发送，请注意查收短信');
+
+      // 开始倒计时 60 秒
+      phoneCountdown.value = 60;
+      phoneCountdownTimer = setInterval(() => {
+        phoneCountdown.value--;
+        if (phoneCountdown.value <= 0) {
+          if (phoneCountdownTimer) {
+            clearInterval(phoneCountdownTimer);
+            phoneCountdownTimer = null;
+          }
+        }
+      }, 1000);
+    } else {
+      ElMessage.error(res.data?.message || res.msg || '发送验证码失败');
+    }
+  } catch (error: any) {
+    ElMessage.error(error.message || '发送验证码失败');
+  } finally {
+    sendPhoneCodeLoading.value = false;
+  }
+};
+
 onBeforeUnmount(() => {
   // 清理倒计时
   if (emailCountdownTimer) {
     clearInterval(emailCountdownTimer);
     emailCountdownTimer = null;
+  }
+  if (phoneCountdownTimer) {
+    clearInterval(phoneCountdownTimer);
+    phoneCountdownTimer = null;
   }
 });
 </script>

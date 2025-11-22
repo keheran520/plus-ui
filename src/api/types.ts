@@ -26,8 +26,11 @@ export interface LoginData {
   uuid?: string;
   clientId: string;
   grantType: string;
-  email: string;
-  emailCode: string;
+  email?: string;
+  emailCode?: string;
+  phonenumber?: string;
+  verifyCode?: string;
+  businessType?: string;
 }
 
 /**

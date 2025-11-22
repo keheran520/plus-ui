@@ -1,7 +1,7 @@
 <template>
   <div class="album-detail-container">
     <!-- 页头 -->
-    <el-page-header @back="handleBack" class="mb-4 p-3">
+    <el-page-header @back="handleBack" class="bg-white p-5">
       <template #content>
         <span class="text-large font-600 mr-3">{{ albumInfo.albumName || '相册详情' }}</span>
       </template>
@@ -52,20 +52,20 @@
           </div>
 
           <div class="album-tags">
-            <el-tag v-if="albumInfo.isPublic === 'Y'"  type="success">
+            <el-tag v-if="albumInfo.isPublic === 'Y'" type="success">
               <el-icon class="mr-1">
                 <Unlock />
               </el-icon>
               公开
             </el-tag>
-            <el-tag v-else  type="info">
+            <el-tag v-else type="info">
               <el-icon class="mr-1">
                 <Lock />
               </el-icon>
               私密
             </el-tag>
             <el-tag v-if="albumInfo.status === '0'" type="success">正常</el-tag>
-            <el-tag v-else  type="danger">已停用</el-tag>
+            <el-tag v-else type="danger">已停用</el-tag>
           </div>
         </div>
       </div>
@@ -339,8 +339,8 @@ const timelineData = computed(() => {
 
 // 获取相册详情
 const getAlbumDetail = async () => {
-    const res = await getImageAlbum(route.params.id as string);
-    albumInfo.value = res.data;
+  const res = await getImageAlbum(route.params.id as string);
+  albumInfo.value = res.data;
 };
 
 // 获取图片列表
@@ -384,7 +384,7 @@ const handleAddImageSuccess = () => {
 
 // 上传成功处理
 const handleUploadSuccess = (data: any) => {
-  ElMessage({message:`成功上传 ${data.length} 张图片`,type:'success',plain:true});
+  ElMessage({ message: `成功上传 ${data.length} 张图片`, type: 'success', plain: true });
   // 刷新图片列表
   getImageList();
 };
@@ -567,9 +567,6 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .album-detail-container {
-  padding: 20px;
-  background: #f5f7fa;
-  min-height: calc(100vh - 120px);
 }
 
 // 页头操作按钮
@@ -581,6 +578,7 @@ onUnmounted(() => {
 // 相册信息卡片
 .album-info-card {
   border-radius: 8px;
+  margin: var(--spacing-md);
 
   .album-info-content {
     display: flex;
@@ -653,6 +651,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 20px;
+  margin: 0 var(--spacing-md);
 
   // 响应式：中等屏幕
   @media (max-width: 1400px) {
