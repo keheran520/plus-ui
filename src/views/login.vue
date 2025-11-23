@@ -384,7 +384,7 @@ const sendEmailCode = async () => {
   sendEmailCodeLoading.value = true;
   try {
     // 调用发送邮箱验证码的接口
-    const res = await sendEmailVerifyCode(loginForm.value.email);
+    const res = await sendEmailVerifyCode(loginForm.value.email, loginForm.value.tenantId);
     if (res.code === HttpStatus.SUCCESS) {
       ElMessage.success('验证码已发送，请查收邮件');
 
@@ -515,7 +515,7 @@ const sendPhoneCode = async () => {
   sendPhoneCodeLoading.value = true;
   try {
     // 调用发送号码验证码的接口
-    const res = await sendPhoneVerifyCode(loginForm.value.phonenumber, 'login');
+    const res = await sendPhoneVerifyCode(loginForm.value.phonenumber, 'login', loginForm.value.tenantId);
     if (res.code === HttpStatus.SUCCESS && res.data?.success) {
       ElMessage.success('验证码已发送，请注意查收短信');
 

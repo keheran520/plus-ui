@@ -114,32 +114,43 @@ export function getCodeImg(tenantId?: string): AxiosPromise<VerifyCodeResult> {
 
 /**
  * 获取邮箱验证码
+ * @param email 邮箱地址
+ * @param tenantId 租户ID
  */
-export function sendEmailVerifyCode(email: string): AxiosPromise<VerifyCodeResult> {
+export function sendEmailVerifyCode(email: string, tenantId?: string): AxiosPromise<VerifyCodeResult> {
   return request({
     url: '/resource/email/code',
     headers: {
-      isToken: false
+      isToken: false,
+      'X-Tenant-Id': tenantId || '000000'
     },
     method: 'get',
-    params: { email },
+    params: {
+      email,
+      ...(tenantId ? { tenantId } : {})
+    },
     timeout: 20000
   });
 }
 
 /**
  * 获取号码认证验证码
+ * @param phonenumber 手机号
+ * @param businessType 业务类型
+ * @param tenantId 租户ID
  */
-export function sendPhoneVerifyCode(phonenumber: string, businessType?: string): AxiosPromise<any> {
+export function sendPhoneVerifyCode(phonenumber: string, businessType?: string, tenantId?: string): AxiosPromise<any> {
   return request({
     url: '/resource/phoneverify/code',
     headers: {
-      isToken: false
+      isToken: false,
+      'X-Tenant-Id': tenantId || '000000'
     },
     method: 'get',
     params: {
       phonenumber,
-      businessType: businessType || 'login'
+      businessType: businessType || 'login',
+      ...(tenantId ? { tenantId } : {})
     },
     timeout: 20000
   });
