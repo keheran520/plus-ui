@@ -59,9 +59,6 @@
               >预览开关 : {{ previewListResource ? '禁用' : '启用' }}
             </el-button>
           </el-col>
-          <!--          <el-col :span="1.5">-->
-          <!--            <el-button v-hasPermi="['system:ossConfig:list']" type="info" plain icon="Operation" @click="handleOssConfig">配置管理</el-button>-->
-          <!--          </el-col>-->
           <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
         </el-row>
       </template>
@@ -225,7 +222,6 @@ function handleQuery() {
 
 /** 重置按钮操作 */
 function resetQuery() {
-  showTable.value = false;
   dateRangeCreateTime.value = ['', ''];
   queryFormRef.value?.resetFields();
   queryParams.value.orderByColumn = defaultSort.value.prop;
@@ -285,10 +281,7 @@ const handleOrderChange = (prop: string, order: string) => {
   queryParams.value.isAsc = isAscArr.join(',');
   getList();
 };
-/** 任务日志列表查询 */
-const handleOssConfig = () => {
-  router.push('/system/oss-config/index');
-};
+
 /** 文件按钮操作 */
 const handleFile = () => {
   reset();
