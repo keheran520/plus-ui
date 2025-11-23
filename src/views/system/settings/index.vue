@@ -1,6 +1,6 @@
 <template>
   <div class="p-4">
-    <el-card shadow="hover" class="settings-card">
+    <el-card class="settings-card" shadow="hover">
       <SettingTabs v-model="activeTab" :tabs="tabList">
         <!-- 网站配置 -->
         <div v-show="activeTab === 'website'">
@@ -14,12 +14,17 @@
 
         <!-- 登录配置 -->
         <div v-show="activeTab === 'login'">
-         <Login />
+          <Login />
         </div>
 
         <!-- 邮箱配置 -->
         <div v-show="activeTab === 'email'">
           <Email />
+        </div>
+
+        <!-- 号码认证配置 -->
+        <div v-show="activeTab === 'phoneVerify'">
+          <PhoneVerify />
         </div>
 
         <!-- 短信配置 -->
@@ -29,12 +34,12 @@
 
         <!-- 存储配置 -->
         <div v-show="activeTab === 'storage'">
-         <Storage />
+          <Storage />
         </div>
 
         <!-- 客户端配置 -->
         <div v-show="activeTab === 'client'">
-         <Client />
+          <Client />
         </div>
       </SettingTabs>
     </el-card>
@@ -48,17 +53,10 @@ import Email from './email/index.vue';
 import Login from './login/index.vue';
 import Security from './security/index.vue';
 import Sms from './sms/index.vue';
+import PhoneVerify from './phoneVerify/index.vue';
 import Storage from './storage/index.vue';
 import Client from './client/index.vue';
-import {
-  Monitor,
-  Lock,
-  User,
-  Message,
-  Phone,
-  Folder,
-  Platform
-} from '@element-plus/icons-vue';
+import { Folder, Lock, Message, Monitor, Phone, Platform, User } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -80,9 +78,10 @@ const tabList = [
   { name: 'login', label: '登录配置', icon: User },
   { name: 'email', label: '邮箱配置', icon: Message },
   { name: 'sms', label: '短信配置', icon: Phone },
+  { name: 'phoneVerify', label: '认证配置', icon: Phone },
   { name: 'storage', label: '存储配置', icon: Folder },
-  { name: 'client', label: '客户端配置',icon: Platform }
-]
+  { name: 'client', label: '客户端配置', icon: Platform }
+];
 </script>
 
 <style lang="scss" scoped>

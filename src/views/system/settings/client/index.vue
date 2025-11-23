@@ -2,20 +2,20 @@
   <div class="p-2">
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="search">
-        <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="85px">
+        <el-form ref="queryFormRef" :inline="true" :model="queryParams" label-width="85px">
           <el-form-item label="客户端key" prop="clientKey">
-            <el-input v-model="queryParams.clientKey" placeholder="请输入客户端key" clearable @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.clientKey" clearable placeholder="请输入客户端key" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="客户端秘钥" prop="clientSecret">
-            <el-input v-model="queryParams.clientSecret" placeholder="请输入客户端秘钥" clearable @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.clientSecret" clearable placeholder="请输入客户端秘钥" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="状态" prop="status">
-            <el-select v-model="queryParams.status" placeholder="状态" clearable>
+            <el-select v-model="queryParams.status" clearable placeholder="状态">
               <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -26,70 +26,97 @@
       <template #header>
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:client:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
+            <el-button v-hasPermi="['system:client:add']" icon="Plus" plain type="primary" @click="handleAdd">新增 </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:client:edit']" type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()">
+            <el-button v-hasPermi="['system:client:edit']" :disabled="single" icon="Edit" plain type="success" @click="handleUpdate()">
               修改
             </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:client:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
+            <el-button v-hasPermi="['system:client:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">
               删除
             </el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button v-hasPermi="['system:client:export']" type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+            <el-button v-hasPermi="['system:client:export']" icon="Download" plain type="warning" @click="handleExport"> 导出 </el-button>
           </el-col>
           <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
         </el-row>
       </template>
 
       <el-table v-loading="loading" :data="clientList" border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column v-if="true" label="id" align="center" prop="id" />
-        <el-table-column label="客户端id" align="center" prop="clientId" />
-        <el-table-column label="客户端key" align="center" prop="clientKey" />
-        <el-table-column label="客户端秘钥" align="center" prop="clientSecret" />
-        <el-table-column label="授权类型" align="center">
+        <el-table-column align="center" type="selection" width="55" />
+        <el-table-column v-if="true" align="center" label="id" prop="id" />
+        <el-table-column align="center" label="客户端id" prop="clientId" />
+        <el-table-column align="center" label="客户端key" prop="clientKey" />
+        <el-table-column align="center" label="客户端秘钥" prop="clientSecret" width="200">
+          <template #default="scope">
+            <div style="display: flex; align-items: center; justify-content: center">
+              <transition name="fade" mode="out-in">
+                <span v-if="!scope.row._showSecret" key="hidden">**********</span>
+                <span v-else key="visible" style="font-family: monospace; color: #409eff">{{ scope.row._secretValue || '加载中...' }}</span>
+              </transition>
+              <el-icon
+                v-hasPermi="['system:client:secretQuery']"
+                :class="{ 'icon-transition': true, 'is-rotating': scope.row._loading }"
+                style="margin-left: 8px; cursor: pointer; font-size: 16px; color: #409eff"
+                @click="toggleSecretVisibility(scope.row)"
+              >
+                <transition name="icon-fade" mode="out-in">
+                  <View v-if="!scope.row._showSecret" key="view" />
+                  <Hide v-else key="hide" />
+                </transition>
+              </el-icon>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column align="center" label="授权类型">
           <template #default="scope">
             <dict-tag :options="sys_grant_type" :value="scope.row.grantTypeList" />
           </template>
         </el-table-column>
-        <el-table-column label="设备类型" align="center">
+        <el-table-column align="center" label="设备类型">
           <template #default="scope">
             <dict-tag :options="sys_device_type" :value="scope.row.deviceType" />
           </template>
         </el-table-column>
-        <el-table-column label="Token活跃超时时间" align="center" prop="activeTimeout" />
-        <el-table-column label="Token固定超时时间" align="center" prop="timeout" />
-        <el-table-column key="status" label="状态" align="center">
+        <el-table-column align="center" label="Token活跃超时时间" prop="activeTimeout" />
+        <el-table-column align="center" label="Token固定超时时间" prop="timeout" />
+        <el-table-column key="status" align="center" label="状态">
           <template #default="scope">
             <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="handleStatusChange(scope.row)"></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column align="center" class-name="small-padding fixed-width" label="操作">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
-              <el-button v-hasPermi="['system:client:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button v-hasPermi="['system:client:edit']" icon="Edit" link type="primary" @click="handleUpdate(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-              <el-button v-hasPermi="['system:client:remove']" link type="primary" icon="Delete" @click="handleDelete(scope.row)"></el-button>
+              <el-button v-hasPermi="['system:client:remove']" icon="Delete" link type="primary" @click="handleDelete(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
     </el-card>
     <!-- 添加或修改客户端管理对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
+    <el-dialog v-model="dialog.visible" :title="dialog.title" append-to-body width="500px">
       <el-form ref="clientFormRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="客户端key" prop="clientKey">
           <el-input v-model="form.clientKey" :disabled="form.id != null" placeholder="请输入客户端key" />
         </el-form-item>
         <el-form-item label="客户端秘钥" prop="clientSecret">
-          <el-input v-model="form.clientSecret" :disabled="form.id != null" placeholder="请输入客户端秘钥" />
+          <el-input v-model="form.clientSecret" :type="secretInputType" placeholder="请输入客户端秘钥">
+            <template #suffix>
+              <el-icon v-if="form.id" style="cursor: pointer" @click="toggleFormSecretVisibility">
+                <View v-if="secretInputType === 'password'" />
+                <Hide v-else />
+              </el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="授权类型" prop="grantTypeList">
           <el-select v-model="form.grantTypeList" multiple placeholder="请输入授权类型">
@@ -101,7 +128,7 @@
             <el-option v-for="dict in sys_device_type" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item prop="activeTimeout" label-width="auto">
+        <el-form-item label-width="auto" prop="activeTimeout">
           <template #label>
             <span>
               <el-tooltip content="指定时间无操作则过期（单位：秒），默认30分钟（1800秒）" placement="top">
@@ -112,7 +139,7 @@
           </template>
           <el-input v-model="form.activeTimeout" placeholder="请输入Token活跃超时时间" />
         </el-form-item>
-        <el-form-item prop="timeout" label-width="auto">
+        <el-form-item label-width="auto" prop="timeout">
           <template #label>
             <span>
               <el-tooltip content="指定时间必定过期（单位：秒），默认七天（604800秒）" placement="top">
@@ -141,9 +168,10 @@
   </div>
 </template>
 
-<script setup name="Client" lang="ts">
-import { listClient, getClient, delClient, addClient, updateClient, changeStatus } from '@/api/system/client';
-import { ClientVO, ClientQuery, ClientForm } from '@/api/system/client/types';
+<script lang="ts" name="Client" setup>
+import { addClient, changeStatus, delClient, getClient, getClientSecret, listClient, updateClient } from '@/api/system/client';
+import { ClientForm, ClientQuery, ClientVO } from '@/api/system/client/types';
+import { View, Hide } from '@element-plus/icons-vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_normal_disable } = toRefs<any>(proxy?.useDict('sys_normal_disable'));
@@ -158,6 +186,7 @@ const ids = ref<Array<string | number>>([]);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
+const secretInputType = ref<'text' | 'password'>('password');
 
 const queryFormRef = ref<ElFormInstance>();
 const clientFormRef = ref<ElFormInstance>();
@@ -254,11 +283,56 @@ const handleAdd = () => {
 /** 修改按钮操作 */
 const handleUpdate = async (row?: ClientVO) => {
   reset();
+  secretInputType.value = 'password';
   const _id = row?.id || ids.value[0];
   const res = await getClient(_id);
   Object.assign(form.value, res.data);
+  // 修改时不显示clientSecret，显示占位符
+  form.value.clientSecret = '**********';
   dialog.visible = true;
   dialog.title = '修改客户端管理';
+};
+
+/** 切换表格中密钥的显示状态 */
+const toggleSecretVisibility = async (row: any) => {
+  if (!row._showSecret) {
+    // 显示密钥
+    if (row._loading) return; // 防止重复点击
+    row._loading = true;
+    try {
+      const res = await getClientSecret(row.id);
+      row._secretValue = res.data;
+      row._showSecret = true;
+    } catch (error) {
+      proxy?.$modal.msgError('获取密钥失败');
+    } finally {
+      row._loading = false;
+    }
+  } else {
+    // 隐藏密钥
+    row._showSecret = false;
+  }
+};
+
+/** 切换表单中密钥的显示状态 */
+const toggleFormSecretVisibility = async () => {
+  if (!form.value.id) {
+    return;
+  }
+  if (secretInputType.value === 'password') {
+    // 显示密钥
+    try {
+      const res = await getClientSecret(form.value.id);
+      form.value.clientSecret = res.data;
+      secretInputType.value = 'text';
+    } catch (error) {
+      proxy?.$modal.msgError('获取密钥失败');
+    }
+  } else {
+    // 隐藏密钥
+    form.value.clientSecret = '**********';
+    secretInputType.value = 'password';
+  }
 };
 
 /** 提交按钮 */
@@ -266,12 +340,17 @@ const submitForm = () => {
   clientFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       buttonLoading.value = true;
-      if (form.value.id) {
-        await updateClient(form.value).finally(() => (buttonLoading.value = false));
-      } else {
-        await addClient(form.value).finally(() => (buttonLoading.value = false));
+      // 如果是修改且clientSecret为占位符，则不提交clientSecret
+      const submitData = { ...form.value };
+      if (form.value.id && form.value.clientSecret === '**********') {
+        delete submitData.clientSecret;
       }
-      proxy?.$modal.msgSuccess('修改成功');
+      if (form.value.id) {
+        await updateClient(submitData).finally(() => (buttonLoading.value = false));
+      } else {
+        await addClient(submitData).finally(() => (buttonLoading.value = false));
+      }
+      proxy?.$modal.msgSuccess(form.value.id ? '修改成功' : '新增成功');
       dialog.visible = false;
       await getList();
     }
@@ -314,3 +393,57 @@ onMounted(() => {
   getList();
 });
 </script>
+
+<style scoped>
+/* 文字淡入淡出动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+/* 图标淡入淡出动画 */
+.icon-fade-enter-active,
+.icon-fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.icon-fade-enter-from,
+.icon-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* 图标过渡效果 */
+.icon-transition {
+  transition: all 0.3s ease;
+}
+
+.icon-transition:hover {
+  transform: scale(1.2);
+  color: #66b1ff !important;
+}
+
+/* 加载旋转动画 */
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.is-rotating {
+  animation: rotating 1s linear infinite;
+}
+</style>

@@ -78,3 +78,14 @@ export function changeStatus(clientId: string, status: string) {
     data: data
   });
 }
+
+/**
+ * 获取客户端的clientSecret
+ * @param id 客户端ID
+ */
+export const getClientSecret = (id: string | number): AxiosPromise<string> => {
+  return request({
+    url: '/system/client/getClientSecret/' + id,
+    method: 'get'
+  });
+};

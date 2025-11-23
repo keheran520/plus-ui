@@ -58,3 +58,11 @@ export function changeOssConfigStatus(ossConfigId: string | number, status: stri
     data: data
   });
 }
+
+// 获取OSS配置的secretKey
+export function getOssConfigSecretKey(ossConfigId: string | number): AxiosPromise<string> {
+  return request({
+    url: '/resource/oss/config/getSecretKey/' + ossConfigId,
+    method: 'get'
+  });
+}

@@ -102,7 +102,7 @@ export const batchPublishMessage = (messageIds: Array<string | number>) => {
  * @param messageIds
  */
 export const getMessageLogCount = (messageIds: Array<string | number>): AxiosPromise<number> => {
-  // 手动构建查询字符串，确保格式为 messageIds=1&messageIds=2
+  // // 手动构建查询字符串，确保格式为 messageIds=1&messageIds=2
   const queryString = messageIds.map((id) => `messageIds=${id}`).join('&');
   return request({
     url: `/system/message/logCount?${queryString}`,

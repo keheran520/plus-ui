@@ -102,7 +102,21 @@
           <el-input v-model="form.accessKey" placeholder="请输入accessKey" />
         </el-form-item>
         <el-form-item label="secretKey" prop="secretKey">
-          <el-input v-model="form.secretKey" placeholder="请输入秘钥" show-password />
+          <el-input v-model="form.secretKey" :type="secretInputType" placeholder="请输入秘钥">
+            <template #suffix>
+              <el-icon
+                v-if="form.ossConfigId"
+                :class="{ 'icon-transition': true, 'is-rotating': secretLoading }"
+                style="cursor: pointer; color: #409eff"
+                @click="toggleSecretVisibility"
+              >
+                <transition name="icon-fade" mode="out-in">
+                  <View v-if="secretInputType === 'password'" key="view" />
+                  <Hide v-else key="hide" />
+                </transition>
+              </el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="桶名称" prop="bucketName">
           <el-input v-model="form.bucketName" placeholder="请输入桶名称" />
@@ -140,8 +154,9 @@
 </template>
 
 <script lang="ts" name="OssConfig" setup>
-import { addOssConfig, changeOssConfigStatus, delOssConfig, getOssConfig, listOssConfig, updateOssConfig } from '@/api/system/ossConfig';
+import { addOssConfig, changeOssConfigStatus, delOssConfig, getOssConfig, getOssConfigSecretKey, listOssConfig, updateOssConfig } from '@/api/system/ossConfig';
 import { OssConfigForm, OssConfigQuery, OssConfigVO } from '@/api/system/ossConfig/types';
+import { View, Hide } from '@element-plus/icons-vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_yes_no } = toRefs<any>(proxy?.useDict('sys_yes_no'));
@@ -154,6 +169,8 @@ const ids = ref<Array<number | string>>([]);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
+const secretInputType = ref<'text' | 'password'>('password');
+const secretLoading = ref(false);
 
 const queryFormRef = ref<ElFormInstance>();
 const ossConfigFormRef = ref<ElFormInstance>();
@@ -290,23 +307,56 @@ const handleAdd = () => {
 /** 修改按钮操作 */
 const handleUpdate = async (row?: OssConfigVO) => {
   reset();
+  secretInputType.value = 'password';
   const ossConfigId = row?.ossConfigId || ids.value[0];
   const res = await getOssConfig(ossConfigId);
   Object.assign(form.value, res.data);
+  // 修改时不显示secretKey，显示占位符
+  form.value.secretKey = '**********';
   dialog.visible = true;
   dialog.title = '修改对象存储配置';
+};
+
+/** 切换secretKey的显示状态 */
+const toggleSecretVisibility = async () => {
+  if (!form.value.ossConfigId) {
+    return;
+  }
+  if (secretInputType.value === 'password') {
+    // 显示密钥
+    if (secretLoading.value) return; // 防止重复点击
+    secretLoading.value = true;
+    try {
+      const res = await getOssConfigSecretKey(form.value.ossConfigId);
+      form.value.secretKey = res.data;
+      secretInputType.value = 'text';
+    } catch (error) {
+      proxy?.$modal.msgError('获取密钥失败');
+    } finally {
+      secretLoading.value = false;
+    }
+  } else {
+    // 隐藏密钥
+    form.value.secretKey = '**********';
+    secretInputType.value = 'password';
+  }
 };
 /** 提交按钮 */
 const submitForm = () => {
   ossConfigFormRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       buttonLoading.value = true;
-      if (form.value.ossConfigId) {
-        await updateOssConfig(form.value).finally(() => (buttonLoading.value = false));
-      } else {
-        await addOssConfig(form.value).finally(() => (buttonLoading.value = false));
+      // 如果是修改且secretKey为占位符，则不提交secretKey
+      const submitData = { ...form.value };
+      if (form.value.ossConfigId && form.value.secretKey === '**********') {
+        delete submitData.secretKey;
       }
-      proxy?.$modal.msgSuccess('新增成功');
+      if (form.value.ossConfigId) {
+        await updateOssConfig(submitData).finally(() => (buttonLoading.value = false));
+      } else {
+        await addOssConfig(submitData).finally(() => (buttonLoading.value = false));
+      }
+      proxy?.$modal.msgSuccess(form.value.ossConfigId ? '修改成功' : '新增成功');
       dialog.visible = false;
       await getList();
     }
@@ -340,3 +390,41 @@ onMounted(() => {
   getList();
 });
 </script>
+
+<style scoped>
+/* 图标淡入淡出动画 */
+.icon-fade-enter-active,
+.icon-fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.icon-fade-enter-from,
+.icon-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* 图标过渡效果 */
+.icon-transition {
+  transition: all 0.3s ease;
+}
+
+.icon-transition:hover {
+  transform: scale(1.2);
+  color: #66b1ff !important;
+}
+
+/* 加载旋转动画 */
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.is-rotating {
+  animation: rotating 1s linear infinite;
+}
+</style>
