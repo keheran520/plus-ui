@@ -191,3 +191,25 @@
 .el-message-box .el-message-box__message {
   word-break: break-word;
 }
+
+.el-segmented {
+  padding: 6px !important;
+  background: var(--bg-gray) !important;
+  //--el-segmented-item-selected-bg-color: var(--bg-white) !important;
+  //--el-segmented-item-selected-color: var(--text-primary) !important;
+  border-radius: var(--radius-md) !important;
+
+
+  //.el-segmented__item {
+  //  //border-radius: var(--radius-lg) !important;
+  //  .is-selected {
+  //    box-shadow: 0 2px 3px 0 rgba(19, 24, 29, .12) !important;
+  //  }
+  //}
+
+  //
+  //:deep(.el-segmented__item.is-selected ) {
+  //  border-radius: var(--radius-lg) !important;
+  //
+  //}
+}

@@ -41,6 +41,32 @@
           </el-text>
         </el-form-item>
 
+        <!-- 注册开关 -->
+        <el-form-item label="用户注册开关" prop="registerUser">
+          <el-switch
+            v-model="formData.registerUser"
+            :disabled="!isEditing"
+            active-text="开启"
+            inactive-text="关闭"
+          />
+          <el-text v-if="configDescriptions.registerUser" class="w-full" size="small" type="info">
+            {{ configDescriptions.registerUser }}
+          </el-text>
+        </el-form-item>
+
+        <!-- OSS预览开关 -->
+        <el-form-item label="OSS预览列表资源" prop="ossPreviewListResource">
+          <el-switch
+            v-model="formData.ossPreviewListResource"
+            :disabled="!isEditing"
+            active-text="开启"
+            inactive-text="关闭"
+          />
+          <el-text v-if="configDescriptions.ossPreviewListResource" class="w-full" size="small" type="info">
+            {{ configDescriptions.ossPreviewListResource }}
+          </el-text>
+        </el-form-item>
+
         <!-- 配置说明 -->
         <el-divider />
         <el-alert
@@ -50,6 +76,8 @@
           description="
             • 密码最大错误次数：用户登录时密码输入错误的最大次数，超过此次数将锁定账户
             • 密码锁定时间：账户被锁定后需要等待的时间（单位：分钟），超过此时间后自动解锁
+            • 用户注册开关：控制用户是否可以自助注册账号
+            • OSS预览列表资源：控制OSS文件预览列表资源显示开关
           "
         />
       </template>
@@ -70,19 +98,25 @@ const loading = ref(false);
 // 表单数据
 const formData = reactive({
   maxRetryCount: 5,
-  lockTime: 10
+  lockTime: 10,
+  registerUser: false,
+  ossPreviewListResource: true
 });
 
 // 配置描述映射（从后端获取）
 const configDescriptions = reactive({
   maxRetryCount: '',
-  lockTime: ''
+  lockTime: '',
+  registerUser: '',
+  ossPreviewListResource: ''
 });
 
 // 默认数据（从后端defaultValue字段获取）
 const defaultData = reactive({
   maxRetryCount: 5,
-  lockTime: 10
+  lockTime: 10,
+  registerUser: false,
+  ossPreviewListResource: true
 });
 
 // 配置ID映射
@@ -91,7 +125,9 @@ const configIds: Record<string, number> = {};
 // 原始数据（用于对比是否改变）
 const originalData = reactive({
   maxRetryCount: 5,
-  lockTime: 10
+  lockTime: 10,
+  registerUser: false,
+  ossPreviewListResource: true
 });
 
 // 表单验证规则
@@ -118,13 +154,23 @@ const loadConfig = async () => {
 
     const configMap: Record<string, string> = {
       'user.password.maxRetryCount': 'maxRetryCount',
-      'user.password.lockTime': 'lockTime'
+      'user.password.lockTime': 'lockTime',
+      'sys.account.registerUser': 'registerUser',
+      'sys.oss.previewListResource': 'ossPreviewListResource'
     };
 
     res.rows.forEach((item: any) => {
       const key = configMap[item.configKey];
       if (key) {
-        const value = Number(item.configValue) || (defaultData[key] as number);
+        let value: any;
+        // 根据配置类型转换值
+        if (key === 'registerUser' || key === 'ossPreviewListResource') {
+          // 布尔类型
+          value = item.configValue === 'true' || item.configValue === true;
+        } else {
+          // 数字类型
+          value = Number(item.configValue) || (defaultData[key] as number);
+        }
         formData[key] = value;
         originalData[key] = value; // 保存原始值
         configIds[key] = item.configId;
@@ -134,7 +180,11 @@ const loadConfig = async () => {
         }
         // 保存默认值
         if (item.defaultValue) {
-          defaultData[key] = Number(item.defaultValue) || (defaultData[key] as number);
+          if (key === 'registerUser' || key === 'ossPreviewListResource') {
+            defaultData[key] = item.defaultValue === 'true' || item.defaultValue === true;
+          } else {
+            defaultData[key] = Number(item.defaultValue) || (defaultData[key] as number);
+          }
         }
       }
     });
@@ -155,7 +205,9 @@ const handleSave = async () => {
   try {
     const configMap: Record<string, { key: string; name: string }> = {
       maxRetryCount: { key: 'user.password.maxRetryCount', name: '密码最大错误次数' },
-      lockTime: { key: 'user.password.lockTime', name: '密码锁定时间' }
+      lockTime: { key: 'user.password.lockTime', name: '密码锁定时间' },
+      registerUser: { key: 'sys.account.registerUser', name: '用户注册开关' },
+      ossPreviewListResource: { key: 'sys.oss.previewListResource', name: 'OSS预览列表资源' }
     };
 
     // 只更新改变的配置项

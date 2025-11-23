@@ -74,9 +74,13 @@ export function refreshCache() {
 }
 
 // 获取网站配置信息
-export function getWebsiteConfig() {
+export function getWebsiteConfig(tenantId?: string) {
   return request({
     url: '/',
+    headers: {
+      'X-Tenant-Id': tenantId || '000000'
+    },
+    params: tenantId ? { tenantId } : undefined,
     method: 'get'
   });
 }

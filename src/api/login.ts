@@ -65,26 +65,48 @@ export function logout() {
 
 /**
  * 获取验证码配置
+ * @param tenantId 租户ID
  */
-export function getCaptchaConfig(): AxiosPromise<any> {
+export function getCaptchaConfig(tenantId?: string): AxiosPromise<any> {
   return request({
     url: '/captchaConfig',
     headers: {
-      isToken: false
+      isToken: false,
+      'X-Tenant-Id': tenantId || '000000'
     },
+    params: tenantId ? { tenantId } : undefined,
+    method: 'get'
+  });
+}
+
+/**
+ * 获取注册开关配置
+ * @param tenantId 租户ID
+ */
+export function getRegisterConfig(tenantId?: string): AxiosPromise<any> {
+  return request({
+    url: '/registerConfig',
+    headers: {
+      isToken: false,
+      'X-Tenant-Id': tenantId || '000000'
+    },
+    params: tenantId ? { tenantId } : undefined,
     method: 'get'
   });
 }
 
 /**
  * 获取验证码
+ * @param tenantId 租户ID
  */
-export function getCodeImg(): AxiosPromise<VerifyCodeResult> {
+export function getCodeImg(tenantId?: string): AxiosPromise<VerifyCodeResult> {
   return request({
     url: '/auth/code',
     headers: {
-      isToken: false
+      isToken: false,
+      'X-Tenant-Id': tenantId || '000000'
     },
+    params: tenantId ? { tenantId } : undefined,
     method: 'get',
     timeout: 20000
   });
@@ -115,7 +137,7 @@ export function sendPhoneVerifyCode(phonenumber: string, businessType?: string):
       isToken: false
     },
     method: 'get',
-    params: { 
+    params: {
       phonenumber,
       businessType: businessType || 'login'
     },

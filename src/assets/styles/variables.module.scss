@@ -99,6 +99,7 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --spacing-xll: 64px;
 
   --menuBg: #1f2d3d;
   --menuColor: #bfcbd9;
@@ -213,8 +214,6 @@
   --el-box-shadow-light: var(--shadow-md);
   --el-box-shadow-lighter: var(--shadow-lg);
   --el-box-shadow-dark: 0 2px 8px 0 rgba(0, 0, 0, 0.12);
-
-
 }
 
 html.dark {

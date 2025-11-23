@@ -43,10 +43,10 @@ export const useWebsiteStore = defineStore('website', {
   },
 
   actions: {
-    async fetchWebsiteConfig() {
+    async fetchWebsiteConfig(tenantId?: string) {
       this.loading = true;
       try {
-        const res = await getWebsiteConfig();
+        const res = await getWebsiteConfig(tenantId);
         if (res.data) {
           this.config = {
             logo: res.data.logo || '',
