@@ -1,16 +1,16 @@
 <template>
   <div>
-    <el-table :data="auths" border style="width: 100%; height: 100%; font-size: 14px">
-      <el-table-column label="序号" width="50" type="index" />
-      <el-table-column label="绑定账号平台" width="140" align="center" prop="source" show-overflow-tooltip />
-      <el-table-column label="头像" width="120" align="center" prop="avatar">
+    <el-table :data="auths" border>
+      <el-table-column label="序号" type="index" />
+      <el-table-column align="center" label="绑定账号平台" prop="source" show-overflow-tooltip />
+      <el-table-column align="center" label="头像" prop="avatar">
         <template #default="scope">
           <img :src="scope.row.avatar" style="width: 45px; height: 45px" />
         </template>
       </el-table-column>
-      <el-table-column label="系统账号" width="180" align="center" prop="userName" :show-overflow-tooltip="true" />
-      <el-table-column label="绑定时间" width="180" align="center" prop="createTime" />
-      <el-table-column label="操作" width="80" align="center" class-name="small-padding fixed-width">
+      <el-table-column :show-overflow-tooltip="true" align="center" label="系统账号" prop="userName" />
+      <el-table-column align="center" label="绑定时间" prop="createTime" />
+      <el-table-column align="center" class-name="small-padding fixed-width" label="操作">
         <template #default="scope">
           <el-button size="small" type="text" @click="unlockAuth(scope.row)">解绑</el-button>
         </template>
@@ -55,8 +55,8 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { authUnlock, authBinding } from '@/api/system/social/auth';
+<script lang="ts" setup>
+import { authBinding, authUnlock } from '@/api/system/social/auth';
 import { propTypes } from '@/utils/propTypes';
 import { useUserStore } from '@/store/modules/user';
 
