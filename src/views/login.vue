@@ -121,18 +121,17 @@
                 <el-input v-model="loginForm.email" placeholder="请输入邮箱" prefix-icon="Message" size="large" />
               </el-form-item>
               <el-form-item prop="emailCode">
-                <div class="verify-code-wrapper">
-                  <el-input
-                    v-model="loginForm.emailCode"
-                    placeholder="请输入邮箱验证码"
-                    prefix-icon="Message"
-                    size="large"
-                    @keyup.enter="handleLogin"
-                  />
-                  <el-button :disabled="emailCountdown > 0" :loading="sendEmailCodeLoading" class="code-btn" size="large" @click="sendEmailCode">
-                    {{ emailCountdown > 0 ? `${emailCountdown}s` : '获取验证码' }}
-                  </el-button>
-                </div>
+                <el-input
+                  v-model="loginForm.emailCode"
+                  class="flex-1"
+                  placeholder="请输入邮箱验证码"
+                  prefix-icon="Message"
+                  size="large"
+                  @keyup.enter="handleLogin"
+                />
+                <el-button :disabled="emailCountdown > 0" :loading="sendEmailCodeLoading" class="code-btn" size="large" @click="sendEmailCode">
+                  {{ emailCountdown > 0 ? `${emailCountdown}s` : '获取验证码' }}
+                </el-button>
               </el-form-item>
             </template>
 
@@ -141,19 +140,18 @@
               <el-form-item prop="phonenumber">
                 <el-input v-model="loginForm.phonenumber" maxlength="11" placeholder="请输入手机号" prefix-icon="Iphone" size="large" />
               </el-form-item>
-              <el-form-item prop="verifyCode" style="display: none">
-                <div class="verify-code-wrapper">
-                  <el-input
-                    v-model="loginForm.verifyCode"
-                    placeholder="请输入验证码"
-                    prefix-icon="ChatDotSquare"
-                    size="large"
-                    @keyup.enter="handleLogin"
-                  />
-                  <el-button :disabled="phoneCountdown > 0" :loading="sendPhoneCodeLoading" class="code-btn" size="large" @click="sendPhoneCode">
-                    {{ phoneCountdown > 0 ? `${phoneCountdown}s` : '获取验证码' }}
-                  </el-button>
-                </div>
+              <el-form-item prop="verifyCode">
+                <el-input
+                  v-model="loginForm.verifyCode"
+                  class="flex-1"
+                  placeholder="请输入验证码"
+                  prefix-icon="ChatDotSquare"
+                  size="large"
+                  @keyup.enter="handleLogin"
+                />
+                <el-button :disabled="phoneCountdown > 0" :loading="sendPhoneCodeLoading" class="code-btn" size="large" @click="sendPhoneCode">
+                  {{ phoneCountdown > 0 ? `${phoneCountdown}s` : '获取验证码' }}
+                </el-button>
               </el-form-item>
             </template>
 
@@ -457,11 +455,7 @@ const doSocialLogin = (type: string) => {
 const loadTenantConfig = async (tenantId?: string) => {
   const tid = tenantId || loginForm.value.tenantId;
   // 并行加载所有配置
-  await Promise.all([
-    websiteStore.fetchWebsiteConfig(tid),
-    getCaptchaConfigInfo(tid),
-    getRegisterConfigInfo(tid)
-  ]);
+  await Promise.all([websiteStore.fetchWebsiteConfig(tid), getCaptchaConfigInfo(tid), getRegisterConfigInfo(tid)]);
   // 如果需要验证码，重新获取
   if (captchaEnabled.value) {
     getCode();
@@ -776,6 +770,7 @@ onBeforeUnmount(() => {
   border-radius: 16px;
   padding: 40px 36px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+  min-height: 700px;
 }
 
 .form-header {
@@ -842,18 +837,8 @@ onBeforeUnmount(() => {
     }
   }
 
-  .verify-code-wrapper {
-    display: flex;
-    gap: 10px;
-
-    .el-input {
-      flex: 1;
-    }
-
-    .code-btn {
-      flex: 0 0 110px;
-      white-space: nowrap;
-    }
+  .code-btn {
+    margin-left: var(--spacing-xs);
   }
 
   .form-options {
