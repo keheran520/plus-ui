@@ -119,7 +119,7 @@
                 <el-tooltip v-if="scope.row.userId !== 1" content="修改" placement="top">
                   <el-button v-hasPermi="['system:user:edit']" link type="primary" icon="Edit" @click="handleUpdate(scope.row)"></el-button>
                 </el-tooltip>
-                <el-tooltip v-if="scope.row.userId !== 1" content="删除" placement="top">
+                <el-tooltip v-if="scope.row.userId !== 1 && scope.row.isDefault !== 'Y'" content="删除" placement="top">
                   <el-button v-hasPermi="['system:user:remove']" link type="primary" icon="Delete" @click="handleDelete(scope.row)"></el-button>
                 </el-tooltip>
 

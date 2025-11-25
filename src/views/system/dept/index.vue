@@ -67,7 +67,7 @@
             <el-tooltip content="新增" placement="top">
               <el-button v-hasPermi="['system:dept:add']" link type="primary" icon="Plus" @click="handleAdd(scope.row)" />
             </el-tooltip>
-            <el-tooltip content="删除" placement="top">
+            <el-tooltip v-if="scope.row.isDefault !== 'Y'" content="删除" placement="top">
               <el-button v-hasPermi="['system:dept:remove']" link type="primary" icon="Delete" @click="handleDelete(scope.row)" />
             </el-tooltip>
           </template>

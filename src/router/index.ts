@@ -63,15 +63,29 @@ export const constantRoutes: RouteRecordRaw[] = [
     hidden: true
   },
   {
-    path: '',
+    path: '/index',
     component: Layout,
-    redirect: '/index',
+    redirect: '/dashboard/workplace',
+    hidden: true
+  },
+  {
+    path: '/dashboard',
+    component: Layout,
+    redirect: '/dashboard/workplace',
+    name: 'Dashboard',
+    meta: { title: '仪表盘', icon: 'dashboard', alwaysShow: true },
     children: [
       {
-        path: '/index',
-        component: () => import('@/views/index.vue'),
-        name: 'Index',
-        meta: { title: '首页', icon: 'dashboard', affix: true }
+        path: 'workplace',
+        component: () => import('@/views/dashboard/workplace/index.vue'),
+        name: 'Workplace',
+        meta: { title: '工作台', icon: 'monitor', affix: true }
+      },
+      {
+        path: 'analysis',
+        component: () => import('@/views/dashboard/analysis/index.vue'),
+        name: 'Analysis',
+        meta: { title: '分析页', icon: 'chart' }
       }
     ]
   },

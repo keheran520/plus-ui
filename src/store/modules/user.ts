@@ -1,8 +1,7 @@
 import { to } from 'await-to-js';
 import { getToken, removeToken, setToken } from '@/utils/auth';
-import { login as loginApi, logout as logoutApi, getInfo as getUserInfo } from '@/api/login';
+import { getInfo as getUserInfo, login as loginApi, logout as logoutApi } from '@/api/login';
 import { LoginData } from '@/api/types';
-import defAva from '@/assets/images/profile.jpg';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
@@ -13,6 +12,8 @@ export const useUserStore = defineStore('user', () => {
   const userId = ref<string | number>('');
   const tenantId = ref<string>('');
   const avatar = ref('');
+  const email = ref(''); // 用户邮箱
+  const phonenumber = ref(''); // 用户手机号
   const roles = ref<Array<string>>([]); // 用户角色编码集合 → 判断路由权限
   const permissions = ref<Array<string>>([]); // 用户权限编码集合 → 判断按钮权限
 
@@ -38,7 +39,7 @@ export const useUserStore = defineStore('user', () => {
     if (res) {
       const data = res.data;
       const user = data.user;
-      const profile = user.avatar == '' || user.avatar == null ? defAva : user.avatar;
+      const profile = user.avatar || '';
 
       if (data.roles && data.roles.length > 0) {
         // 验证返回的roles是否是一个非空数组
@@ -52,6 +53,8 @@ export const useUserStore = defineStore('user', () => {
       avatar.value = profile;
       userId.value = user.userId;
       tenantId.value = user.tenantId;
+      email.value = user.email || '';
+      phonenumber.value = user.phonenumber || '';
       return Promise.resolve();
     }
     return Promise.reject(err);
@@ -76,6 +79,8 @@ export const useUserStore = defineStore('user', () => {
     token,
     nickname,
     avatar,
+    email,
+    phonenumber,
     roles,
     permissions,
     login,

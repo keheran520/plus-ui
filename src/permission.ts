@@ -9,6 +9,7 @@ import { useUserStore } from '@/store/modules/user';
 import { useSettingsStore } from '@/store/modules/settings';
 import { usePermissionStore } from '@/store/modules/permission';
 import { ElMessage } from 'element-plus/es';
+import { addVisitRecord, getIconFromMeta } from '@/utils/visitHistory';
 
 NProgress.configure({ showSpinner: false });
 const whiteList = ['/login', '/register', '/social-callback', '/register*', '/register/*', '/picturebed/home', '/picturebed/square'];
@@ -69,6 +70,16 @@ router.beforeEach(async (to, from, next) => {
   }
 });
 
-router.afterEach(() => {
+router.afterEach((to) => {
   NProgress.done();
+  
+  // 记录访问历史（排除登录、注册等特殊页面）
+  if (getToken() && to.meta?.title && !isWhiteList(to.path) && to.path !== '/') {
+    addVisitRecord({
+      path: to.path,
+      name: to.name as string || '',
+      title: to.meta.title as string,
+      icon: getIconFromMeta(to.meta)
+    });
+  }
 });

@@ -109,3 +109,27 @@ export const getMessageLogCount = (messageIds: Array<string | number>): AxiosPro
     method: 'get'
   });
 };
+
+/**
+ * 查询已发布的通知公告列表（用于首页展示）
+ * @param query
+ * @returns {*}
+ */
+export const listPublishedMessage = (query?: MessageQuery): AxiosPromise<MessageVO[]> => {
+  return request({
+    url: '/message/list',
+    method: 'get',
+    params: query
+  });
+};
+
+/**
+ * 获取通知公告详细信息（用于首页展示）
+ * @param messageId
+ */
+export const getPublishedMessage = (messageId: string | number): AxiosPromise<MessageVO> => {
+  return request({
+    url: '/message/' + messageId,
+    method: 'get'
+  });
+};

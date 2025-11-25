@@ -1,6 +1,11 @@
 <template>
   <div class="user-info-head" @click="editCropper()">
-    <img :src="options.img" title="点击上传头像" class="img-circle img-lg" />
+    <img :src="options.img" title="点击上传头像" />
+    <div class="upload-icon">
+      <el-icon>
+        <Camera />
+      </el-icon>
+    </div>
     <el-dialog v-model="open" :title="title" width="800px" append-to-body @opened="modalOpened" @close="closeDialog">
       <el-row>
         <el-col :xs="24" :md="12" :style="{ height: '350px' }">
@@ -58,6 +63,7 @@
 <script setup lang="ts">
 import 'vue-cropper/dist/index.css';
 import { VueCropper } from 'vue-cropper';
+import { Camera } from '@element-plus/icons-vue';
 import { uploadAvatar } from '@/api/system/user';
 import { useUserStore } from '@/store/modules/user';
 import { UploadRawFile } from 'element-plus';
@@ -159,24 +165,41 @@ const closeDialog = () => {
 .user-info-head {
   position: relative;
   display: inline-block;
-  height: 120px;
-}
-
-.user-info-head:hover:after {
-  content: '+';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  color: #eee;
-  background: rgba(0, 0, 0, 0.5);
-  font-size: 24px;
-  font-style: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  width: 100px;
+  height: 100px;
   cursor: pointer;
-  line-height: 110px;
-  border-radius: 50%;
+
+  img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .upload-icon {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 28px;
+    height: 28px;
+    background: #ffffff;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+
+    .el-icon {
+      font-size: 14px;
+      color: #409eff;
+    }
+  }
+
+  &:hover .upload-icon {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+  }
 }
 </style>

@@ -1,19 +1,19 @@
 <template>
   <div
-    class="sidebar-logo-container"
     :class="{ collapse: collapse }"
     :style="{ backgroundColor: sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground }"
+    class="sidebar-logo-container"
   >
     <transition :enter-active-class="proxy?.animate.logoAnimate.enter" mode="out-in">
-      <router-link v-if="collapse" key="collapse" class="sidebar-logo-link" to="/">
+      <router-link v-if="collapse" key="collapse" class="sidebar-logo-link" to="/index">
         <img v-if="logo" :src="logo" class="sidebar-logo" />
-        <h1 v-else class="sidebar-title" :style="{ color: sideTheme === 'theme-dark' ? variables.logoTitleColor : variables.logoLightTitleColor }">
+        <h1 v-else :style="{ color: sideTheme === 'theme-dark' ? variables.logoTitleColor : variables.logoLightTitleColor }" class="sidebar-title">
           {{ title }}
         </h1>
       </router-link>
-      <router-link v-else key="expand" class="sidebar-logo-link" to="/">
+      <router-link v-else key="expand" class="sidebar-logo-link" to="/index">
         <img v-if="logo" :src="logo" class="sidebar-logo" />
-        <h1 class="sidebar-title" :style="{ color: sideTheme === 'theme-dark' ? variables.logoTitleColor : variables.logoLightTitleColor }">
+        <h1 :style="{ color: sideTheme === 'theme-dark' ? variables.logoTitleColor : variables.logoLightTitleColor }" class="sidebar-title">
           {{ title }}
         </h1>
       </router-link>
@@ -21,11 +21,11 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import variables from '@/assets/styles/variables.module.scss';
-import defaultLogo from '@/assets/logo/logo.png';
 import { useSettingsStore } from '@/store/modules/settings';
 import { useWebsiteStore } from '@/store/modules/website';
+
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 defineProps({
@@ -40,7 +40,7 @@ const websiteStore = useWebsiteStore();
 const sideTheme = computed(() => settingsStore.sideTheme);
 
 // 获取logo和title，优先使用网站配置，否则使用默认值
-const logo = computed(() => websiteStore.config.logo || defaultLogo);
+const logo = computed(() => websiteStore.config.logo);
 const title = computed(() => websiteStore.config.name || import.meta.env.VITE_APP_LOGO_TITLE);
 
 // 初始化时加载网站配置

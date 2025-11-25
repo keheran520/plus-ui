@@ -253,7 +253,7 @@ const getCode = async () => {
     const { data } = res;
     // Kaptcha 生成的是 PNG 格式，且后端已经包含了 data:image/png;base64, 前缀
     codeUrl.value = data.img;
-    loginForm.value.uuid = data.uuid;
+    registerForm.value.uuid = data.uuid;
   }
 };
 
