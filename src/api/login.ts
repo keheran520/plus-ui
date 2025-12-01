@@ -116,8 +116,9 @@ export function getCodeImg(tenantId?: string): AxiosPromise<VerifyCodeResult> {
  * 获取邮箱验证码
  * @param email 邮箱地址
  * @param tenantId 租户ID
+ * @param captchaId 行为验证码ID
  */
-export function sendEmailVerifyCode(email: string, tenantId?: string): AxiosPromise<VerifyCodeResult> {
+export function sendEmailVerifyCode(email: string, tenantId?: string, captchaId?: string): AxiosPromise<any> {
   return request({
     url: '/resource/email/code',
     headers: {
@@ -127,6 +128,8 @@ export function sendEmailVerifyCode(email: string, tenantId?: string): AxiosProm
     method: 'get',
     params: {
       email,
+      businessType: 'login',
+      captchaId,
       ...(tenantId ? { tenantId } : {})
     },
     timeout: 20000
@@ -138,8 +141,9 @@ export function sendEmailVerifyCode(email: string, tenantId?: string): AxiosProm
  * @param phonenumber 手机号
  * @param businessType 业务类型
  * @param tenantId 租户ID
+ * @param captchaId 行为验证码ID
  */
-export function sendPhoneVerifyCode(phonenumber: string, businessType?: string, tenantId?: string): AxiosPromise<any> {
+export function sendPhoneVerifyCode(phonenumber: string, businessType?: string, tenantId?: string, captchaId?: string): AxiosPromise<any> {
   return request({
     url: '/resource/phoneverify/code',
     headers: {
@@ -150,6 +154,7 @@ export function sendPhoneVerifyCode(phonenumber: string, businessType?: string, 
     params: {
       phonenumber,
       businessType: businessType || 'login',
+      captchaId,
       ...(tenantId ? { tenantId } : {})
     },
     timeout: 20000

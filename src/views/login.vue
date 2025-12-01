@@ -206,6 +206,7 @@ import { LoginData, TenantVO } from '@/api/types';
 import { to } from 'await-to-js';
 import { HttpStatus } from '@/enums/RespEnum';
 import { useI18n } from 'vue-i18n';
+import { showBehaviorCaptcha } from '@/utils/behaviorCaptcha';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -364,7 +365,7 @@ const getCode = async () => {
 };
 
 /**
- * 发送邮箱验证码
+ * 发送邮箱验证码（集成行为验证码）
  */
 const sendEmailCode = async () => {
   // 先验证邮箱格式
@@ -381,29 +382,44 @@ const sendEmailCode = async () => {
     return;
   }
 
-  sendEmailCodeLoading.value = true;
   try {
-    // 调用发送邮箱验证码的接口
-    const res = await sendEmailVerifyCode(loginForm.value.email, loginForm.value.tenantId);
-    if (res.code === HttpStatus.SUCCESS) {
-      ElMessage.success('验证码已发送，请查收邮件');
+    // 显示行为验证码
+    await showBehaviorCaptcha({
+      onSuccess: async (captchaId) => {
+        console.log('行为验证码验证成功，captchaId:', captchaId);
 
-      // 开始倒计时 60 秒
-      emailCountdown.value = 60;
-      emailCountdownTimer = setInterval(() => {
-        emailCountdown.value--;
-        if (emailCountdown.value <= 0) {
-          if (emailCountdownTimer) {
-            clearInterval(emailCountdownTimer);
-            emailCountdownTimer = null;
+        // 验证成功后发送邮箱验证码，传递captchaId
+        sendEmailCodeLoading.value = true;
+        try {
+          const res = await sendEmailVerifyCode(loginForm.value.email, loginForm.value.tenantId, captchaId);
+          if (res.code === HttpStatus.SUCCESS) {
+            ElMessage.success('验证码已发送，请查收邮件');
+
+            // 开始倒计时 60 秒
+            emailCountdown.value = 60;
+            emailCountdownTimer = setInterval(() => {
+              emailCountdown.value--;
+              if (emailCountdown.value <= 0) {
+                if (emailCountdownTimer) {
+                  clearInterval(emailCountdownTimer);
+                  emailCountdownTimer = null;
+                }
+              }
+            }, 1000);
+          } else {
+            ElMessage.error(res.msg || '发送验证码失败');
           }
+        } finally {
+          sendEmailCodeLoading.value = false;
         }
-      }, 1000);
-    } else {
-      ElMessage.error(res.msg || '发送验证码失败');
-    }
-  } finally {
-    sendEmailCodeLoading.value = false;
+      },
+      onFail: () => {
+        ElMessage.error('行为验证失败，请重试');
+      }
+    });
+  } catch (error: any) {
+    console.error('行为验证码初始化失败:', error);
+    ElMessage.error('验证码加载失败，请刷新页面重试');
   }
 };
 
@@ -496,7 +512,7 @@ const getRegisterConfigInfo = async (tenantId?: string) => {
 };
 
 /**
- * 发送号码验证码
+ * 发送号码验证码（集成行为验证码）
  */
 const sendPhoneCode = async () => {
   // 先验证手机号格式
@@ -512,31 +528,46 @@ const sendPhoneCode = async () => {
     return;
   }
 
-  sendPhoneCodeLoading.value = true;
   try {
-    // 调用发送号码验证码的接口
-    const res = await sendPhoneVerifyCode(loginForm.value.phonenumber, 'login', loginForm.value.tenantId);
-    if (res.code === HttpStatus.SUCCESS && res.data?.success) {
-      ElMessage.success('验证码已发送，请注意查收短信');
+    // 显示行为验证码
+    await showBehaviorCaptcha({
+      onSuccess: async (captchaId) => {
+        console.log('行为验证码验证成功，captchaId:', captchaId);
 
-      // 开始倒计时 60 秒
-      phoneCountdown.value = 60;
-      phoneCountdownTimer = setInterval(() => {
-        phoneCountdown.value--;
-        if (phoneCountdown.value <= 0) {
-          if (phoneCountdownTimer) {
-            clearInterval(phoneCountdownTimer);
-            phoneCountdownTimer = null;
+        // 验证成功后发送号码验证码，传递captchaId
+        sendPhoneCodeLoading.value = true;
+        try {
+          const res = await sendPhoneVerifyCode(loginForm.value.phonenumber, 'login', loginForm.value.tenantId, captchaId);
+          if (res.code === HttpStatus.SUCCESS && res.data?.success) {
+            ElMessage.success('验证码已发送，请注意查收短信');
+
+            // 开始倒计时 60 秒
+            phoneCountdown.value = 60;
+            phoneCountdownTimer = setInterval(() => {
+              phoneCountdown.value--;
+              if (phoneCountdown.value <= 0) {
+                if (phoneCountdownTimer) {
+                  clearInterval(phoneCountdownTimer);
+                  phoneCountdownTimer = null;
+                }
+              }
+            }, 1000);
+          } else {
+            ElMessage.error(res.data?.message || res.msg || '发送验证码失败');
           }
+        } catch (error: any) {
+          ElMessage.error(error.message || '发送验证码失败');
+        } finally {
+          sendPhoneCodeLoading.value = false;
         }
-      }, 1000);
-    } else {
-      ElMessage.error(res.data?.message || res.msg || '发送验证码失败');
-    }
+      },
+      onFail: () => {
+        ElMessage.error('行为验证失败，请重试');
+      }
+    });
   } catch (error: any) {
-    ElMessage.error(error.message || '发送验证码失败');
-  } finally {
-    sendPhoneCodeLoading.value = false;
+    console.error('行为验证码初始化失败:', error);
+    ElMessage.error('验证码加载失败，请刷新页面重试');
   }
 };
 
