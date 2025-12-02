@@ -27,7 +27,7 @@ import { AppMain, Navbar, Settings, TagsView } from './components';
 import { useAppStore } from '@/store/modules/app';
 import { useSettingsStore } from '@/store/modules/settings';
 import { initWebSocket } from '@/utils/websocket';
-import { initSSE } from '@/utils/sse';
+import { initSSE, requestNotificationPermission } from '@/utils/sse';
 
 const settingsStore = useSettingsStore();
 const theme = computed(() => settingsStore.theme);
@@ -73,7 +73,11 @@ onMounted(() => {
 });
 
 onMounted(() => {
+  // 初始化 SSE
   initSSE(import.meta.env.VITE_APP_BASE_API + '/resource/sse');
+  
+  // 请求浏览器通知权限
+  requestNotificationPermission();
 });
 
 const handleClickOutside = () => {

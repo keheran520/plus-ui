@@ -215,17 +215,19 @@ const loadUnreadCount = async () => {
   }
 };
 
-// 直接更新未读数量（供SSE调用）
+// 直接更新未读数量（供SSE调用，异步更新）
 const updateUnreadCount = (count: number) => {
   const oldCount = newNotice.value;
   newNotice.value = count;
   console.log('[Navbar] 直接更新徽章数字:', oldCount, '->', newNotice.value);
   
-  // 同时刷新 notice 组件的消息列表
-  if (noticeRef.value && noticeRef.value.getTableData) {
-    console.log('[Navbar] 刷新notice组件消息列表');
-    noticeRef.value.getTableData();
-  }
+  // 异步刷新 notice 组件的消息列表（不阻塞）
+  setTimeout(() => {
+    if (noticeRef.value && noticeRef.value.getTableData) {
+      console.log('[Navbar] 异步刷新notice组件消息列表');
+      noticeRef.value.getTableData();
+    }
+  }, 100);
 };
 
 // 定时刷新未读消息数量
