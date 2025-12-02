@@ -47,11 +47,11 @@ export function unbindEmail(data: { code: string }) {
 /**
  * 发送号码认证验证码（推荐使用）
  */
-export function sendPhoneVerifyCode(phonenumber: string, businessType: string = 'bind') {
+export function sendPhoneVerifyCode(phonenumber: string, businessType: string = 'bind', captchaId?: string) {
   return request({
     url: '/resource/phoneverify/code',
     method: 'get',
-    params: { phonenumber, businessType }
+    params: { phonenumber, businessType, captchaId }
   });
 }
 
@@ -70,11 +70,12 @@ export function sendPhoneSmsCode(phonenumber: string) {
  * 发送邮箱验证码
  * @param email 邮箱地址
  * @param businessType 业务类型（可选，默认为 login）
+ * @param captchaId 行为验证码ID（可选）
  */
-export function sendEmailCode(email: string, businessType: string = 'login') {
+export function sendEmailCode(email: string, businessType: string = 'login', captchaId?: string) {
   return request({
     url: '/resource/email/code',
     method: 'get',
-    params: { email, businessType }
+    params: { email, businessType, captchaId }
   });
 }

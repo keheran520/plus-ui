@@ -127,6 +127,7 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import ResetPwd from './resetPwd.vue';
 import { UserVO } from '@/api/system/user/types';
 import { bindEmail, bindPhone, sendEmailCode, sendPhoneVerifyCode, unbindEmail, unbindPhone } from '@/api/system/user/security';
+import { showBehaviorCaptcha } from '@/utils/behaviorCaptcha';
 
 interface Props {
   user: Partial<UserVO>;
@@ -288,7 +289,7 @@ const handleAction = (type: string) => {
   }
 };
 
-// 发送绑定手机号码认证验证码（默认）
+// 发送绑定手机号码认证验证码（集成行为验证码）
 const sendBindPhoneCode = async () => {
   if (!phoneForm.phonenumber) {
     ElMessage.warning('请先输入手机号');
@@ -299,45 +300,77 @@ const sendBindPhoneCode = async () => {
     return;
   }
 
-  phoneCodeLoading.value = true;
   try {
-    await sendPhoneVerifyCode(phoneForm.phonenumber, 'bind');
-    phoneForm.verifyType = 'phoneverify'; // 设置验证类型
-    ElMessage.success('验证码已发送，请完成号码认证');
-    phoneCooldown.value = 60;
-    phoneTimer = setInterval(() => {
-      phoneCooldown.value--;
-      if (phoneCooldown.value <= 0 && phoneTimer) {
-        clearInterval(phoneTimer);
+    // 显示行为验证码
+    await showBehaviorCaptcha({
+      onSuccess: async (captchaId) => {
+        console.log('行为验证码验证成功，captchaId:', captchaId);
+
+        // 验证成功后发送手机验证码，传递captchaId
+        phoneCodeLoading.value = true;
+        try {
+          await sendPhoneVerifyCode(phoneForm.phonenumber, 'bind', captchaId);
+          phoneForm.verifyType = 'phoneverify'; // 设置验证类型
+          ElMessage.success('验证码已发送，请完成号码认证');
+          phoneCooldown.value = 60;
+          phoneTimer = setInterval(() => {
+            phoneCooldown.value--;
+            if (phoneCooldown.value <= 0 && phoneTimer) {
+              clearInterval(phoneTimer);
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('发送验证码失败：', error);
+        } finally {
+          phoneCodeLoading.value = false;
+        }
+      },
+      onFail: () => {
+        ElMessage.error('行为验证失败，请重试');
       }
-    }, 1000);
-  } catch (error) {
-    console.error('发送验证码失败：', error);
-  } finally {
-    phoneCodeLoading.value = false;
+    });
+  } catch (error: any) {
+    console.error('行为验证码初始化失败:', error);
+    ElMessage.error('验证码加载失败，请刷新页面重试');
   }
 };
 
-// 发送解绑手机号码认证验证码
+// 发送解绑手机号码认证验证码（集成行为验证码）
 const sendUnbindPhoneVerifyCode = async () => {
   if (!props.user.phonenumber) return;
 
-  unbindPhoneCodeLoading.value = true;
   try {
-    await sendPhoneVerifyCode(props.user.phonenumber, 'unbind');
-    unbindPhoneForm.verifyType = 'phoneverify'; // 设置验证类型
-    ElMessage.success('验证码已发送，请完成号码认证');
-    unbindPhoneCooldown.value = 60;
-    unbindPhoneTimer = setInterval(() => {
-      unbindPhoneCooldown.value--;
-      if (unbindPhoneCooldown.value <= 0 && unbindPhoneTimer) {
-        clearInterval(unbindPhoneTimer);
+    // 显示行为验证码
+    await showBehaviorCaptcha({
+      onSuccess: async (captchaId) => {
+        console.log('行为验证码验证成功，captchaId:', captchaId);
+
+        // 验证成功后发送手机验证码，传递captchaId
+        unbindPhoneCodeLoading.value = true;
+        try {
+          await sendPhoneVerifyCode(props.user.phonenumber, 'unbind', captchaId);
+          unbindPhoneForm.verifyType = 'phoneverify'; // 设置验证类型
+          ElMessage.success('验证码已发送，请完成号码认证');
+          unbindPhoneCooldown.value = 60;
+          unbindPhoneTimer = setInterval(() => {
+            unbindPhoneCooldown.value--;
+            if (unbindPhoneCooldown.value <= 0 && unbindPhoneTimer) {
+              clearInterval(unbindPhoneTimer);
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('发送验证码失败：', error);
+        } finally {
+          unbindPhoneCodeLoading.value = false;
+        }
+      },
+      onFail: () => {
+        ElMessage.error('行为验证失败，请重试');
       }
-    }, 1000);
-  } catch (error) {
-    console.error('发送验证码失败：', error);
-  } finally {
-    unbindPhoneCodeLoading.value = false;
+    });
+  } catch (error: any) {
+    console.error('行为验证码初始化失败:', error);
+    ElMessage.error('验证码加载失败，请刷新页面重试');
   }
 };
 
@@ -405,7 +438,7 @@ const resetUnbindPhoneForm = () => {
   }
 };
 
-// 发送邮箱验证码
+// 发送邮箱验证码（集成行为验证码）
 const sendEmailVerifyCode = async () => {
   if (!emailForm.email) {
     ElMessage.warning('请先输入邮箱地址');
@@ -416,43 +449,75 @@ const sendEmailVerifyCode = async () => {
     return;
   }
 
-  emailCodeLoading.value = true;
   try {
-    await sendEmailCode(emailForm.email, 'bind');
-    ElMessage.success('验证码已发送至邮箱');
-    emailCooldown.value = 60;
-    emailTimer = setInterval(() => {
-      emailCooldown.value--;
-      if (emailCooldown.value <= 0 && emailTimer) {
-        clearInterval(emailTimer);
+    // 显示行为验证码
+    await showBehaviorCaptcha({
+      onSuccess: async (captchaId) => {
+        console.log('行为验证码验证成功，captchaId:', captchaId);
+
+        // 验证成功后发送邮箱验证码，传递captchaId
+        emailCodeLoading.value = true;
+        try {
+          await sendEmailCode(emailForm.email, 'bind', captchaId);
+          ElMessage.success('验证码已发送至邮箱');
+          emailCooldown.value = 60;
+          emailTimer = setInterval(() => {
+            emailCooldown.value--;
+            if (emailCooldown.value <= 0 && emailTimer) {
+              clearInterval(emailTimer);
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('发送验证码失败：', error);
+        } finally {
+          emailCodeLoading.value = false;
+        }
+      },
+      onFail: () => {
+        ElMessage.error('行为验证失败，请重试');
       }
-    }, 1000);
-  } catch (error) {
-    console.error('发送验证码失败：', error);
-  } finally {
-    emailCodeLoading.value = false;
+    });
+  } catch (error: any) {
+    console.error('行为验证码初始化失败:', error);
+    ElMessage.error('验证码加载失败，请刷新页面重试');
   }
 };
 
-// 发送解绑邮箱验证码
+// 发送解绑邮箱验证码（集成行为验证码）
 const sendUnbindEmailCode = async () => {
   if (!props.user.email) return;
 
-  unbindEmailCodeLoading.value = true;
   try {
-    await sendEmailCode(props.user.email, 'unbind');
-    ElMessage.success('验证码已发送至邮箱');
-    unbindEmailCooldown.value = 60;
-    unbindEmailTimer = setInterval(() => {
-      unbindEmailCooldown.value--;
-      if (unbindEmailCooldown.value <= 0 && unbindEmailTimer) {
-        clearInterval(unbindEmailTimer);
+    // 显示行为验证码
+    await showBehaviorCaptcha({
+      onSuccess: async (captchaId) => {
+        console.log('行为验证码验证成功，captchaId:', captchaId);
+
+        // 验证成功后发送邮箱验证码，传递captchaId
+        unbindEmailCodeLoading.value = true;
+        try {
+          await sendEmailCode(props.user.email, 'unbind', captchaId);
+          ElMessage.success('验证码已发送至邮箱');
+          unbindEmailCooldown.value = 60;
+          unbindEmailTimer = setInterval(() => {
+            unbindEmailCooldown.value--;
+            if (unbindEmailCooldown.value <= 0 && unbindEmailTimer) {
+              clearInterval(unbindEmailTimer);
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('发送验证码失败：', error);
+        } finally {
+          unbindEmailCodeLoading.value = false;
+        }
+      },
+      onFail: () => {
+        ElMessage.error('行为验证失败，请重试');
       }
-    }, 1000);
-  } catch (error) {
-    console.error('发送验证码失败：', error);
-  } finally {
-    unbindEmailCodeLoading.value = false;
+    });
+  } catch (error: any) {
+    console.error('行为验证码初始化失败:', error);
+    ElMessage.error('验证码加载失败，请刷新页面重试');
   }
 };
 
