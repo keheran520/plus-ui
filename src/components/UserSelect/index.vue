@@ -198,11 +198,21 @@ const getTreeSelect = async () => {
 /** 查询用户列表 */
 const getList = async () => {
   loading.value = true;
-  queryParams.value.userIds = prop.userIds;
-  const res = await api.listUser(proxy?.addDateRange(queryParams.value, dateRange.value));
+  // 不传递 userIds 参数给后端，在前端过滤
+  const params = { ...queryParams.value };
+  delete params.userIds;
+  const res = await api.listUser(proxy?.addDateRange(params, dateRange.value));
   loading.value = false;
-  userList.value = res.rows;
-  total.value = res.total;
+  
+  // 如果有 userIds 过滤列表，在前端过滤掉这些用户
+  let filteredRows = res.rows;
+  if (prop.userIds) {
+    const excludeUserIds = computedIds(prop.userIds);
+    filteredRows = res.rows.filter(user => !excludeUserIds.includes(String(user.userId)));
+  }
+  
+  userList.value = filteredRows;
+  total.value = filteredRows.length;
 };
 
 const pageList = async () => {

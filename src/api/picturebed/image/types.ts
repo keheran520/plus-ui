@@ -50,6 +50,11 @@ export interface ImageVO {
   likeCount?: number;
 
   /**
+   * 评论数
+   */
+  commentCount?: number;
+
+  /**
    * 是否公开(0否 1是)
    */
   isPublic: string;
@@ -217,6 +222,11 @@ export interface ImageForm extends BaseEntity {
    * 点赞数
    */
   likeCount?: number;
+
+  /**
+   * 评论数
+   */
+  commentCount?: number;
 
   /**
    * 是否公开(0否 1是)

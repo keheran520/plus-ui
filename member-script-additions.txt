@@ -1,0 +1,149 @@
+// ========== 需要在 script 部分添加的内容 ==========
+
+// 1. 添加import
+import { User, Refresh } from '@element-plus/icons-vue';
+import { generateMemberNo, getLinkedUserIds } from '@/api/member/member';
+import { listLevel } from '@/api/member/level';
+import UserSelect from '@/components/UserSelect/index.vue';
+
+// 2. 在现有变量后添加新变量
+const memberDrawer = ref(false); // 替换 memberDialog
+const generating = ref(false); // 生成编号loading状态
+const levelList = ref<any[]>([]); // 会员等级列表
+const linkedUserIds = ref<number[]>([]); // 已关联会员的用户ID列表
+const selectedUsers = ref<any[]>([]); // 选中的用户
+const userSelectRef = ref<any>(null); // UserSelect组件ref
+
+// 3. 修改 memberForm，添加 userName 字段
+const memberForm = ref({
+  id: undefined as number | undefined,
+  userId: undefined as number | undefined,
+  userName: '', // 新增：用于显示用户名
+  memberNo: '',
+  realName: '',
+  idCard: '',
+  birthday: '',
+  levelId: undefined as number | undefined,
+  balance: 0,
+  points: 0,
+  totalConsumeAmount: 0,
+  status: '0',
+  source: '',
+  registerTime: '',
+  remark: ''
+});
+
+// 4. 修改 memberRules，添加新的校验规则
+const memberRules = ref({
+  userId: [{ required: true, message: '请选择关联用户', trigger: 'change' }],
+  memberNo: [{ required: true, message: '会员编号不能为空', trigger: 'blur' }],
+  levelId: [{ required: true, message: '请选择会员等级', trigger: 'change' }],
+  realName: [
+    { max: 50, message: '真实姓名不能超过50个字符', trigger: 'blur' }
+  ],
+  idCard: [
+    {
+      pattern: /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[0-9Xx]$/,
+      message: '请输入正确的身份证号',
+      trigger: 'blur'
+    }
+  ],
+  status: [{ required: true, message: '请选择会员状态', trigger: 'change' }]
+});
+
+// 5. 添加加载会员等级列表的方法
+const loadLevelList = async () => {
+  try {
+    const res = await listLevel({ status: '0' }); // 只加载正常状态的等级
+    levelList.value = res.data?.rows || res.data || [];
+  } catch (error) {
+    console.error('加载会员等级失败:', error);
+  }
+};
+
+// 6. 添加加载已关联用户ID列表的方法
+const loadLinkedUserIds = async () => {
+  try {
+    const res = await getLinkedUserIds();
+    linkedUserIds.value = res.data || [];
+  } catch (error) {
+    console.error('加载已关联用户ID失败:', error);
+  }
+};
+
+// 7. 添加生成会员编号的方法
+const handleGenerateMemberNo = async () => {
+  generating.value = true;
+  try {
+    const res = await generateMemberNo();
+    memberForm.value.memberNo = res.data;
+    proxy.$modal.msgSuccess('会员编号生成成功');
+  } catch (error) {
+    proxy.$modal.msgError('生成会员编号失败');
+  } finally {
+    generating.value = false;
+  }
+};
+
+// 8. 添加打开用户选择器的方法
+const handleSelectUser = () => {
+  // 如果是编辑模式且已有用户，不允许更改
+  if (memberForm.value.id && memberForm.value.userId) {
+    proxy.$modal.msgWarning('编辑时不能更改关联用户');
+    return;
+  }
+  loadLinkedUserIds(); // 加载已关联的用户ID
+  userSelectRef.value?.userDialog?.openDialog();
+};
+
+// 9. 添加用户选择回调
+const handleUserSelected = (users: any[]) => {
+  if (users && users.length > 0) {
+    const user = users[0]; // 单选，取第一个
+    memberForm.value.userId = user.userId;
+    memberForm.value.userName = user.nickName || user.userName;
+  }
+};
+
+// 10. 修改 handleAdd 方法，打开抽屉时自动生成编号
+function handleAdd() {
+  resetMemberForm();
+  memberDrawer.value = true; // 改为 memberDrawer
+  memberTitle.value = '新增会员';
+  
+  // 加载会员等级列表
+  loadLevelList();
+  
+  // 自动生成会员编号
+  handleGenerateMemberNo();
+}
+
+// 11. 修改 handleUpdate 方法
+function handleUpdate(row?: any) {
+  resetMemberForm();
+  const id = row?.id || ids.value[0];
+  getMember(id).then((response: any) => {
+    memberForm.value = response.data;
+    // 如果有userId，获取用户名用于显示
+    if (response.data.userId) {
+      memberForm.value.userName = response.data.nickName || response.data.userName || `用户${response.data.userId}`;
+    }
+    memberDrawer.value = true; // 改为 memberDrawer
+    memberTitle.value = '修改会员';
+    
+    // 加载会员等级列表
+    loadLevelList();
+  });
+}
+
+// 12. 修改 cancelMember 方法
+function cancelMember() {
+  memberDrawer.value = false; // 改为 memberDrawer
+  resetMemberForm();
+}
+
+// 13. 在 onMounted 中加载会员等级列表
+onMounted(() => {
+  getList();
+  loadLevelList(); // 初始化时加载会员等级
+});

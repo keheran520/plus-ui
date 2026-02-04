@@ -1,0 +1,132 @@
+<!-- 这是完整的会员新增/编辑抽屉代码，用于替换 index.vue 第 371-445 行的 el-dialog -->
+
+<!-- 新增/编辑会员抽屉 -->
+<el-drawer
+  v-model="memberDrawer"
+  :title="memberTitle"
+  :close-on-click-modal="false"
+  direction="rtl"
+  size="700px"
+>
+  <el-form ref="memberRef" :model="memberForm" :rules="memberRules" label-width="110px">
+    <!-- 用户选择 -->
+    <el-form-item label="关联用户" prop="userId">
+      <el-input
+        v-model="memberForm.userName"
+        readonly
+        placeholder="点击选择用户"
+        @click="handleSelectUser"
+      >
+        <template #suffix>
+          <el-button :icon="User" link type="primary" @click="handleSelectUser">选择</el-button>
+        </template>
+      </el-input>
+      <div v-if="memberForm.userId" style="margin-top: 8px; color: #909399; font-size: 12px">
+        用户ID: {{ memberForm.userId }}
+      </div>
+    </el-form-item>
+
+    <!-- 会员编号 -->
+    <el-form-item label="会员编号" prop="memberNo">
+      <el-input v-model="memberForm.memberNo" placeholder="会员编号">
+        <template #append>
+          <el-button :icon="Refresh" @click="handleGenerateMemberNo" :loading="generating">
+            生成编号
+          </el-button>
+        </template>
+      </el-input>
+    </el-form-item>
+
+    <el-row :gutter="20">
+      <el-col :span="12">
+        <el-form-item label="真实姓名" prop="realName">
+          <el-input v-model="memberForm.realName" clearable placeholder="请输入真实姓名" />
+        </el-form-item>
+      </el-col>
+      <el-col :span="12">
+        <el-form-item label="身份证号" prop="idCard">
+          <el-input v-model="memberForm.idCard" clearable maxlength="18" placeholder="选填" />
+        </el-form-item>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="20">
+      <el-col :span="12">
+        <el-form-item label="生日" prop="birthday">
+          <el-date-picker
+            v-model="memberForm.birthday"
+            placeholder="选填"
+            style="width: 100%"
+            type="date"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
+      </el-col>
+      <el-col :span="12">
+        <el-form-item label="会员等级" prop="levelId">
+          <el-select v-model="memberForm.levelId" clearable placeholder="请选择会员等级" style="width: 100%">
+            <el-option
+              v-for="level in levelList"
+              :key="level.id"
+              :label="level.levelName"
+              :value="level.id"
+            >
+              <span style="float: left">{{ level.levelName }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">
+                折扣: {{ (level.discountRate * 100).toFixed(0) }}%
+              </span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="20">
+      <el-col :span="12">
+        <el-form-item label="会员状态" prop="status">
+          <el-radio-group v-model="memberForm.status">
+            <el-radio label="0">正常</el-radio>
+            <el-radio label="1">冻结</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-col>
+      <el-col :span="12">
+        <el-form-item label="注册来源" prop="source">
+          <el-select v-model="memberForm.source" clearable placeholder="请选择注册来源" style="width: 100%">
+            <el-option label="H5" value="h5" />
+            <el-option label="小程序" value="mini" />
+            <el-option label="PC" value="pc" />
+            <el-option label="后台添加" value="admin" />
+          </el-select>
+        </el-form-item>
+      </el-col>
+    </el-row>
+
+    <el-form-item label="备注" prop="remark">
+      <el-input
+        v-model="memberForm.remark"
+        :rows="3"
+        maxlength="200"
+        placeholder="请输入备注"
+        show-word-limit
+        type="textarea"
+      />
+    </el-form-item>
+  </el-form>
+
+  <template #footer>
+    <div style="flex: auto">
+      <el-button @click="cancelMember">取消</el-button>
+      <el-button :loading="memberLoading" type="primary" @click="submitMember">确定</el-button>
+    </div>
+  </template>
+</el-drawer>
+
+<!-- UserSelect 组件 -->
+<UserSelect
+  ref="userSelectRef"
+  v-model="selectedUsers"
+  :multiple="false"
+  :userIds="linkedUserIds"
+  @confirmCallBack="handleUserSelected"
+/>

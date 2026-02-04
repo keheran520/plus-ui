@@ -211,6 +211,11 @@
             {{ scope.row.likeCount || 0 }}
           </template>
         </el-table-column>
+        <el-table-column align="center" label="评论数" prop="commentCount" width="100">
+          <template #default="scope">
+            {{ scope.row.commentCount || 0 }}
+          </template>
+        </el-table-column>
         <el-table-column align="center" label="是否公开" prop="isPublic">
           <template #default="scope">
             <dict-tag :options="sys_yes_no" :value="scope.row.isPublic" />
@@ -378,6 +383,7 @@ const initFormData: ImageForm = {
   viewCount: 0,
   downloadCount: 0,
   likeCount: 0,
+  commentCount: 0,
   isPublic: 'Y',
   status: '0',
   sortOrder: 0,

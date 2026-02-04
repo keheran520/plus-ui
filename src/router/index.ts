@@ -162,6 +162,20 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '消息中心', icon: 'bell' }
       }
     ]
+  },
+  {
+    path: '/member',
+    component: Layout,
+    hidden: true,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: 'member/detail/:id',
+        component: () => import('@/views/member/member/detail.vue'),
+        name: 'MemberDetail',
+        meta: { title: '会员详情', icon: 'user', activeMenu: '/member/member' }
+      }
+    ]
   }
 ];
 
