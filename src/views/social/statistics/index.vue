@@ -84,9 +84,9 @@
             <el-form-item label="内容ID" prop="targetId">
               <el-input v-model="queryParams.targetId" clearable placeholder="请输入内容ID" style="width: 150px" @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="最小点赞" prop="minLikeCount">
-              <el-input-number v-model="queryParams.minLikeCount" :min="0" controls-position="right" style="width: 150px" />
-            </el-form-item>
+            <!--            <el-form-item label="最小点赞" prop="minLikeCount">-->
+            <!--              <el-input-number v-model="queryParams.minLikeCount" :min="0" controls-position="right" style="width: 150px" />-->
+            <!--            </el-form-item>-->
             <el-form-item>
               <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -126,6 +126,7 @@
             <el-tag v-if="row.targetType === 'image'" type="success">图片</el-tag>
             <el-tag v-else-if="row.targetType === 'album'" type="primary">相册</el-tag>
             <el-tag v-else-if="row.targetType === 'article'" type="warning">文章</el-tag>
+            <el-tag v-else-if="row.targetType === 'comment'">评论</el-tag>
             <el-tag v-else>{{ row.targetType }}</el-tag>
           </template>
         </el-table-column>
@@ -152,12 +153,12 @@
 </template>
 
 <script lang="ts" setup>
-import { delSocialStatistics, listSocialStatistics, getStatisticsOverview, refreshStatistics, batchRefreshStatistics } from '@/api/social/statistics';
-import type { StatisticsQuery, StatisticsVO } from '@/api/social/statistics/types';
+import { batchRefreshStatistics, delSocialStatistics, getStatisticsOverview, listSocialStatistics, refreshStatistics } from '@/api/social/statistics';
+import type { SocialStatisticsQuery, SocialStatisticsVO } from '@/api/social/statistics/types';
 
 const { proxy } = getCurrentInstance() as any;
 
-const statisticsList = ref<StatisticsVO[]>([]);
+const statisticsList = ref<SocialStatisticsVO[]>([]);
 const loading = ref(true);
 const showSearch = ref(true);
 const ids = ref<Array<string | number>>([]);
@@ -177,7 +178,7 @@ const overview = ref({
   todayViews: 0
 });
 
-const queryParams = ref<StatisticsQuery>({
+const queryParams = ref<SocialStatisticsQuery>({
   pageNum: 1,
   pageSize: 10,
   targetType: undefined,
@@ -222,12 +223,12 @@ function resetQuery() {
 }
 
 /** 多选框选中数据 */
-function handleSelectionChange(selection: StatisticsVO[]) {
+function handleSelectionChange(selection: SocialStatisticsVO[]) {
   ids.value = selection.map((item) => item.statId);
 }
 
 /** 刷新单个统计 */
-function handleRefresh(row: StatisticsVO) {
+function handleRefresh(row: SocialStatisticsVO) {
   proxy.$modal
     .confirm('确认刷新该统计数据吗？')
     .then(() => {
@@ -261,7 +262,7 @@ function handleBatchRefresh() {
 }
 
 /** 删除按钮操作 */
-function handleDelete(row: StatisticsVO) {
+function handleDelete(row: SocialStatisticsVO) {
   proxy.$modal
     .confirm('确认删除该统计数据吗？')
     .then(() => {

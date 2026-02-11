@@ -67,7 +67,7 @@ export const refreshStatistics = (targetType: string, targetId: number | string)
   return request({
     url: '/social/statistics/refresh',
     method: 'post',
-    data: { targetType, targetId }
+    params: { targetType, targetId }
   });
 };
 
@@ -76,7 +76,7 @@ export const batchRefreshStatistics = (targetType: string) => {
   return request({
     url: '/social/statistics/batchRefresh',
     method: 'post',
-    data: { targetType }
+    params: { targetType }
   });
 };
 
