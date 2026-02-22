@@ -1,137 +1,115 @@
 <template>
-  <div class="p-2">
-    <!-- 统计概览卡片 -->
-    <el-row :gutter="20" class="mb-[10px]">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon total">
-              <el-icon :size="32">
-                <Connection />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalNetworks }}</div>
-              <div class="stat-label">总网络数</div>
-              <div class="stat-today">激活 {{ overview.activeNetworks }}</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon active">
-              <el-icon :size="32">
-                <CircleCheck />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.activeNetworks }}</div>
-              <div class="stat-label">激活网络</div>
-              <div class="stat-today">运行中</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon bridge">
-              <el-icon :size="32">
-                <Share />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.bridgeNetworks }}</div>
-              <div class="stat-label">桥接网络</div>
-              <div class="stat-today">Bridge</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon default">
-              <el-icon :size="32">
-                <Star />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.defaultNetworks }}</div>
-              <div class="stat-label">默认网络</div>
-              <div class="stat-today">Default</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 搜索区域 -->
-    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="mb-[10px]">
-        <el-card shadow="never">
-          <el-form ref="queryRef" :inline="true" :model="queryParams">
-            <el-form-item label="接口名称" prop="iface">
-              <el-input v-model="queryParams.iface" clearable placeholder="请输入接口名称" style="width: 200px" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="网络类型" prop="type">
-              <el-select v-model="queryParams.type" clearable placeholder="请选择网络类型" style="width: 150px">
-                <el-option label="桥接" value="bridge" />
-                <el-option label="绑定" value="bond" />
-                <el-option label="VLAN" value="vlan" />
-                <el-option label="OVS" value="OVS" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="激活状态" prop="active">
-              <el-select v-model="queryParams.active" clearable placeholder="请选择激活状态" style="width: 150px">
-                <el-option label="是" value="1" />
-                <el-option label="否" value="0" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
+  <div class="network-container">
+    <!-- 顶部统计栏 -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <el-icon class="stat-icon total"><Connection /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalNetworks }}</span>
+          <span class="stat-label">总网络数</span>
+        </div>
       </div>
-    </transition>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon active"><CircleCheck /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.activeNetworks }}</span>
+          <span class="stat-label">激活网络</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon bridge"><Share /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.bridgeNetworks }}</span>
+          <span class="stat-label">桥接网络</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon vlan"><Grid /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.vlanNetworks || 0 }}</span>
+          <span class="stat-label">VLAN网络</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon default"><Star /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.defaultNetworks }}</span>
+          <span class="stat-label">默认网络</span>
+        </div>
+      </div>
+    </div>
 
-    <!-- 操作按钮和表格区域 -->
-    <el-card shadow="never">
-      <template #header>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:network:add']" icon="Plus" plain type="primary" @click="handleAdd">新增</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:network:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete">
-              删除
-            </el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:network:export']" icon="Download" plain type="warning" @click="handleExport">导出</el-button>
-          </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
-        </el-row>
-      </template>
+    <!-- 工具栏 -->
+    <div class="toolbar-container">
+      <div class="toolbar-main">
+        <!-- 左侧：类型筛选 -->
+        <div class="toolbar-section">
+          <el-radio-group v-model="queryParams.type" @change="handleQuery">
+            <el-radio-button label="">全部</el-radio-button>
+            <el-radio-button label="bridge">桥接</el-radio-button>
+            <el-radio-button label="bond">绑定</el-radio-button>
+            <el-radio-button label="vlan">VLAN</el-radio-button>
+            <el-radio-button label="OVS">OVS</el-radio-button>
+          </el-radio-group>
+        </div>
 
-      <!-- 数据表格 -->
-      <el-table
-        v-loading="loading"
-        :data="networkList"
-        :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
-        border
-        highlight-current-row
-        stripe
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column align="center" fixed type="selection" width="50" />
-        <el-table-column align="center" label="网络ID" prop="networkId" width="100" />
-        <el-table-column :show-overflow-tooltip="true" align="center" label="接口名称" prop="iface" width="150" />
-        <el-table-column align="center" label="网络类型" prop="type" width="100">
+        <!-- 中间：操作按钮 -->
+        <div class="toolbar-section">
+          <el-button v-hasPermi="['pve:network:add']" icon="Plus" type="primary" @click="handleAdd">新增网络</el-button>
+          <el-button v-hasPermi="['pve:network:remove']" icon="Delete" :disabled="multiple" @click="handleDelete">删除</el-button>
+          <el-button v-hasPermi="['pve:network:export']" icon="Download" @click="handleExport">导出</el-button>
+        </div>
+
+        <!-- 右侧：搜索和刷新 -->
+        <div class="toolbar-section toolbar-right">
+          <el-select v-model="queryParams.active" clearable placeholder="激活状态" style="width: 120px" @change="handleQuery">
+            <el-option label="是" value="1" />
+            <el-option label="否" value="0" />
+          </el-select>
+          <el-input
+            v-model="queryParams.iface"
+            class="search-input"
+            clearable
+            placeholder="搜索接口名称"
+            prefix-icon="Search"
+            style="width: 200px"
+            @clear="handleQuery"
+            @keyup.enter="handleQuery"
+          />
+          <el-button icon="Refresh" @click="handleRefresh">刷新</el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 网络列表 -->
+    <div class="table-container">
+      <el-table v-loading="loading" :data="networkList" border stripe @selection-change="handleSelectionChange">
+        <el-table-column align="center" fixed type="selection" width="40" />
+
+        <!-- 网络信息 -->
+        <el-table-column label="网络信息" min-width="220">
+          <template #default="{ row }">
+            <div class="network-info">
+              <div class="network-name-row">
+                <el-icon class="network-icon"><Connection /></el-icon>
+                <span class="network-name">{{ row.iface }}</span>
+                <el-tag v-if="row.isDefault === '1'" type="warning" size="small" style="margin-left: 8px">默认</el-tag>
+              </div>
+              <div class="network-meta">
+                <span class="meta-item">ID: {{ row.networkId }}</span>
+                <span v-if="row.cidr" class="meta-divider">|</span>
+                <span v-if="row.cidr" class="meta-item">{{ row.cidr }}</span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <!-- 网络类型 -->
+        <el-table-column label="类型" width="100" align="center">
           <template #default="{ row }">
             <el-tag v-if="row.type === 'bridge'" type="primary">桥接</el-tag>
             <el-tag v-else-if="row.type === 'bond'" type="success">绑定</el-tag>
@@ -139,41 +117,72 @@
             <el-tag v-else type="info">{{ row.type }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="激活状态" prop="active" width="100">
+
+        <!-- IP配置 -->
+        <el-table-column label="IP配置" min-width="200">
           <template #default="{ row }">
-            <el-tag v-if="row.active === '1'" type="success">是</el-tag>
-            <el-tag v-else type="info">否</el-tag>
+            <div class="ip-config">
+              <div v-if="row.address" class="config-item">
+                <span class="config-label">地址:</span>
+                <span class="config-value">{{ row.address }}</span>
+              </div>
+              <div v-if="row.netmask" class="config-item">
+                <span class="config-label">掩码:</span>
+                <span class="config-value">{{ row.netmask }}</span>
+              </div>
+              <div v-if="row.gateway" class="config-item">
+                <span class="config-label">网关:</span>
+                <span class="config-value">{{ row.gateway }}</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="自动启动" prop="autostart" width="100">
+
+        <!-- MTU -->
+        <el-table-column label="MTU" width="100" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.autostart === '1'" type="success">是</el-tag>
-            <el-tag v-else type="info">否</el-tag>
+            <span v-if="row.mtu">{{ row.mtu }}</span>
+            <span v-else style="color: #999">-</span>
           </template>
         </el-table-column>
-        <el-table-column :show-overflow-tooltip="true" align="center" label="IP地址" prop="address" width="150" />
-        <el-table-column :show-overflow-tooltip="true" align="center" label="子网掩码" prop="netmask" width="150" />
-        <el-table-column :show-overflow-tooltip="true" align="center" label="网关" prop="gateway" width="150" />
-        <el-table-column :show-overflow-tooltip="true" align="center" label="CIDR" prop="cidr" width="150" />
-        <el-table-column align="center" label="默认网络" prop="isDefault" width="100">
+
+        <!-- 状态 -->
+        <el-table-column label="激活" width="80" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.isDefault === '1'" type="warning">是</el-tag>
-            <el-tag v-else type="info">否</el-tag>
+            <el-tag v-if="row.active === '1'" type="success" size="small">是</el-tag>
+            <el-tag v-else type="info" size="small">否</el-tag>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="MTU" prop="mtu" width="100" />
-        <el-table-column align="center" label="创建时间" prop="createTime" width="180" />
-        <el-table-column align="center" class-name="small-padding" fixed="right" label="操作" width="180">
+
+        <!-- 自动启动 -->
+        <el-table-column label="自启" width="80" align="center">
           <template #default="{ row }">
-            <el-button v-hasPermi="['pve:network:edit']" icon="Edit" link type="primary" @click="handleUpdate(row)">编辑</el-button>
-            <el-button v-hasPermi="['pve:network:remove']" icon="Delete" link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-tag v-if="row.autostart === '1'" type="success" size="small">是</el-tag>
+            <el-tag v-else type="info" size="small">否</el-tag>
+          </template>
+        </el-table-column>
+
+        <!-- 操作列 -->
+        <el-table-column label="操作" width="120" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
+              <el-button link type="primary">
+                更多
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-hasPermi="['pve:network:edit']" command="edit">修改</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:network:remove']" command="delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
-    </el-card>
+    </div>
 
     <!-- 添加或修改对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" append-to-body width="800px">
@@ -274,7 +283,6 @@ const { proxy } = getCurrentInstance() as any;
 
 const networkList = ref<PveNetworkVO[]>([]);
 const loading = ref(true);
-const showSearch = ref(true);
 const ids = ref<Array<string | number>>([]);
 const multiple = ref(true);
 const total = ref(0);
@@ -286,6 +294,7 @@ const overview = ref({
   totalNetworks: 0,
   activeNetworks: 0,
   bridgeNetworks: 0,
+  vlanNetworks: 0,
   defaultNetworks: 0
 });
 
@@ -293,24 +302,36 @@ const queryParams = ref<PveNetworkQuery>({
   pageNum: 1,
   pageSize: 10,
   iface: undefined,
-  type: undefined,
+  type: '',
   active: undefined
 });
-const queryRef = ref();
+const formRef = ref();
 
 const form = ref<PveNetworkForm>({});
-const formRef = ref();
 
 const rules = {
   iface: [{ required: true, message: '接口名称不能为空', trigger: 'blur' }],
   type: [{ required: true, message: '网络类型不能为空', trigger: 'change' }]
 };
 
+/** 计算统计概览 */
+function calculateOverview() {
+  overview.value = {
+    totalNetworks: networkList.value.length,
+    activeNetworks: networkList.value.filter((n) => n.active === '1').length,
+    bridgeNetworks: networkList.value.filter((n) => n.type === 'bridge').length,
+    vlanNetworks: networkList.value.filter((n) => n.type === 'vlan').length,
+    defaultNetworks: networkList.value.filter((n) => n.isDefault === '1').length
+  };
+}
+
 /** 获取统计概览 */
 function loadOverview() {
   getOverview()
     .then((response: any) => {
-      overview.value = response.data || {};
+      if (response.data) {
+        overview.value = response.data;
+      }
     })
     .catch(() => {
       console.error('获取统计概览失败');
@@ -324,6 +345,7 @@ function getList() {
     .then((response: any) => {
       networkList.value = response.rows;
       total.value = response.total;
+      calculateOverview();
       loading.value = false;
     })
     .catch(() => {
@@ -331,16 +353,23 @@ function getList() {
     });
 }
 
+/** 刷新 */
+function handleRefresh() {
+  queryParams.value = {
+    pageNum: 1,
+    pageSize: 10,
+    iface: undefined,
+    type: '',
+    active: undefined
+  };
+  getList();
+  loadOverview();
+}
+
 /** 搜索按钮操作 */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
-}
-
-/** 重置按钮操作 */
-function resetQuery() {
-  queryRef.value?.resetFields();
-  handleQuery();
 }
 
 /** 多选框选中数据 */
@@ -417,6 +446,18 @@ function handleExport() {
   );
 }
 
+/** 操作命令处理 */
+function handleCommand(command: string, row: PveNetworkVO) {
+  switch (command) {
+    case 'edit':
+      handleUpdate(row);
+      break;
+    case 'delete':
+      handleDelete(row);
+      break;
+  }
+}
+
 /** 取消按钮 */
 function cancel() {
   dialogVisible.value = false;
@@ -449,59 +490,164 @@ getList();
 </script>
 
 <style lang="scss" scoped>
-.stat-card {
+.network-container {
+  padding: 16px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 84px);
+}
+
+/* 统计栏样式 */
+.stats-bar {
   display: flex;
   align-items: center;
-  padding: 10px 0;
+  background: white;
+  border-radius: 8px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
 
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.stat-icon {
+  font-size: 32px;
+  &.total {
+    color: #409eff;
+  }
+  &.active {
+    color: #67c23a;
+  }
+  &.bridge {
+    color: #e6a23c;
+  }
+  &.vlan {
+    color: #f56c6c;
+  }
+  &.default {
+    color: #909399;
+  }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: #e4e7ed;
+  margin: 0 16px;
+}
+
+/* 工具栏样式 */
+.toolbar-container {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-right {
+  margin-left: auto;
+}
+
+/* 表格容器 */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 网络信息 */
+.network-info {
+  .network-name-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-right: 16px;
-    color: white;
+    margin-bottom: 4px;
+  }
 
-    &.total {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
+  .network-icon {
+    font-size: 18px;
+    color: #409eff;
+    margin-right: 8px;
+  }
 
-    &.active {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
+  .network-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+  }
 
-    &.bridge {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
+  .network-meta {
+    font-size: 12px;
+    color: #909399;
+    padding-left: 26px;
+  }
 
-    &.default {
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  .meta-item {
+    margin-right: 4px;
+  }
+
+  .meta-divider {
+    margin: 0 4px;
+  }
+}
+
+/* IP配置 */
+.ip-config {
+  .config-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+
+    &:last-child {
+      margin-bottom: 0;
     }
   }
 
-  .stat-content {
-    flex: 1;
+  .config-label {
+    font-size: 12px;
+    color: #909399;
+    width: 40px;
+  }
 
-    .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: #303133;
-      line-height: 1.2;
-    }
-
-    .stat-label {
-      font-size: 14px;
-      color: #909399;
-      margin-top: 4px;
-    }
-
-    .stat-today {
-      font-size: 12px;
-      color: #67c23a;
-      margin-top: 4px;
-    }
+  .config-value {
+    font-size: 13px;
+    color: #606266;
+    font-family: 'Courier New', monospace;
   }
 }
 </style>

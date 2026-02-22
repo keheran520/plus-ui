@@ -1,186 +1,196 @@
 <template>
-  <div class="p-2">
-    <!-- 统计概览卡片 -->
-    <el-row :gutter="20" class="mb-[10px]">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon total">
-              <el-icon :size="32">
-                <Monitor />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalNodes }}</div>
-              <div class="stat-label">总节点数</div>
-              <div class="stat-today">在线 {{ overview.onlineNodes }}</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon cpu">
-              <el-icon :size="32">
-                <Cpu />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalCpuCores }}</div>
-              <div class="stat-label">总CPU核心数</div>
-              <div class="stat-today">平均 {{ overview.avgCpuPerNode }} 核/节点</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon memory">
-              <el-icon :size="32">
-                <Memo />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalMemory }} GB</div>
-              <div class="stat-label">总内存容量</div>
-              <div class="stat-today">平均 {{ overview.avgMemoryPerNode }} GB/节点</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon storage">
-              <el-icon :size="32">
-                <Coin />
-              </el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalStorage }} GB</div>
-              <div class="stat-label">总存储容量</div>
-              <div class="stat-today">集群 {{ overview.totalClusters }} 个</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 搜索区域 -->
-    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="mb-[10px]">
-        <el-card shadow="never">
-          <el-form ref="queryFormRef" :inline="true" :model="queryParams" label-width="68px">
-            <el-form-item label="集群" prop="clusterId">
-              <el-select v-model="queryParams.clusterId" clearable placeholder="请选择集群" style="width: 200px">
-                <el-option v-for="cluster in clusterList" :key="cluster.clusterId" :label="cluster.clusterName" :value="cluster.clusterId" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="节点名称" prop="nodeName">
-              <el-input v-model="queryParams.nodeName" clearable placeholder="请输入节点名称" style="width: 200px" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="IP地址" prop="ipAddress">
-              <el-input v-model="queryParams.ipAddress" clearable placeholder="请输入IP地址" style="width: 200px" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="状态" prop="status">
-              <el-select v-model="queryParams.status" clearable placeholder="请选择状态" style="width: 150px">
-                <el-option label="正常" value="0" />
-                <el-option label="停用" value="1" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
+  <div class="node-container">
+    <!-- 顶部统计栏 -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <el-icon class="stat-icon total"><Monitor /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalNodes }}</span>
+          <span class="stat-label">总节点数</span>
+        </div>
       </div>
-    </transition>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon online"><CircleCheck /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.onlineNodes }}</span>
+          <span class="stat-label">在线节点</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon cpu"><Cpu /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalCpuCores }}</span>
+          <span class="stat-label">总CPU核心</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon memory"><Memo /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalMemory }}</span>
+          <span class="stat-label">总内存(GB)</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon storage"><Coin /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalStorage }}</span>
+          <span class="stat-label">总存储(GB)</span>
+        </div>
+      </div>
+    </div>
 
-    <!-- 数据表格 -->
-    <el-card shadow="never">
-      <template #header>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:node:add']" icon="Plus" plain type="primary" @click="handleAdd">新增</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:node:edit']" :disabled="single" icon="Edit" plain type="success" @click="handleUpdate()">修改</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:node:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">删除</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:node:export']" icon="Download" plain type="warning" @click="handleExport">导出</el-button>
-          </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
-        </el-row>
-      </template>
+    <!-- 工具栏 -->
+    <div class="toolbar-container">
+      <div class="toolbar-main">
+        <!-- 左侧：状态筛选 -->
+        <div class="toolbar-section">
+          <el-radio-group v-model="queryParams.status" @change="handleQuery">
+            <el-radio-button label="">全部</el-radio-button>
+            <el-radio-button label="0">正常</el-radio-button>
+            <el-radio-button label="1">停用</el-radio-button>
+          </el-radio-group>
+        </div>
 
-      <el-table
-        v-loading="loading"
-        :data="nodeList"
-        :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
-        border
-        highlight-current-row
-        stripe
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column align="center" type="selection" width="50" />
-        <el-table-column align="center" label="节点ID" prop="nodeId" width="100" />
-        <el-table-column align="center" label="集群名称" prop="clusterName" width="150" show-overflow-tooltip />
-        <el-table-column align="center" label="节点名称" prop="nodeName" width="150" show-overflow-tooltip />
-        <el-table-column align="center" label="IP地址" prop="ipAddress" width="150" />
-        <el-table-column align="center" label="端口" prop="apiPort" width="80" />
-        <el-table-column align="center" label="状态" width="100">
+        <!-- 中间：操作按钮 -->
+        <div class="toolbar-section">
+          <el-button v-hasPermi="['pve:node:add']" icon="Plus" type="primary" @click="handleAdd">新增节点</el-button>
+          <el-button v-hasPermi="['pve:node:remove']" icon="Delete" :disabled="multiple" @click="handleDelete()">删除</el-button>
+          <el-button v-hasPermi="['pve:node:export']" icon="Download" @click="handleExport">导出</el-button>
+        </div>
+
+        <!-- 右侧：搜索和刷新 -->
+        <div class="toolbar-section toolbar-right">
+          <el-select v-model="queryParams.clusterId" clearable placeholder="选择集群" style="width: 150px" @change="handleQuery">
+            <el-option v-for="cluster in clusterList" :key="cluster.clusterId" :label="cluster.clusterName" :value="cluster.clusterId" />
+          </el-select>
+          <el-input
+            v-model="queryParams.nodeName"
+            class="search-input"
+            clearable
+            placeholder="搜索节点名称"
+            prefix-icon="Search"
+            style="width: 200px"
+            @clear="handleQuery"
+            @keyup.enter="handleQuery"
+          />
+          <el-button icon="Refresh" @click="handleRefresh">刷新</el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 节点列表 -->
+    <div class="table-container">
+      <el-table v-loading="loading" :data="nodeList" border stripe @selection-change="handleSelectionChange">
+        <el-table-column align="center" fixed type="selection" width="40" />
+
+        <!-- 节点信息 -->
+        <el-table-column label="节点信息" min-width="250">
           <template #default="{ row }">
-            <dict-tag :options="sys_normal_disable" :value="row.status" />
+            <div class="node-info">
+              <div class="node-name-row">
+                <el-icon class="node-icon"><Monitor /></el-icon>
+                <span class="node-name">{{ row.nodeName }}</span>
+                <el-tag v-if="row.nodeType === 'master'" type="danger" size="small" style="margin-left: 8px">主节点</el-tag>
+              </div>
+              <div class="node-meta">
+                <span class="meta-item">{{ row.clusterName || '-' }}</span>
+                <span class="meta-divider">|</span>
+                <span class="meta-item">{{ row.ipAddress }}:{{ row.apiPort || 8006 }}</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="节点类型" prop="nodeType" width="100" />
-        <el-table-column align="center" label="CPU(核)" prop="cpuCores" width="100">
+
+        <!-- 资源配置 -->
+        <el-table-column label="资源配置" width="200" align="center">
           <template #default="{ row }">
-            <el-tag type="primary">{{ row.cpuCores || 0 }}</el-tag>
+            <div class="resource-info">
+              <div class="resource-item">
+                <el-icon style="color: #409eff"><Cpu /></el-icon>
+                <span class="resource-label">CPU:</span>
+                <span class="resource-value">{{ row.cpuCores || 0 }} 核</span>
+              </div>
+              <div class="resource-item">
+                <el-icon style="color: #67c23a"><Memo /></el-icon>
+                <span class="resource-label">内存:</span>
+                <span class="resource-value">{{ row.memorySize || 0 }} GB</span>
+              </div>
+              <div class="resource-item">
+                <el-icon style="color: #e6a23c"><Coin /></el-icon>
+                <span class="resource-label">存储:</span>
+                <span class="resource-value">{{ row.storageSize || 0 }} GB</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="内存(GB)" prop="memorySize" width="100">
+
+        <!-- VM配置 -->
+        <el-table-column label="VM配置" width="150" align="center">
           <template #default="{ row }">
-            <el-tag type="success">{{ row.memorySize || 0 }}</el-tag>
+            <div class="vm-config">
+              <div class="config-item">
+                <span class="config-label">最大:</span>
+                <span class="config-value">{{ row.maxVmCount || 100 }}</span>
+              </div>
+              <div class="config-item">
+                <span class="config-label">阈值:</span>
+                <span class="config-value">{{ row.memoryThreshold || 80 }}%</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="存储(GB)" prop="storageSize" width="100">
+
+        <!-- 状态 -->
+        <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag type="warning">{{ row.storageSize || 0 }}</el-tag>
+            <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
+              <div class="status-dropdown">
+                <el-tag :type="row.status === '0' ? 'success' : 'info'" class="status-tag">
+                  {{ row.status === '0' ? '正常' : '停用' }}
+                  <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+                </el-tag>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="row.status === '1'" command="enable">启用</el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === '0'" command="disable">停用</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="最大VM数" prop="maxVmCount" width="100" />
-        <el-table-column align="center" label="描述" prop="description" show-overflow-tooltip width="200" />
-        <el-table-column align="center" label="创建时间" prop="createTime" width="180" />
-        <el-table-column align="center" class-name="small-padding" fixed="right" label="操作" width="280">
+
+        <!-- 描述 -->
+        <el-table-column label="描述" min-width="180" prop="description" show-overflow-tooltip />
+
+        <!-- 操作列 -->
+        <el-table-column label="操作" width="120" align="center" fixed="right">
           <template #default="{ row }">
-            <el-tooltip content="同步信息" placement="top">
-              <el-button v-hasPermi="['pve:node:edit']" icon="Refresh" link type="primary" @click="handleSync(row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="同步全部" placement="top">
-              <el-button v-hasPermi="['pve:node:edit']" icon="Download" link type="warning" @click="handleSyncAll(row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="查看状态" placement="top">
-              <el-button v-hasPermi="['pve:node:query']" icon="View" link type="success" @click="handleViewStatus(row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="修改" placement="top">
-              <el-button v-hasPermi="['pve:node:edit']" icon="Edit" link type="primary" @click="handleUpdate(row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <el-button v-hasPermi="['pve:node:remove']" icon="Delete" link type="danger" @click="handleDelete(row)"></el-button>
-            </el-tooltip>
+            <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
+              <el-button link type="primary">
+                更多
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-hasPermi="['pve:node:edit']" command="sync">同步信息</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:node:edit']" command="syncAll">同步全部</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:node:query']" command="status">查看状态</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:node:edit']" command="edit" divided>修改</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:node:remove']" command="delete">删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
 
       <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
-    </el-card>
+    </div>
 
     <!-- 添加或修改对话框 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" append-to-body width="800px" @close="cancel">
@@ -310,9 +320,7 @@ const { sys_normal_disable } = toRefs<any>(proxy?.useDict('sys_normal_disable'))
 
 const nodeList = ref<PveNodeVO[]>([]);
 const loading = ref(true);
-const showSearch = ref(true);
 const ids = ref<Array<string | number>>([]);
-const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const clusterList = ref<ClusterVO[]>([]);
@@ -330,7 +338,6 @@ const overview = ref({
   avgMemoryPerNode: 0
 });
 
-const queryFormRef = ref<ElFormInstance>();
 const nodeFormRef = ref<ElFormInstance>();
 
 const dialog = reactive<DialogOption>({
@@ -420,6 +427,20 @@ function getList() {
     });
 }
 
+/** 刷新 */
+function handleRefresh() {
+  queryParams.value = {
+    pageNum: 1,
+    pageSize: 10,
+    clusterId: undefined,
+    nodeName: undefined,
+    ipAddress: undefined,
+    status: undefined
+  };
+  getList();
+  loadOverview();
+}
+
 /** 取消按钮 */
 function cancel() {
   reset();
@@ -438,16 +459,9 @@ function handleQuery() {
   getList();
 }
 
-/** 重置按钮操作 */
-function resetQuery() {
-  queryFormRef.value?.resetFields();
-  handleQuery();
-}
-
 /** 多选框选中数据 */
 function handleSelectionChange(selection: PveNodeVO[]) {
   ids.value = selection.map((item) => item.nodeId);
-  single.value = selection.length != 1;
   multiple.value = !selection.length;
 }
 
@@ -548,6 +562,48 @@ async function handleViewStatus(row: PveNodeVO) {
   }
 }
 
+/** 状态命令处理 */
+function handleStatusCommand(command: string, row: PveNodeVO) {
+  const newStatus = command === 'enable' ? '0' : '1';
+  const text = command === 'enable' ? '启用' : '停用';
+
+  proxy?.$modal
+    .confirm('确认要"' + text + '""' + row.nodeName + '"节点吗？')
+    .then(() => {
+      row.status = newStatus;
+      return updatePveNode(row);
+    })
+    .then(() => {
+      proxy?.$modal.msgSuccess(text + '成功');
+      getList();
+      loadOverview();
+    })
+    .catch(() => {
+      getList();
+    });
+}
+
+/** 操作命令处理 */
+function handleCommand(command: string, row: PveNodeVO) {
+  switch (command) {
+    case 'sync':
+      handleSync(row);
+      break;
+    case 'syncAll':
+      handleSyncAll(row);
+      break;
+    case 'status':
+      handleViewStatus(row);
+      break;
+    case 'edit':
+      handleUpdate(row);
+      break;
+    case 'delete':
+      handleDelete(row);
+      break;
+  }
+}
+
 /** 导出按钮操作 */
 function handleExport() {
   proxy?.download(
@@ -566,59 +622,208 @@ getList();
 </script>
 
 <style lang="scss" scoped>
-.stat-card {
+.node-container {
+  padding: 16px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 84px);
+}
+
+/* 统计栏样式 */
+.stats-bar {
   display: flex;
   align-items: center;
-  padding: 10px 0;
+  background: white;
+  border-radius: 8px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
 
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.stat-icon {
+  font-size: 32px;
+  &.total {
+    color: #409eff;
+  }
+  &.online {
+    color: #67c23a;
+  }
+  &.cpu {
+    color: #e6a23c;
+  }
+  &.memory {
+    color: #f56c6c;
+  }
+  &.storage {
+    color: #909399;
+  }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: #e4e7ed;
+  margin: 0 16px;
+}
+
+/* 工具栏样式 */
+.toolbar-container {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-right {
+  margin-left: auto;
+}
+
+/* 表格容器 */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 节点信息 */
+.node-info {
+  .node-name-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .node-icon {
+    font-size: 18px;
+    color: #409eff;
+    margin-right: 8px;
+  }
+
+  .node-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+  }
+
+  .node-meta {
+    font-size: 12px;
+    color: #909399;
+    padding-left: 26px;
+  }
+
+  .meta-item {
+    margin-right: 4px;
+  }
+
+  .meta-divider {
+    margin: 0 4px;
+  }
+}
+
+/* 资源信息 */
+.resource-info {
+  .resource-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 16px;
-    color: white;
+    gap: 4px;
+    margin-bottom: 6px;
 
-    &.total {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    &.cpu {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    &.memory {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    &.storage {
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    &:last-child {
+      margin-bottom: 0;
     }
   }
 
-  .stat-content {
-    flex: 1;
+  .resource-label {
+    font-size: 12px;
+    color: #909399;
+  }
 
-    .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: #303133;
-      line-height: 1.2;
-    }
+  .resource-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: #606266;
+  }
+}
 
-    .stat-label {
-      font-size: 14px;
-      color: #909399;
-      margin-top: 4px;
-    }
+/* VM配置 */
+.vm-config {
+  .config-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
 
-    .stat-today {
-      font-size: 12px;
-      color: #67c23a;
-      margin-top: 4px;
+    &:last-child {
+      margin-bottom: 0;
     }
+  }
+
+  .config-label {
+    font-size: 12px;
+    color: #909399;
+    margin-right: 4px;
+  }
+
+  .config-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: #606266;
+  }
+}
+
+/* 状态下拉 */
+.status-dropdown {
+  cursor: pointer;
+
+  .status-tag {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .dropdown-icon {
+    font-size: 12px;
   }
 }
 </style>

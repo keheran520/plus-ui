@@ -1,143 +1,179 @@
 <template>
-  <div class="p-2">
-    <!-- 统计概览卡片 -->
-    <el-row :gutter="20" class="mb-[10px]">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon total">
-              <el-icon :size="32"><Monitor /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalClusters }}</div>
-              <div class="stat-label">总集群数</div>
-              <div class="stat-today">在线 {{ overview.onlineClusters }}</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon nodes">
-              <el-icon :size="32"><Cpu /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalNodes }}</div>
-              <div class="stat-label">总节点数</div>
-              <div class="stat-today">在线 {{ overview.onlineNodes }}</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon cpu">
-              <el-icon :size="32"><Memo /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalCpuCores }}</div>
-              <div class="stat-label">总CPU核心数</div>
-              <div class="stat-today">内存 {{ overview.totalMemory }} GB</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon storage">
-              <el-icon :size="32"><Coin /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ overview.totalStorage }} GB</div>
-              <div class="stat-label">总存储容量</div>
-              <div class="stat-today">节点平均 {{ avgStoragePerNode }} GB</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="mb-[10px]">
-        <el-card shadow="hover">
-          <el-form ref="queryFormRef" :inline="true" :model="queryParams">
-            <el-form-item label="集群名称" prop="clusterName">
-              <el-input v-model="queryParams.clusterName" clearable placeholder="请输入集群名称" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="集群状态" prop="status">
-              <el-select v-model="queryParams.status" clearable placeholder="请选择集群状态">
-                <el-option label="正常" value="0" />
-                <el-option label="停用" value="1" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
+  <div class="cluster-container">
+    <!-- 顶部统计栏 -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <el-icon class="stat-icon total"><Monitor /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalClusters }}</span>
+          <span class="stat-label">总集群数</span>
+        </div>
       </div>
-    </transition>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon online"><CircleCheck /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.onlineClusters }}</span>
+          <span class="stat-label">在线集群</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon nodes"><Cpu /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalNodes }}</span>
+          <span class="stat-label">总节点数</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon cpu"><Memo /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalCpuCores }}</span>
+          <span class="stat-label">总CPU核心</span>
+        </div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <el-icon class="stat-icon memory"><Odometer /></el-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ overview.totalMemory }}</span>
+          <span class="stat-label">总内存(GB)</span>
+        </div>
+      </div>
+    </div>
 
-    <el-card shadow="never">
-      <template #header>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:cluster:add']" icon="Plus" plain type="primary" @click="handleAdd">新增</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:cluster:edit']" :disabled="single" icon="Edit" plain type="success" @click="handleUpdate()">修改</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:cluster:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()"
-              >删除</el-button
-            >
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['pve:cluster:export']" icon="Download" plain type="warning" @click="handleExport">导出</el-button>
-          </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-        </el-row>
-      </template>
+    <!-- 工具栏 -->
+    <div class="toolbar-container">
+      <div class="toolbar-main">
+        <!-- 左侧：状态筛选 -->
+        <div class="toolbar-section">
+          <el-radio-group v-model="queryParams.status" @change="handleQuery">
+            <el-radio-button label="">全部</el-radio-button>
+            <el-radio-button label="0">正常</el-radio-button>
+            <el-radio-button label="1">停用</el-radio-button>
+          </el-radio-group>
+        </div>
 
-      <el-table v-loading="loading" :data="clusterList" border @selection-change="handleSelectionChange">
-        <el-table-column align="center" type="selection" width="55" />
-        <el-table-column v-if="false" align="center" label="集群ID" prop="clusterId" />
-        <el-table-column :show-overflow-tooltip="true" align="center" label="集群名称" prop="clusterName" />
-        <el-table-column :show-overflow-tooltip="true" align="center" label="API令牌ID" prop="tokenId" />
-        <el-table-column align="center" label="集群状态" prop="status">
-          <template #default="scope">
-            <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
+        <!-- 中间：操作按钮 -->
+        <div class="toolbar-section">
+          <el-button v-hasPermi="['pve:cluster:add']" icon="Plus" type="primary" @click="handleAdd">新增集群</el-button>
+          <el-button v-hasPermi="['pve:cluster:remove']" icon="Delete" :disabled="multiple" @click="handleDelete()">删除</el-button>
+          <el-button v-hasPermi="['pve:cluster:export']" icon="Download" @click="handleExport">导出</el-button>
+        </div>
+
+        <!-- 右侧：搜索和刷新 -->
+        <div class="toolbar-section toolbar-right">
+          <el-input
+            v-model="queryParams.clusterName"
+            class="search-input"
+            clearable
+            placeholder="搜索集群名称"
+            prefix-icon="Search"
+            style="width: 200px"
+            @clear="handleQuery"
+            @keyup.enter="handleQuery"
+          />
+          <el-button icon="Refresh" @click="handleRefresh">刷新</el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 集群列表 -->
+    <div class="table-container">
+      <el-table v-loading="loading" :data="clusterList" border stripe @selection-change="handleSelectionChange">
+        <el-table-column align="center" fixed type="selection" width="40" />
+
+        <!-- 集群信息 -->
+        <el-table-column label="集群信息" min-width="250">
+          <template #default="{ row }">
+            <div class="cluster-info">
+              <div class="cluster-name-row">
+                <el-icon class="cluster-icon"><Monitor /></el-icon>
+                <span class="cluster-name">{{ row.clusterName }}</span>
+              </div>
+              <div class="cluster-meta">
+                <span class="meta-item">ID: {{ row.clusterId }}</span>
+                <span class="meta-divider">|</span>
+                <span class="meta-item">{{ row.ipAddress }}:{{ row.apiPort || 8006 }}</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column :show-overflow-tooltip="true" align="center" label="描述" prop="description" />
-        <el-table-column align="center" label="排序" prop="sort" width="80" />
-        <el-table-column align="center" class-name="small-padding fixed-width" fixed="right" label="操作" width="280">
-          <template #default="scope">
-            <el-tooltip content="测试连接" placement="top">
-              <el-button v-hasPermi="['pve:cluster:test']" icon="Connection" link type="success" @click="handleTestConnection(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="查看状态" placement="top">
-              <el-button v-hasPermi="['pve:cluster:query']" icon="View" link type="info" @click="handleViewStatus(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="同步信息" placement="top">
-              <el-button v-hasPermi="['pve:cluster:sync']" icon="Refresh" link type="warning" @click="handleSync(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="修改" placement="top">
-              <el-button v-hasPermi="['pve:cluster:edit']" icon="Edit" link type="primary" @click="handleUpdate(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <el-button v-hasPermi="['pve:cluster:remove']" icon="Delete" link type="danger" @click="handleDelete(scope.row)"></el-button>
-            </el-tooltip>
+
+        <!-- API令牌 -->
+        <el-table-column label="API令牌" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <div class="token-info">
+              <el-icon style="color: #909399; margin-right: 4px"><Key /></el-icon>
+              <span>{{ row.tokenId }}</span>
+            </div>
+          </template>
+        </el-table-column>
+
+        <!-- 节点信息 -->
+        <el-table-column label="节点信息" width="150" align="center">
+          <template #default="{ row }">
+            <div class="node-stats">
+              <div class="node-item">
+                <span class="node-label">总数:</span>
+                <span class="node-value">{{ row.nodeCount || 0 }}</span>
+              </div>
+              <div class="node-item">
+                <span class="node-label">在线:</span>
+                <span class="node-value online">{{ row.onlineNodeCount || 0 }}</span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <!-- 状态 -->
+        <el-table-column label="状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
+              <div class="status-dropdown">
+                <el-tag :type="row.status === '0' ? 'success' : 'info'" class="status-tag">
+                  {{ row.status === '0' ? '正常' : '停用' }}
+                  <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+                </el-tag>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="row.status === '1'" command="enable">启用</el-dropdown-item>
+                  <el-dropdown-item v-if="row.status === '0'" command="disable">停用</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+        </el-table-column>
+
+        <!-- 描述 -->
+        <el-table-column label="描述" min-width="180" prop="description" show-overflow-tooltip />
+
+        <!-- 操作列 -->
+        <el-table-column label="操作" width="120" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
+              <el-button link type="primary">
+                更多
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-hasPermi="['pve:cluster:test']" command="test">测试连接</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:cluster:query']" command="status">查看状态</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:cluster:sync']" command="sync">同步信息</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:cluster:edit']" command="edit" divided>修改</el-dropdown-item>
+                  <el-dropdown-item v-hasPermi="['pve:cluster:remove']" command="delete">删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
 
       <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
-    </el-card>
+    </div>
 
     <!-- 添加或修改PVE集群对话框 -->
     <el-dialog v-model="dialog.visible" :title="dialog.title" append-to-body width="600px">
@@ -220,14 +256,11 @@ import { addCluster, delCluster, getCluster, getClusterStatus, listCluster, sync
 import { ClusterForm, ClusterQuery, ClusterVO } from '@/api/pve/cluster/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
-const { sys_normal_disable } = toRefs<any>(proxy?.useDict('sys_normal_disable'));
 
 const clusterList = ref<ClusterVO[]>([]);
 const buttonLoading = ref(false);
 const loading = ref(true);
-const showSearch = ref(true);
 const ids = ref<Array<string | number>>([]);
-const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 
@@ -244,13 +277,6 @@ const overview = ref({
   totalStorage: 0
 });
 
-// 计算属性:节点平均存储
-const avgStoragePerNode = computed(() => {
-  if (overview.value.totalNodes === 0) return 0;
-  return Math.round(overview.value.totalStorage / overview.value.totalNodes);
-});
-
-const queryFormRef = ref<ElFormInstance>();
 const clusterFormRef = ref<ElFormInstance>();
 
 const dialog = reactive<DialogOption>({
@@ -317,6 +343,19 @@ const getList = async () => {
   loading.value = false;
 };
 
+/** 刷新 */
+const handleRefresh = () => {
+  queryParams.value = {
+    pageNum: 1,
+    pageSize: 10,
+    clusterName: undefined,
+    status: undefined,
+    params: {}
+  };
+  getList();
+  loadOverview();
+};
+
 /** 取消按钮 */
 const cancel = () => {
   reset();
@@ -335,16 +374,9 @@ const handleQuery = () => {
   getList();
 };
 
-/** 重置按钮操作 */
-const resetQuery = () => {
-  queryFormRef.value?.resetFields();
-  handleQuery();
-};
-
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: ClusterVO[]) => {
   ids.value = selection.map((item) => item.clusterId);
-  single.value = selection.length != 1;
   multiple.value = !selection.length;
 };
 
@@ -378,6 +410,7 @@ const submitForm = () => {
       proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();
+      await loadOverview();
     }
   });
 };
@@ -389,6 +422,7 @@ const handleDelete = async (row?: ClusterVO) => {
   await delCluster(_clusterIds);
   proxy?.$modal.msgSuccess('删除成功');
   await getList();
+  await loadOverview();
 };
 
 /** 导出按钮操作 */
@@ -441,10 +475,53 @@ const handleSync = async (row: ClusterVO) => {
     await syncClusterInfo(row.clusterId);
     proxy?.$modal.msgSuccess('同步成功');
     await getList();
+    await loadOverview();
   } catch (error) {
     // 用户取消或同步失败
   } finally {
     loading.value = false;
+  }
+};
+
+/** 状态命令处理 */
+const handleStatusCommand = (command: string, row: ClusterVO) => {
+  const newStatus = command === 'enable' ? '0' : '1';
+  const text = command === 'enable' ? '启用' : '停用';
+
+  proxy?.$modal
+    .confirm('确认要"' + text + '""' + row.clusterName + '"集群吗？')
+    .then(() => {
+      row.status = newStatus;
+      return updateCluster(row);
+    })
+    .then(() => {
+      proxy?.$modal.msgSuccess(text + '成功');
+      getList();
+      loadOverview();
+    })
+    .catch(() => {
+      getList();
+    });
+};
+
+/** 操作命令处理 */
+const handleCommand = (command: string, row: ClusterVO) => {
+  switch (command) {
+    case 'test':
+      handleTestConnection(row);
+      break;
+    case 'status':
+      handleViewStatus(row);
+      break;
+    case 'sync':
+      handleSync(row);
+      break;
+    case 'edit':
+      handleUpdate(row);
+      break;
+    case 'delete':
+      handleDelete(row);
+      break;
   }
 };
 
@@ -463,59 +540,194 @@ onMounted(() => {
 
 
 <style lang="scss" scoped>
-.stat-card {
+.cluster-container {
+  padding: 16px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 84px);
+}
+
+/* 统计栏样式 */
+.stats-bar {
   display: flex;
   align-items: center;
-  padding: 10px 0;
+  background: white;
+  border-radius: 8px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
 
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.stat-icon {
+  font-size: 32px;
+  &.total {
+    color: #409eff;
+  }
+  &.online {
+    color: #67c23a;
+  }
+  &.nodes {
+    color: #e6a23c;
+  }
+  &.cpu {
+    color: #f56c6c;
+  }
+  &.memory {
+    color: #909399;
+  }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: #e4e7ed;
+  margin: 0 16px;
+}
+
+/* 工具栏样式 */
+.toolbar-container {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-right {
+  margin-left: auto;
+}
+
+/* 表格容器 */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 集群信息 */
+.cluster-info {
+  .cluster-name-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .cluster-icon {
+    font-size: 18px;
+    color: #409eff;
+    margin-right: 8px;
+  }
+
+  .cluster-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+  }
+
+  .cluster-meta {
+    font-size: 12px;
+    color: #909399;
+    padding-left: 26px;
+  }
+
+  .meta-item {
+    margin-right: 4px;
+  }
+
+  .meta-divider {
+    margin: 0 4px;
+  }
+}
+
+/* 令牌信息 */
+.token-info {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #606266;
+}
+
+/* 节点统计 */
+.node-stats {
+  .node-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 16px;
-    color: white;
+    margin-bottom: 4px;
 
-    &.total {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    &.nodes {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    &.cpu {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    &.storage {
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    &:last-child {
+      margin-bottom: 0;
     }
   }
 
-  .stat-content {
-    flex: 1;
+  .node-label {
+    font-size: 12px;
+    color: #909399;
+    margin-right: 4px;
+  }
 
-    .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: #303133;
-      line-height: 1.2;
-    }
+  .node-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #606266;
 
-    .stat-label {
-      font-size: 14px;
-      color: #909399;
-      margin-top: 4px;
-    }
-
-    .stat-today {
-      font-size: 12px;
+    &.online {
       color: #67c23a;
-      margin-top: 4px;
     }
+  }
+}
+
+/* 状态下拉 */
+.status-dropdown {
+  cursor: pointer;
+
+  .status-tag {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .dropdown-icon {
+    font-size: 12px;
   }
 }
 </style>

@@ -176,6 +176,32 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '会员详情', icon: 'user', activeMenu: '/member/member' }
       }
     ]
+  },
+  {
+    path: '/pve',
+    component: Layout,
+    hidden: true,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: 'virtualMachine/console',
+        component: () => import('@/views/pve/virtualMachine/console.vue'),
+        name: 'VirtualMachineConsole',
+        meta: { title: '虚拟机控制台', icon: 'monitor', activeMenu: '/pve/virtualMachine' }
+      },
+      {
+        path: 'virtualMachine/detail',
+        component: () => import('@/views/pve/virtualMachine/detail.vue'),
+        name: 'VirtualMachineDetail',
+        meta: { title: '虚拟机详情', icon: 'monitor', activeMenu: '/pve/virtualMachine' }
+      },
+      {
+        path: 'ikuaiConnection',
+        component: () => import('@/views/pve/ikuaiConnection/index.vue'),
+        name: 'IkuaiConnection',
+        meta: { title: 'iKuai连接管理', icon: 'link', activeMenu: '/infrastructure/ikuaiConnection' }
+      }
+    ]
   }
 ];
 
