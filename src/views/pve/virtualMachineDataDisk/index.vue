@@ -29,16 +29,16 @@
       <div class="stat-item">
         <el-icon class="stat-icon capacity"><Odometer /></el-icon>
         <div class="stat-info">
-          <span class="stat-value">{{ overview.totalCapacity }}</span>
-          <span class="stat-label">总容量(GB)</span>
+          <span class="stat-value">{{ formatBytes(overview.totalCapacity) }}</span>
+          <span class="stat-label">总容量</span>
         </div>
       </div>
       <div class="stat-divider"></div>
       <div class="stat-item">
         <el-icon class="stat-icon average"><DataAnalysis /></el-icon>
         <div class="stat-info">
-          <span class="stat-value">{{ overview.averageSize }}</span>
-          <span class="stat-label">平均大小(GB)</span>
+          <span class="stat-value">{{ formatBytes(overview.averageSize) }}</span>
+          <span class="stat-label">平均大小</span>
         </div>
       </div>
     </div>
@@ -119,7 +119,7 @@
         <!-- 容量 -->
         <el-table-column label="容量" width="120" align="center">
           <template #default="{ row }">
-            <span class="capacity-value">{{ row.diskSize }} GB</span>
+            <span class="capacity-value">{{ formatBytes(row.diskSize) }}</span>
           </template>
         </el-table-column>
 
@@ -301,6 +301,17 @@ const rules = ref({
 const resizeRules = ref({
   newSize: [{ required: true, message: '新大小不能为空', trigger: 'blur' }]
 });
+
+/** 格式化字节为易读格式 */
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes === 0) return '0 B';
+  
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
 
 /** 计算统计数据 */
 function calculateOverview() {

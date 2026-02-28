@@ -60,7 +60,7 @@
         <!-- 中间：操作按钮 -->
         <div class="toolbar-section">
           <el-button v-hasPermi="['pve:storage:add']" icon="Plus" type="primary" @click="handleAdd">新增存储</el-button>
-          <el-button v-hasPermi="['pve:storage:remove']" icon="Delete" :disabled="multiple" @click="handleDelete()">删除</el-button>
+          <el-button v-hasPermi="['pve:storage:remove']" :disabled="multiple" icon="Delete" @click="handleDelete()">删除</el-button>
           <el-button v-hasPermi="['pve:storage:export']" icon="Download" @click="handleExport">导出</el-button>
         </div>
 
@@ -108,7 +108,7 @@
         </el-table-column>
 
         <!-- 存储类型 -->
-        <el-table-column label="类型" width="100" align="center">
+        <el-table-column align="center" label="类型" width="100">
           <template #default="{ row }">
             <el-tag v-if="row.storageType === 'dir'" type="primary">目录</el-tag>
             <el-tag v-else-if="row.storageType === 'lvm'" type="success">LVM</el-tag>
@@ -140,7 +140,7 @@
         </el-table-column>
 
         <!-- 容量信息 -->
-        <el-table-column label="容量信息" width="200" align="center">
+        <el-table-column align="center" label="容量信息" width="200">
           <template #default="{ row }">
             <div class="capacity-info">
               <div class="capacity-item">
@@ -160,7 +160,7 @@
         </el-table-column>
 
         <!-- 内容类型 -->
-        <el-table-column label="内容类型" width="150" show-overflow-tooltip>
+        <el-table-column label="内容类型" show-overflow-tooltip width="150">
           <template #default="{ row }">
             <span v-if="row.contentTypes">{{ row.contentTypes }}</span>
             <span v-else style="color: #999">-</span>
@@ -168,7 +168,7 @@
         </el-table-column>
 
         <!-- 状态 -->
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column align="center" label="状态" width="100">
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
               <div class="status-dropdown">
@@ -188,7 +188,7 @@
         </el-table-column>
 
         <!-- 操作列 -->
-        <el-table-column label="操作" width="120" align="center" fixed="right">
+        <el-table-column align="center" fixed="right" label="操作" width="120">
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
               <el-button link type="primary">
@@ -206,79 +206,130 @@
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
     </div>
     <!-- 添加或修改PVE存储对话框 -->
-    <el-dialog :title="dialog.title" v-model="dialog.visible" width="500px" append-to-body>
-      <el-form ref="storageFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="所属节点ID" prop="nodeId">
-          <el-input v-model="form.nodeId" placeholder="请输入所属节点ID" />
+    <el-dialog v-model="dialog.visible" :title="dialog.title" append-to-body width="700px" @close="cancel">
+      <el-form ref="storageFormRef" :model="form" :rules="rules" label-width="120px">
+        <!-- 存储类型 -->
+        <el-form-item label="存储类型" prop="storageType">
+          <el-select v-model="form.storageType" :disabled="!!form.storageId" placeholder="请选择存储类型" style="width: 100%" @change="handleStorageTypeChange">
+            <el-option-group label="本地存储">
+              <el-option label="Directory (目录)" value="dir" />
+              <el-option label="LVM (逻辑卷管理)" value="lvm" />
+              <el-option label="LVM-Thin (精简配置)" value="lvmthin" />
+              <el-option label="ZFS" value="zfspool" />
+            </el-option-group>
+            <el-option-group label="网络存储">
+              <el-option label="NFS (网络文件系统)" value="nfs" />
+              <el-option label="CIFS/SMB (Windows共享)" value="cifs" />
+              <el-option label="iSCSI" value="iscsi" />
+              <el-option label="Ceph RBD" value="rbd" />
+              <el-option label="GlusterFS" value="glusterfs" />
+            </el-option-group>
+          </el-select>
         </el-form-item>
+
+        <!-- PVE存储标识 -->
+        <el-form-item label="存储ID" prop="pveStorageId">
+          <el-input v-model="form.pveStorageId" :disabled="!!form.storageId" maxlength="50" placeholder="例如: local-lvm" />
+          <div class="form-tip">存储的唯一标识符，只能包含字母、数字、下划线和中划线</div>
+        </el-form-item>
+
+        <!-- 存储名称 -->
         <el-form-item label="存储名称" prop="storageName">
-          <el-input v-model="form.storageName" placeholder="请输入存储名称" />
+          <el-input v-model="form.storageName" maxlength="100" placeholder="请输入存储名称" />
         </el-form-item>
-        <el-form-item label="PVE存储标识" prop="pveStorageId">
-          <el-input v-model="form.pveStorageId" placeholder="请输入PVE存储标识" />
+
+        <!-- Directory 特定配置 -->
+        <template v-if="form.storageType === 'dir'">
+          <el-form-item label="目录路径" prop="path">
+            <el-input v-model="form.path" placeholder="/mnt/storage" />
+          </el-form-item>
+        </template>
+
+        <!-- NFS 特定配置 -->
+        <template v-if="form.storageType === 'nfs'">
+          <el-form-item label="服务器地址" prop="server">
+            <el-input v-model="form.server" placeholder="192.168.1.100" />
+          </el-form-item>
+          <el-form-item label="导出路径" prop="export">
+            <el-input v-model="form.export" placeholder="/export/storage" />
+          </el-form-item>
+        </template>
+
+        <!-- CIFS 特定配置 -->
+        <template v-if="form.storageType === 'cifs'">
+          <el-form-item label="服务器地址" prop="server">
+            <el-input v-model="form.server" placeholder="192.168.1.100" />
+            <div class="form-tip">Windows共享服务器的IP地址或主机名</div>
+          </el-form-item>
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="form.username" placeholder="administrator" />
+            <div class="form-tip">访问共享的用户名，留空则尝试匿名访问</div>
+          </el-form-item>
+          <el-form-item label="密码" prop="password">
+            <el-input v-model="form.password" placeholder="请输入密码" show-password type="password" />
+            <div class="form-tip">访问共享的密码，留空则尝试无密码访问</div>
+          </el-form-item>
+          <el-form-item label="共享名" prop="share">
+            <el-input v-model="form.share" placeholder="例如: share" />
+            <div class="form-tip">Windows共享文件夹名称</div>
+          </el-form-item>
+        </template>
+
+        <!-- iSCSI 特定配置 -->
+        <template v-if="form.storageType === 'iscsi'">
+          <el-form-item label="门户地址" prop="portal">
+            <el-input v-model="form.portal" placeholder="192.168.1.100:3260" />
+          </el-form-item>
+          <el-form-item label="目标名称" prop="target">
+            <el-input v-model="form.target" placeholder="iqn.2023-01.com.example:storage" />
+          </el-form-item>
+        </template>
+
+        <!-- Ceph RBD 特定配置 -->
+        <template v-if="form.storageType === 'rbd'">
+          <el-form-item label="池名称" prop="pool">
+            <el-input v-model="form.pool" placeholder="rbd" />
+          </el-form-item>
+        </template>
+
+        <!-- 内容类型 -->
+        <el-form-item label="内容类型" prop="contentTypes">
+          <el-checkbox-group v-model="contentTypesList">
+            <el-checkbox label="images">磁盘镜像</el-checkbox>
+            <el-checkbox label="rootdir">容器根目录</el-checkbox>
+            <el-checkbox label="vztmpl">容器模板</el-checkbox>
+            <el-checkbox label="iso">ISO镜像</el-checkbox>
+            <el-checkbox label="backup">备份文件</el-checkbox>
+            <el-checkbox label="snippets">代码片段</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
-        <el-form-item label="路径" prop="path">
-            <el-input v-model="form.path" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="服务器地址" prop="server">
-          <el-input v-model="form.server" placeholder="请输入服务器地址" />
-        </el-form-item>
-        <el-form-item label="导出路径(NFS)" prop="export">
-            <el-input v-model="form.export" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-        <el-form-item label="共享名(CIFS)" prop="share">
-          <el-input v-model="form.share" placeholder="请输入共享名(CIFS)" />
-        </el-form-item>
-        <el-form-item label="用户名(CIFS/NFS等需要认证的存储)" prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名(CIFS/NFS等需要认证的存储)" />
-        </el-form-item>
-        <el-form-item label="密码(加密)" prop="password">
-          <el-input v-model="form.password" placeholder="请输入密码(加密)" />
-        </el-form-item>
-        <el-form-item label="门户地址(iSCSI)" prop="portal">
-          <el-input v-model="form.portal" placeholder="请输入门户地址(iSCSI)" />
-        </el-form-item>
-        <el-form-item label="目标名称(iSCSI)" prop="target">
-          <el-input v-model="form.target" placeholder="请输入目标名称(iSCSI)" />
-        </el-form-item>
-        <el-form-item label="池名称(Ceph RBD)" prop="pool">
-          <el-input v-model="form.pool" placeholder="请输入池名称(Ceph RBD)" />
-        </el-form-item>
-        <el-form-item label="内容类型(逗号分隔: images,iso,backup等)" prop="contentTypes">
-          <el-input v-model="form.contentTypes" placeholder="请输入内容类型(逗号分隔: images,iso,backup等)" />
-        </el-form-item>
-        <el-form-item label="是否启用(0:禁用 1:启用)" prop="enabled">
-          <el-input v-model="form.enabled" placeholder="请输入是否启用(0:禁用 1:启用)" />
-        </el-form-item>
-        <el-form-item label="总容量(字节)" prop="totalSize">
-          <el-input v-model="form.totalSize" placeholder="请输入总容量(字节)" />
-        </el-form-item>
-        <el-form-item label="已使用(字节)" prop="usedSize">
-          <el-input v-model="form.usedSize" placeholder="请输入已使用(字节)" />
-        </el-form-item>
-        <el-form-item label="可用容量(字节)" prop="availableSize">
-          <el-input v-model="form.availableSize" placeholder="请输入可用容量(字节)" />
-        </el-form-item>
+
+        <!-- 描述 -->
         <el-form-item label="描述" prop="description">
-            <el-input v-model="form.description" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.description" :rows="3" maxlength="500" placeholder="请输入描述" type="textarea" />
+        </el-form-item>
+
+        <!-- 启用状态 -->
+        <el-form-item label="启用" prop="enabled">
+          <el-switch v-model="enabledSwitch" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
           <el-button @click="cancel">取 消</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
         </div>
       </template>
     </el-dialog>
   </div>
 </template>
 
-<script setup name="Storage" lang="ts">
-import { listStorage, getStorage, delStorage, addStorage, updateStorage } from '@/api/pve/storage';
-import { StorageVO, StorageQuery, StorageForm } from '@/api/pve/storage/types';
+<script lang="ts" name="Storage" setup>
+import { addStorage, delStorage, getStorage, listStorage, updateStorage } from '@/api/pve/storage';
+import { StorageForm, StorageQuery, StorageVO } from '@/api/pve/storage/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -311,7 +362,7 @@ const initFormData: StorageForm = {
   nodeId: undefined,
   storageName: undefined,
   pveStorageId: undefined,
-  storageType: undefined,
+  storageType: 'dir',
   path: undefined,
   server: undefined,
   export: undefined,
@@ -326,17 +377,33 @@ const initFormData: StorageForm = {
   totalSize: undefined,
   usedSize: undefined,
   availableSize: undefined,
-  description: undefined,
-}
+  description: undefined
+};
+
+// 内容类型列表（用于checkbox）
+const contentTypesList = ref<string[]>(['images']);
+// 启用开关（用于switch）
+const enabledSwitch = ref(true);
+
+// 监听内容类型列表变化，更新form.contentTypes
+watch(contentTypesList, (newVal) => {
+  form.value.contentTypes = newVal.join(',');
+});
+
+// 监听启用开关变化，更新form.enabled
+watch(enabledSwitch, (newVal) => {
+  form.value.enabled = newVal ? '1' : '0';
+});
+
 const data = reactive<PageData<StorageForm, StorageQuery>>({
-  form: {...initFormData},
+  form: { ...initFormData },
   queryParams: {
     pageNum: 1,
     pageSize: 10,
     nodeId: undefined,
     storageName: undefined,
     pveStorageId: undefined,
-    storageType: undefined,
+    storageType: '',
     path: undefined,
     server: undefined,
     export: undefined,
@@ -351,26 +418,23 @@ const data = reactive<PageData<StorageForm, StorageQuery>>({
     totalSize: undefined,
     usedSize: undefined,
     availableSize: undefined,
-    description: undefined,
-    params: {
-    }
+    description: undefined
   },
   rules: {
-    storageId: [
-      { required: true, message: "存储ID不能为空", trigger: "blur" }
-    ],
-    nodeId: [
-      { required: true, message: "所属节点ID不能为空", trigger: "blur" }
-    ],
-    storageName: [
-      { required: true, message: "存储名称不能为空", trigger: "blur" }
-    ],
+    storageType: [{ required: true, message: '存储类型不能为空', trigger: 'change' }],
+    storageName: [{ required: true, message: '存储名称不能为空', trigger: 'blur' }],
     pveStorageId: [
-      { required: true, message: "PVE存储标识不能为空", trigger: "blur" }
+      { required: true, message: 'PVE存储标识不能为空', trigger: 'blur' },
+      { pattern: /^[a-zA-Z0-9_-]+$/, message: '只能包含字母、数字、下划线和中划线', trigger: 'blur' }
     ],
-    storageType: [
-      { required: true, message: "存储类型(dir/lvm/lvmthin/zfspool/nfs/cifs/iscsi/rbd/glusterfs)不能为空", trigger: "change" }
-    ],
+    path: [{ required: true, message: '目录路径不能为空', trigger: 'blur' }],
+    server: [{ required: true, message: '服务器地址不能为空', trigger: 'blur' }],
+    export: [{ required: true, message: '导出路径不能为空', trigger: 'blur' }],
+    share: [{ required: true, message: '共享名不能为空', trigger: 'blur' }],
+    portal: [{ required: true, message: '门户地址不能为空', trigger: 'blur' }],
+    target: [{ required: true, message: '目标名称不能为空', trigger: 'blur' }],
+    pool: [{ required: true, message: '池名称不能为空', trigger: 'blur' }],
+    contentTypes: [{ required: true, message: '请选择内容类型', trigger: 'change' }]
   }
 });
 
@@ -391,7 +455,7 @@ function calculateOverview() {
   const online = storageList.value.filter((s) => s.enabled === '1').length;
   const totalCap = storageList.value.reduce((sum, s) => sum + (s.totalSize || 0), 0);
   const usedCap = storageList.value.reduce((sum, s) => sum + (s.usedSize || 0), 0);
-  
+
   overview.value = {
     totalStorage: total,
     onlineStorage: online,
@@ -410,7 +474,7 @@ const getList = async () => {
   total.value = res.total;
   calculateOverview();
   loading.value = false;
-}
+};
 
 /** 刷新 */
 const handleRefresh = () => {
@@ -431,42 +495,66 @@ const handleRefresh = () => {
 const cancel = () => {
   reset();
   dialog.visible = false;
-}
+};
 
 /** 表单重置 */
 const reset = () => {
-  form.value = {...initFormData};
+  form.value = { ...initFormData };
+  contentTypesList.value = ['images'];
+  enabledSwitch.value = true;
   storageFormRef.value?.resetFields();
-}
+};
+
+/** 存储类型变化时，重置相关字段 */
+const handleStorageTypeChange = () => {
+  form.value.path = undefined;
+  form.value.server = undefined;
+  form.value.export = undefined;
+  form.value.share = undefined;
+  form.value.username = undefined;
+  form.value.password = undefined;
+  form.value.portal = undefined;
+  form.value.target = undefined;
+  form.value.pool = undefined;
+};
 
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
   getList();
-}
+};
 
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: StorageVO[]) => {
-  ids.value = selection.map(item => item.storageId);
+  ids.value = selection.map((item) => item.storageId);
   multiple.value = !selection.length;
-}
+};
 
 /** 新增按钮操作 */
 const handleAdd = () => {
   reset();
   dialog.visible = true;
-  dialog.title = "添加PVE存储";
-}
+  dialog.title = '添加PVE存储';
+};
 
 /** 修改按钮操作 */
 const handleUpdate = async (row?: StorageVO) => {
   reset();
-  const _storageId = row?.storageId || ids.value[0]
+  const _storageId = row?.storageId || ids.value[0];
   const res = await getStorage(_storageId);
   Object.assign(form.value, res.data);
+  
+  // 设置内容类型列表
+  if (res.data.contentTypes) {
+    contentTypesList.value = res.data.contentTypes.split(',');
+  }
+  
+  // 设置启用开关
+  enabledSwitch.value = res.data.enabled === '1';
+  
   dialog.visible = true;
-  dialog.title = "修改PVE存储";
-}
+  dialog.title = '修改PVE存储';
+};
 
 /** 提交按钮 */
 const submitForm = () => {
@@ -474,25 +562,25 @@ const submitForm = () => {
     if (valid) {
       buttonLoading.value = true;
       if (form.value.storageId) {
-        await updateStorage(form.value).finally(() =>  buttonLoading.value = false);
+        await updateStorage(form.value).finally(() => (buttonLoading.value = false));
       } else {
-        await addStorage(form.value).finally(() =>  buttonLoading.value = false);
+        await addStorage(form.value).finally(() => (buttonLoading.value = false));
       }
-      proxy?.$modal.msgSuccess("操作成功");
+      proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();
     }
   });
-}
+};
 
 /** 删除按钮操作 */
 const handleDelete = async (row?: StorageVO) => {
   const _storageIds = row?.storageId || ids.value;
-  await proxy?.$modal.confirm('是否确认删除PVE存储编号为"' + _storageIds + '"的数据项？').finally(() => loading.value = false);
+  await proxy?.$modal.confirm('是否确认删除PVE存储编号为"' + _storageIds + '"的数据项？').finally(() => (loading.value = false));
   await delStorage(_storageIds);
-  proxy?.$modal.msgSuccess("删除成功");
+  proxy?.$modal.msgSuccess('删除成功');
   await getList();
-}
+};
 
 /** 状态命令处理 */
 const handleStatusCommand = (command: string, row: StorageVO) => {
@@ -528,17 +616,21 @@ const handleCommand = (command: string, row: StorageVO) => {
 
 /** 导出按钮操作 */
 const handleExport = () => {
-  proxy?.download('pve/storage/export', {
-    ...queryParams.value
-  }, `storage_${new Date().getTime()}.xlsx`)
-}
+  proxy?.download(
+    'pve/storage/export',
+    {
+      ...queryParams.value
+    },
+    `storage_${new Date().getTime()}.xlsx`
+  );
+};
 
 onMounted(() => {
   getList();
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .storage-container {
   padding: 16px;
   background: #f5f7fa;
@@ -739,5 +831,13 @@ onMounted(() => {
   .dropdown-icon {
     font-size: 12px;
   }
+}
+
+/* 表单提示 */
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+  line-height: 1.5;
 }
 </style>

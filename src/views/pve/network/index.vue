@@ -185,26 +185,28 @@
     </div>
 
     <!-- 添加或修改对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" append-to-body width="800px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" append-to-body width="800px" @close="cancel">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-        <el-row>
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="接口名称" prop="iface">
-              <el-input v-model="form.iface" placeholder="请输入接口名称" />
+              <el-input v-model="form.iface" :disabled="!!form.networkId" placeholder="例如: vmbr0" />
+              <div class="form-tip">网络接口的唯一标识符，不能与现有接口重复</div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="网络类型" prop="type">
               <el-select v-model="form.type" placeholder="请选择网络类型" style="width: 100%">
-                <el-option label="桥接" value="bridge" />
-                <el-option label="绑定" value="bond" />
-                <el-option label="VLAN" value="vlan" />
+                <el-option label="Linux Bridge（桥接）" value="bridge" />
+                <el-option label="Bond（绑定）" value="bond" />
+                <el-option label="VLAN（虚拟局域网）" value="vlan" />
                 <el-option label="OVS" value="OVS" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="激活状态" prop="active">
               <el-radio-group v-model="form.active">
@@ -222,34 +224,118 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+
+        <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="IP地址" prop="address">
-              <el-input v-model="form.address" placeholder="请输入IP地址" />
+            <el-form-item label="IP地址/CIDR" prop="address">
+              <el-input v-model="form.address" placeholder="例如: 192.168.1.100/24" />
+              <div class="form-tip">IPv4地址和子网掩码，格式：IP/掩码位数</div>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="子网掩码" prop="netmask">
-              <el-input v-model="form.netmask" placeholder="请输入子网掩码" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
           <el-col :span="12">
             <el-form-item label="网关" prop="gateway">
-              <el-input v-model="form.gateway" placeholder="请输入网关" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="MTU" prop="mtu">
-              <el-input-number v-model="form.mtu" :min="1" :max="9000" placeholder="请输入MTU" style="width: 100%" />
+              <el-input v-model="form.gateway" placeholder="例如: 192.168.1.1" />
+              <div class="form-tip">默认网关地址，用于访问外部网络</div>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
+
+        <el-row v-if="form.address && !form.address.includes('/')" :gutter="16">
           <el-col :span="12">
-            <el-form-item label="CIDR" prop="cidr">
-              <el-input v-model="form.cidr" placeholder="请输入CIDR" />
+            <el-form-item label="子网掩码" prop="netmask">
+              <el-input v-model="form.netmask" placeholder="例如: 255.255.255.0" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="IPv6地址/CIDR" prop="address6">
+              <el-input v-model="form.address6" placeholder="例如: 2001:db8::1/64" />
+              <div class="form-tip">IPv6地址和前缀长度</div>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="IPv6网关" prop="gateway6">
+              <el-input v-model="form.gateway6" placeholder="例如: 2001:db8::1" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- Bridge 特定配置 -->
+        <template v-if="form.type === 'bridge'">
+          <el-form-item label="桥接端口" prop="bridgePorts">
+            <el-input v-model="form.bridgePorts" placeholder="例如: eno1" />
+            <div class="form-tip">要桥接的物理网卡接口，多个接口用空格分隔</div>
+          </el-form-item>
+        </template>
+
+        <!-- Bond 特定配置 -->
+        <template v-if="form.type === 'bond'">
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item label="从属接口" prop="slaves">
+                <el-input v-model="form.slaves" placeholder="例如: eno1 eno2" />
+                <div class="form-tip">参与绑定的物理网卡，空格分隔（必填）</div>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="Bond模式" prop="bondMode">
+                <el-select v-model="form.bondMode" placeholder="请选择Bond模式" style="width: 100%">
+                  <el-option label="balance-rr（轮询，默认）" value="balance-rr" />
+                  <el-option label="active-backup（主备模式）" value="active-backup" />
+                  <el-option label="balance-xor（异或策略）" value="balance-xor" />
+                  <el-option label="broadcast（广播策略）" value="broadcast" />
+                  <el-option label="802.3ad（LACP动态聚合）" value="802.3ad" />
+                  <el-option label="balance-tlb（传输负载均衡）" value="balance-tlb" />
+                  <el-option label="balance-alb（自适应负载均衡）" value="balance-alb" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row v-if="['balance-xor', '802.3ad', 'balance-tlb', 'balance-alb'].includes(form.bondMode)" :gutter="16">
+            <el-col :span="12">
+              <el-form-item label="Hash策略" prop="bondXmitHashPolicy">
+                <el-select v-model="form.bondXmitHashPolicy" placeholder="请选择Hash策略" style="width: 100%">
+                  <el-option label="layer2（基于MAC地址）" value="layer2" />
+                  <el-option label="layer2+3（基于MAC和IP）" value="layer2+3" />
+                  <el-option label="layer3+4（基于IP和端口）" value="layer3+4" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="主接口" prop="bondPrimary">
+                <el-input v-model="form.bondPrimary" placeholder="例如: eno1" />
+                <div class="form-tip">主备模式下的主接口</div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </template>
+
+        <!-- VLAN 特定配置 -->
+        <template v-if="form.type === 'vlan'">
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item label="VLAN ID" prop="vlanId">
+                <el-input-number v-model="form.vlanId" :max="4094" :min="1" placeholder="例如: 100" style="width: 100%" />
+                <div class="form-tip">VLAN标识符，范围1-4094</div>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="VLAN原始设备" prop="vlanRawDevice">
+                <el-input v-model="form.vlanRawDevice" placeholder="例如: eno1 或 vmbr0" />
+                <div class="form-tip">VLAN所基于的物理接口或Bridge接口</div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </template>
+
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="MTU" prop="mtu">
+              <el-input-number v-model="form.mtu" :max="65535" :min="68" placeholder="默认: 1500" style="width: 100%" />
+              <div class="form-tip">最大传输单元，默认1500</div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -261,14 +347,16 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <el-form-item label="注释" prop="comments">
-          <el-input v-model="form.comments" placeholder="请输入注释" type="textarea" />
+          <el-input v-model="form.comments" :rows="3" placeholder="例如：管理网络、虚拟机网络等" type="textarea" />
+          <div class="form-tip">接口的描述信息，方便识别用途</div>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
           <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm">确 定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -311,7 +399,11 @@ const form = ref<PveNetworkForm>({});
 
 const rules = {
   iface: [{ required: true, message: '接口名称不能为空', trigger: 'blur' }],
-  type: [{ required: true, message: '网络类型不能为空', trigger: 'change' }]
+  type: [{ required: true, message: '网络类型不能为空', trigger: 'change' }],
+  slaves: [{ required: true, message: 'Bond类型必须配置从属接口', trigger: 'blur' }],
+  bondMode: [{ required: true, message: 'Bond类型必须选择Bond模式', trigger: 'change' }],
+  vlanId: [{ required: true, message: 'VLAN类型必须配置VLAN ID', trigger: 'blur' }],
+  vlanRawDevice: [{ required: true, message: 'VLAN类型必须配置原始设备', trigger: 'blur' }]
 };
 
 /** 计算统计概览 */
@@ -400,6 +492,27 @@ function handleUpdate(row: PveNetworkVO) {
 function submitForm() {
   proxy.$refs['formRef'].validate((valid: boolean) => {
     if (valid) {
+      // 根据类型校验必填字段
+      if (form.value.type === 'bond') {
+        if (!form.value.slaves || form.value.slaves.trim() === '') {
+          proxy.$modal.msgError('Bond类型必须配置从属接口');
+          return;
+        }
+        if (!form.value.bondMode || form.value.bondMode.trim() === '') {
+          proxy.$modal.msgError('Bond类型必须选择Bond模式');
+          return;
+        }
+      } else if (form.value.type === 'vlan') {
+        if (!form.value.vlanId) {
+          proxy.$modal.msgError('VLAN类型必须配置VLAN ID');
+          return;
+        }
+        if (!form.value.vlanRawDevice || form.value.vlanRawDevice.trim() === '') {
+          proxy.$modal.msgError('VLAN类型必须配置原始设备');
+          return;
+        }
+      }
+
       if (form.value.networkId) {
         updateNetwork(form.value).then(() => {
           proxy.$modal.msgSuccess('修改成功');
@@ -649,5 +762,13 @@ getList();
     color: #606266;
     font-family: 'Courier New', monospace;
   }
+}
+
+/* 表单提示 */
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+  line-height: 1.5;
 }
 </style>

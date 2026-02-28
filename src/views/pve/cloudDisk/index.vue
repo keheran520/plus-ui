@@ -29,8 +29,8 @@
       <div class="stat-item">
         <el-icon class="stat-icon capacity"><Odometer /></el-icon>
         <div class="stat-info">
-          <span class="stat-value">{{ overview.totalCapacity }}</span>
-          <span class="stat-label">总容量(GB)</span>
+          <span class="stat-value">{{ formatBytes(overview.totalCapacity) }}</span>
+          <span class="stat-label">总容量</span>
         </div>
       </div>
       <div class="stat-divider"></div>
@@ -118,7 +118,7 @@
         <!-- 容量 -->
         <el-table-column label="容量" width="120" align="center">
           <template #default="{ row }">
-            <span class="capacity-value">{{ row.size }} GB</span>
+            <span class="capacity-value">{{ formatBytes(row.size) }}</span>
           </template>
         </el-table-column>
 
@@ -283,6 +283,17 @@ const rules = ref({
   diskFormat: [{ required: true, message: '磁盘格式不能为空', trigger: 'change' }],
   busType: [{ required: true, message: '总线类型不能为空', trigger: 'change' }]
 });
+
+/** 格式化字节为易读格式 */
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes === 0) return '0 B';
+  
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
 
 /** 获取统计概览 */
 function loadOverview() {

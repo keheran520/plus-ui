@@ -58,7 +58,7 @@
         <!-- 中间：操作按钮 -->
         <div class="toolbar-section">
           <el-button v-hasPermi="['pve:node:add']" icon="Plus" type="primary" @click="handleAdd">新增节点</el-button>
-          <el-button v-hasPermi="['pve:node:remove']" icon="Delete" :disabled="multiple" @click="handleDelete()">删除</el-button>
+          <el-button v-hasPermi="['pve:node:remove']" :disabled="multiple" icon="Delete" @click="handleDelete()">删除</el-button>
           <el-button v-hasPermi="['pve:node:export']" icon="Download" @click="handleExport">导出</el-button>
         </div>
 
@@ -94,7 +94,7 @@
               <div class="node-name-row">
                 <el-icon class="node-icon"><Monitor /></el-icon>
                 <span class="node-name">{{ row.nodeName }}</span>
-                <el-tag v-if="row.nodeType === 'master'" type="danger" size="small" style="margin-left: 8px">主节点</el-tag>
+                <el-tag v-if="row.nodeType === 'master'" size="small" style="margin-left: 8px" type="danger">主节点</el-tag>
               </div>
               <div class="node-meta">
                 <span class="meta-item">{{ row.clusterName || '-' }}</span>
@@ -106,7 +106,7 @@
         </el-table-column>
 
         <!-- 资源配置 -->
-        <el-table-column label="资源配置" width="200" align="center">
+        <el-table-column align="center" label="资源配置" width="200">
           <template #default="{ row }">
             <div class="resource-info">
               <div class="resource-item">
@@ -129,7 +129,7 @@
         </el-table-column>
 
         <!-- VM配置 -->
-        <el-table-column label="VM配置" width="150" align="center">
+        <el-table-column align="center" label="VM配置" width="150">
           <template #default="{ row }">
             <div class="vm-config">
               <div class="config-item">
@@ -145,7 +145,7 @@
         </el-table-column>
 
         <!-- 状态 -->
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column align="center" label="状态" width="100">
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
               <div class="status-dropdown">
@@ -168,7 +168,7 @@
         <el-table-column label="描述" min-width="180" prop="description" show-overflow-tooltip />
 
         <!-- 操作列 -->
-        <el-table-column label="操作" width="120" align="center" fixed="right">
+        <el-table-column align="center" fixed="right" label="操作" width="120">
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
               <el-button link type="primary">
@@ -308,11 +308,11 @@
   </div>
 </template>
 
-<script lang="ts" setup name="PveNode">
-import { ElLoading } from 'element-plus';
-import { listPveNode, getPveNode, addPveNode, updatePveNode, delPveNode, syncNodeInfo, getNodeStatus, syncAllData } from '@/api/pve/node';
-import { listCluster, getOverview } from '@/api/pve/cluster';
-import type { PveNodeVO, PveNodeQuery, PveNodeForm } from '@/api/pve/node/types';
+<script lang="ts" name="PveNode" setup>
+import { ElLoading, FormRules } from 'element-plus';
+import { addPveNode, delPveNode, getNodeStatus, getPveNode, listPveNode, syncAllData, syncNodeInfo, updatePveNode } from '@/api/pve/node';
+import { getOverview, listCluster } from '@/api/pve/cluster';
+import type { PveNodeForm, PveNodeQuery, PveNodeVO } from '@/api/pve/node/types';
 import type { ClusterVO } from '@/api/pve/cluster/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -377,7 +377,7 @@ const queryParams = ref<PveNodeQuery>({
   clusterId: undefined,
   nodeName: undefined,
   ipAddress: undefined,
-  status: undefined
+  status: '' // 默认为空字符串，显示全部
 });
 
 const rules = reactive<FormRules>({
@@ -530,7 +530,7 @@ async function handleSyncAll(row: PveNodeVO) {
   try {
     const res: any = await syncAllData(row.nodeId);
     loading.close();
-    
+
     // 显示同步结果
     const result = res.data;
     let message = `同步完成!\n`;
@@ -539,7 +539,7 @@ async function handleSyncAll(row: PveNodeVO) {
     message += `虚拟机: ${result.vmSuccess ? '成功' : '失败'} (${result.vmCount}条)\n`;
     message += `云硬盘: ${result.diskSuccess ? '成功' : '失败'} (${result.diskCount}条)\n`;
     message += `数据盘: ${result.dataDiskSuccess ? '成功' : '失败'} (${result.dataDiskCount}条)`;
-    
+
     proxy?.$modal.msgSuccess(message);
     await getList();
     await loadOverview();

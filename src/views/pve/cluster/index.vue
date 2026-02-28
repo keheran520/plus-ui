@@ -58,7 +58,7 @@
         <!-- 中间：操作按钮 -->
         <div class="toolbar-section">
           <el-button v-hasPermi="['pve:cluster:add']" icon="Plus" type="primary" @click="handleAdd">新增集群</el-button>
-          <el-button v-hasPermi="['pve:cluster:remove']" icon="Delete" :disabled="multiple" @click="handleDelete()">删除</el-button>
+          <el-button v-hasPermi="['pve:cluster:remove']" :disabled="multiple" icon="Delete" @click="handleDelete()">删除</el-button>
           <el-button v-hasPermi="['pve:cluster:export']" icon="Download" @click="handleExport">导出</el-button>
         </div>
 
@@ -112,7 +112,7 @@
         </el-table-column>
 
         <!-- 节点信息 -->
-        <el-table-column label="节点信息" width="150" align="center">
+        <el-table-column align="center" label="节点信息" width="150">
           <template #default="{ row }">
             <div class="node-stats">
               <div class="node-item">
@@ -128,7 +128,7 @@
         </el-table-column>
 
         <!-- 状态 -->
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column align="center" label="状态" width="100">
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
               <div class="status-dropdown">
@@ -151,7 +151,7 @@
         <el-table-column label="描述" min-width="180" prop="description" show-overflow-tooltip />
 
         <!-- 操作列 -->
-        <el-table-column label="操作" width="120" align="center" fixed="right">
+        <el-table-column align="center" fixed="right" label="操作" width="120">
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, row)">
               <el-button link type="primary">
@@ -252,7 +252,17 @@
 </template>
 
 <script lang="ts" name="Cluster" setup>
-import { addCluster, delCluster, getCluster, getClusterStatus, listCluster, syncClusterInfo, testConnection, updateCluster, getOverview } from '@/api/pve/cluster';
+import {
+  addCluster,
+  delCluster,
+  getCluster,
+  getClusterStatus,
+  getOverview,
+  listCluster,
+  syncClusterInfo,
+  testConnection,
+  updateCluster
+} from '@/api/pve/cluster';
 import { ClusterForm, ClusterQuery, ClusterVO } from '@/api/pve/cluster/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
@@ -321,7 +331,7 @@ const data = reactive<PageData<ClusterForm, ClusterQuery>>({
     pageNum: 1,
     pageSize: 10,
     clusterName: undefined,
-    status: undefined,
+    status: '', // 默认为空字符串，显示全部
     params: {}
   },
   rules: {
@@ -349,7 +359,7 @@ const handleRefresh = () => {
     pageNum: 1,
     pageSize: 10,
     clusterName: undefined,
-    status: undefined,
+    status: '', // 重置为空字符串，显示全部
     params: {}
   };
   getList();
@@ -458,7 +468,26 @@ const handleViewStatus = async (row: ClusterVO) => {
   try {
     loading.value = true;
     const res = await getClusterStatus(row.clusterId);
-    statusDialog.data = res.data;
+    
+    // PVE API 返回的数据结构: { data: [...] }
+    // 需要转换为前端期望的格式
+    if (res.data && res.data.data) {
+      const nodes = res.data.data;
+      statusDialog.data = {
+        name: row.clusterName,
+        version: '-',
+        nodes: nodes,
+        quorate: nodes.length > 0 ? '是' : '否'
+      };
+    } else {
+      statusDialog.data = {
+        name: row.clusterName,
+        version: '-',
+        nodes: [],
+        quorate: '否'
+      };
+    }
+    
     statusDialog.visible = true;
   } catch (error) {
     proxy?.$modal.msgError('获取集群状态失败');
@@ -537,7 +566,6 @@ onMounted(() => {
   getList();
 });
 </script>
-
 
 <style lang="scss" scoped>
 .cluster-container {

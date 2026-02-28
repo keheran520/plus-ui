@@ -1,4 +1,4 @@
-import { createWebHistory, createRouter, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 /* Layout */
 import Layout from '@/layout/index.vue';
 
@@ -202,6 +202,13 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: 'iKuai连接管理', icon: 'link', activeMenu: '/infrastructure/ikuaiConnection' }
       }
     ]
+  },
+  {
+    path: '/pve/home',
+    component: () => import('@/views/pve/home/index.vue'),
+    name: 'PveHome',
+    hidden: true,
+    meta: { title: 'PVE首页' }
   }
 ];
 
