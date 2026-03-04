@@ -71,3 +71,28 @@ export function syncAllData(nodeId: string | number) {
     method: 'post'
   });
 }
+
+// 完善节点配置
+export function completeNodeConfig(nodeId: string | number, data: any) {
+  return request({
+    url: '/pve/node/completeConfig/' + nodeId,
+    method: 'post',
+    data: data
+  });
+}
+
+// 获取节点可用的存储池列表
+export function getNodeStorages(nodeId: string | number) {
+  return request({
+    url: '/pve/node/storages/' + nodeId,
+    method: 'get'
+  });
+}
+
+// 获取节点可用的网络接口列表
+export function getNodeNetworks(nodeId: string | number) {
+  return request({
+    url: '/pve/node/networks/' + nodeId,
+    method: 'get'
+  });
+}

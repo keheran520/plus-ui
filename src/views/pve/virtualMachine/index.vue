@@ -697,9 +697,8 @@ function handleBatchAction(action: string) {
 
 /** 新增按钮操作 */
 function handleAdd() {
-  reset();
-  dialogVisible.value = true;
-  dialogTitle.value = '添加虚拟机';
+  // 跳转到创建页面
+  router.push('/pve/virtualMachine/create');
 }
 
 /** 修改按钮操作 */

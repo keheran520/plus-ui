@@ -145,22 +145,29 @@
         </el-table-column>
 
         <!-- 状态 -->
-        <el-table-column align="center" label="状态" width="100">
+        <el-table-column align="center" label="状态" width="150">
           <template #default="{ row }">
-            <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
-              <div class="status-dropdown">
-                <el-tag :type="row.status === '0' ? 'success' : 'info'" class="status-tag">
-                  {{ row.status === '0' ? '正常' : '停用' }}
-                  <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
-                </el-tag>
-              </div>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item v-if="row.status === '1'" command="enable">启用</el-dropdown-item>
-                  <el-dropdown-item v-if="row.status === '0'" command="disable">停用</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center">
+              <!-- 运行状态 -->
+              <el-dropdown trigger="click" @command="(cmd) => handleStatusCommand(cmd, row)">
+                <div class="status-dropdown">
+                  <el-tag :type="row.status === '0' ? 'success' : 'info'" class="status-tag" size="small">
+                    {{ row.status === '0' ? '正常' : '停用' }}
+                    <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+                  </el-tag>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-if="row.status === '1'" command="enable">启用</el-dropdown-item>
+                    <el-dropdown-item v-if="row.status === '0'" command="disable">停用</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              
+              <!-- 配置状态 -->
+              <el-tag v-if="row.configStatus === 'complete'" size="small" type="success">已完善</el-tag>
+              <el-tag v-else size="small" type="warning">未完善</el-tag>
+            </div>
           </template>
         </el-table-column>
 
@@ -177,6 +184,7 @@
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
+                  <el-dropdown-item v-hasPermi="['pve:node:edit']" command="complete">完善配置</el-dropdown-item>
                   <el-dropdown-item v-hasPermi="['pve:node:edit']" command="sync">同步信息</el-dropdown-item>
                   <el-dropdown-item v-hasPermi="['pve:node:edit']" command="syncAll">同步全部</el-dropdown-item>
                   <el-dropdown-item v-hasPermi="['pve:node:query']" command="status">查看状态</el-dropdown-item>
@@ -305,12 +313,122 @@
         </el-descriptions>
       </div>
     </el-dialog>
+
+    <!-- 完善配置对话框 -->
+    <el-dialog v-model="configDialog.visible" :title="`完善节点配置 - ${currentNode.nodeName}`" width="900px" @close="cancelConfig">
+      <el-alert
+        title="提示"
+        type="info"
+        :closable="false"
+        style="margin-bottom: 20px"
+      >
+        <template #default>
+          <div>请先同步节点的存储和网络信息，然后选择相应的存储池和网络接口进行配置。</div>
+        </template>
+      </el-alert>
+
+      <el-form ref="configFormRef" :model="configForm" :rules="configRules" label-width="180px">
+        <el-divider content-position="left">资源限制配置</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="最大VM数量" prop="maxVmCount">
+              <el-input-number v-model="configForm.maxVmCount" :min="1" :max="1000" placeholder="最大VM数量" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="内存阈值(%)" prop="memoryThreshold">
+              <el-input-number v-model="configForm.memoryThreshold" :min="1" :max="100" placeholder="内存阈值" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="系统存储阈值(%)" prop="systemStorageThreshold">
+              <el-input-number v-model="configForm.systemStorageThreshold" :min="1" :max="100" placeholder="系统存储阈值" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="数据存储阈值(%)" prop="dataStorageThreshold">
+              <el-input-number v-model="configForm.dataStorageThreshold" :min="1" :max="100" placeholder="数据存储阈值" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider content-position="left">存储池配置</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="模板存储池" prop="templateStorage">
+              <el-select v-model="configForm.templateStorage" placeholder="请选择模板存储池" style="width: 100%">
+                <el-option v-for="storage in storageList" :key="storage.storageId" :label="`${storage.storageName} (${formatSize(storage.availableSize)}可用)`" :value="storage.storageId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="系统盘存储池" prop="systemDiskStorage">
+              <el-select v-model="configForm.systemDiskStorage" placeholder="请选择系统盘存储池" style="width: 100%">
+                <el-option v-for="storage in storageList" :key="storage.storageId" :label="`${storage.storageName} (${formatSize(storage.availableSize)}可用)`" :value="storage.storageId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="数据盘存储池" prop="dataDiskStorage">
+              <el-select v-model="configForm.dataDiskStorage" placeholder="请选择数据盘存储池" style="width: 100%">
+                <el-option v-for="storage in storageList" :key="storage.storageId" :label="`${storage.storageName} (${formatSize(storage.availableSize)}可用)`" :value="storage.storageId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="ISO存储池">
+              <el-select v-model="configForm.isoStorage" placeholder="请选择ISO存储池" style="width: 100%">
+                <el-option v-for="storage in storageList" :key="storage.storageId" :label="`${storage.storageName} (${formatSize(storage.availableSize)}可用)`" :value="storage.storageId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="备份存储池">
+              <el-select v-model="configForm.backupStorage" placeholder="请选择备份存储池" style="width: 100%">
+                <el-option v-for="storage in storageList" :key="storage.storageId" :label="`${storage.storageName} (${formatSize(storage.availableSize)}可用)`" :value="storage.storageId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-divider content-position="left">网络接口配置</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="公网网桥" prop="publicBridge">
+              <el-select v-model="configForm.publicBridge" placeholder="请选择公网网桥" style="width: 100%">
+                <el-option v-for="network in networkList" :key="network.networkId" :label="`${network.iface} (${network.type})`" :value="network.networkId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="内网网桥" prop="privateBridge">
+              <el-select v-model="configForm.privateBridge" placeholder="请选择内网网桥" style="width: 100%">
+                <el-option v-for="network in networkList" :key="network.networkId" :label="`${network.iface} (${network.type})`" :value="network.networkId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancelConfig">取 消</el-button>
+          <el-button type="primary" @click="submitConfig">确 定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" name="PveNode" setup>
 import { ElLoading, FormRules } from 'element-plus';
-import { addPveNode, delPveNode, getNodeStatus, getPveNode, listPveNode, syncAllData, syncNodeInfo, updatePveNode } from '@/api/pve/node';
+import { addPveNode, completeNodeConfig, delPveNode, getNodeNetworks, getNodeStatus, getNodeStorages, getPveNode, listPveNode, syncAllData, syncNodeInfo, updatePveNode } from '@/api/pve/node';
 import { getOverview, listCluster } from '@/api/pve/cluster';
 import type { PveNodeForm, PveNodeQuery, PveNodeVO } from '@/api/pve/node/types';
 import type { ClusterVO } from '@/api/pve/cluster/types';
@@ -351,7 +469,14 @@ const statusDialog = reactive({
   data: null as any
 });
 
+const configDialog = reactive({
+  visible: false,
+  loading: false
+});
+
 const currentNode = ref<any>({});
+const storageList = ref<any[]>([]);
+const networkList = ref<any[]>([]);
 
 const initFormData: PveNodeForm = {
   nodeId: undefined,
@@ -370,6 +495,22 @@ const initFormData: PveNodeForm = {
   description: ''
 };
 const form = ref<PveNodeForm>({ ...initFormData });
+
+const configFormRef = ref<ElFormInstance>();
+const configForm = ref({
+  nodeId: undefined,
+  maxVmCount: 100,
+  memoryThreshold: 80,
+  systemStorageThreshold: 80,
+  dataStorageThreshold: 80,
+  templateStorage: undefined,
+  systemDiskStorage: undefined,
+  dataDiskStorage: undefined,
+  isoStorage: undefined,
+  backupStorage: undefined,
+  publicBridge: undefined,
+  privateBridge: undefined
+});
 
 const queryParams = ref<PveNodeQuery>({
   pageNum: 1,
@@ -398,6 +539,17 @@ const rules = reactive<FormRules>({
     }
   ],
   nodeType: [{ required: true, message: '节点类型不能为空', trigger: 'change' }]
+});
+
+const configRules = reactive<FormRules>({
+  maxVmCount: [{ required: true, message: '最大VM数量不能为空', trigger: 'blur' }],
+  memoryThreshold: [{ required: true, message: '内存阈值不能为空', trigger: 'blur' }],
+  systemStorageThreshold: [{ required: true, message: '系统存储阈值不能为空', trigger: 'blur' }],
+  dataStorageThreshold: [{ required: true, message: '数据存储阈值不能为空', trigger: 'blur' }],
+  templateStorage: [{ required: true, message: '模板存储池不能为空', trigger: 'change' }],
+  systemDiskStorage: [{ required: true, message: '系统盘存储池不能为空', trigger: 'change' }],
+  publicBridge: [{ required: true, message: '公网网桥不能为空', trigger: 'change' }],
+  privateBridge: [{ required: true, message: '内网网桥不能为空', trigger: 'change' }]
 });
 
 /** 加载统计概览 */
@@ -586,6 +738,9 @@ function handleStatusCommand(command: string, row: PveNodeVO) {
 /** 操作命令处理 */
 function handleCommand(command: string, row: PveNodeVO) {
   switch (command) {
+    case 'complete':
+      handleCompleteConfig(row);
+      break;
     case 'sync':
       handleSync(row);
       break;
@@ -602,6 +757,80 @@ function handleCommand(command: string, row: PveNodeVO) {
       handleDelete(row);
       break;
   }
+}
+
+/** 完善节点配置 */
+async function handleCompleteConfig(row: PveNodeVO) {
+  currentNode.value = row;
+  configDialog.visible = true;
+  configDialog.loading = true;
+
+  try {
+    // 加载节点的存储池列表
+    const storageRes: any = await getNodeStorages(row.nodeId);
+    storageList.value = storageRes.data || [];
+
+    // 加载节点的网络接口列表
+    const networkRes: any = await getNodeNetworks(row.nodeId);
+    networkList.value = networkRes.data || [];
+
+    // 如果没有数据，提示用户先同步
+    if (storageList.value.length === 0 || networkList.value.length === 0) {
+      proxy?.$modal.msgWarning('请先同步节点的存储和网络信息');
+    }
+
+    // 填充现有配置
+    configForm.value = {
+      nodeId: row.nodeId,
+      maxVmCount: row.maxVmCount || 100,
+      memoryThreshold: row.memoryThreshold || 80,
+      systemStorageThreshold: row.systemStorageThreshold || 80,
+      dataStorageThreshold: row.dataStorageThreshold || 80,
+      templateStorage: row.templateStorage,
+      systemDiskStorage: row.systemDiskStorage,
+      dataDiskStorage: row.dataDiskStorage,
+      isoStorage: row.isoStorage,
+      backupStorage: row.backupStorage,
+      publicBridge: row.publicBridge,
+      privateBridge: row.privateBridge
+    };
+  } catch (error) {
+    proxy?.$modal.msgError('加载节点配置失败');
+  } finally {
+    configDialog.loading = false;
+  }
+}
+
+/** 取消配置 */
+function cancelConfig() {
+  configDialog.visible = false;
+  configFormRef.value?.resetFields();
+}
+
+/** 提交配置 */
+function submitConfig() {
+  configFormRef.value?.validate(async (valid: boolean) => {
+    if (valid) {
+      try {
+        await completeNodeConfig(configForm.value.nodeId, configForm.value);
+        proxy?.$modal.msgSuccess('配置完善成功');
+        configDialog.visible = false;
+        await getList();
+        await loadOverview();
+      } catch (error) {
+        proxy?.$modal.msgError('配置完善失败');
+      }
+    }
+  });
+}
+
+/** 格式化大小 */
+function formatSize(bytes: number): string {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
 }
 
 /** 导出按钮操作 */

@@ -65,6 +65,11 @@ export interface IpPoolVO {
   usedIps: number;
 
   /**
+   * 可用IP数量
+   */
+  availableIps: number;
+
+  /**
    * 描述
    */
   description: string;

@@ -196,6 +196,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: { title: '虚拟机详情', icon: 'monitor', activeMenu: '/pve/virtualMachine' }
       },
       {
+        path: 'virtualMachine/create',
+        component: () => import('@/views/pve/virtualMachine/create-v3.vue'),
+        name: 'VirtualMachineCreate',
+        meta: { title: '创建虚拟机', icon: 'plus', activeMenu: '/pve/virtualMachine' }
+      },
+      {
         path: 'ikuaiConnection',
         component: () => import('@/views/pve/ikuaiConnection/index.vue'),
         name: 'IkuaiConnection',

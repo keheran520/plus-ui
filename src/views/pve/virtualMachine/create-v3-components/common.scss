@@ -1,0 +1,63 @@
+// 规格类型单选组（通用样式）
+.form-section {
+  margin-bottom: 32px;
+}
+
+// 规格类型单选组
+.spec-type-radio-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  :deep(.el-radio) {
+    margin-right: 0;
+    padding-left: 0;
+  }
+
+  :deep(.el-radio__label) {
+    display: none;
+  }
+}
+
+.spec-type-radio {
+  flex: 0 0 auto;
+}
+
+.spec-type-card {
+  min-width: 80px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  background: #f5f7fa;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0 12px;
+
+  .spec-type-title {
+    font-size: 13px;
+    color: #303133;
+  }
+
+  &:hover {
+    border-color: #409eff;
+  }
+
+  &.checked {
+    border-color: #409eff;
+    background: rgba(64, 158, 255, 0.1);
+
+    .spec-type-title {
+      color: #409eff;
+      font-weight: 500;
+    }
+  }
+}
+
+.spec-type-title {
+  font-size: 14px;
+  color: #303133;
+}
