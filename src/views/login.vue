@@ -1,51 +1,29 @@
 <template>
   <div class="login-container">
-    <!-- 背景图案层 -->
-    <div class="pattern-layer"></div>
+    <!-- 背景图（与首页同源，懒加载淡入） -->
+    <div class="login-bg">
+      <transition name="bg-fade">
+        <img v-if="bgLoaded && websiteConfig.backgroundImage" :src="websiteConfig.backgroundImage" alt="" class="bg-img" />
+      </transition>
+      <div class="bg-overlay"></div>
+    </div>
 
-    <!-- 光晕装饰层 -->
+    <!-- 浮动光晕 -->
     <div class="glow-layer">
       <div class="glow glow-1"></div>
       <div class="glow glow-2"></div>
       <div class="glow glow-3"></div>
     </div>
 
-    <!-- 背景装饰 -->
-    <div class="bg-decoration">
-      <div class="circle circle-1"></div>
-      <div class="circle circle-2"></div>
-      <div class="circle circle-3"></div>
-    </div>
-
     <div class="login-wrapper">
       <!-- 左侧品牌区域 -->
       <div class="brand-section">
         <div class="brand-content">
-          <div class="brand-logo">
-            <div class="logo-icon">
-              <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-              </svg>
-            </div>
-          </div>
           <h1 class="brand-title">{{ title }}</h1>
-          <p class="brand-subtitle">现代化企业级管理系统</p>
-          <div class="brand-features">
-            <div class="feature-item">
-              <div class="feature-icon">✨</div>
-              <div class="feature-text">简洁优雅</div>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon">🚀</div>
-              <div class="feature-text">高效快速</div>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon">🔒</div>
-              <div class="feature-text">安全可靠</div>
-            </div>
-          </div>
+          <p :style="{ marginBottom: websiteConfig.description ? '16px' : '48px' }" class="brand-subtitle">
+            {{ websiteConfig.nameEn || 'Your photo album on the cloud.' }}
+          </p>
+          <p v-if="websiteConfig.description" class="brand-desc">{{ websiteConfig.description }}</p>
         </div>
       </div>
 
@@ -110,7 +88,18 @@
                   </template>
                 </el-input>
                 <div class="captcha-image" @click="getCode">
-                  <img :src="codeUrl" alt="验证码" />
+                  <template v-if="!codeUrl">
+                    <div class="captcha-placeholder">
+                      <el-icon class="captcha-icon"><Refresh /></el-icon>
+                      <span>点击获取</span>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <img v-show="captchaImgLoaded" :src="codeUrl" alt="" @error="captchaImgLoaded = false" @load="captchaImgLoaded = true" />
+                    <div v-if="!captchaImgLoaded" class="captcha-placeholder">
+                      <el-icon class="captcha-icon is-loading"><Loading /></el-icon>
+                    </div>
+                  </template>
                 </div>
               </el-form-item>
             </template>
@@ -219,7 +208,25 @@ const sendEmailCodeLoading = ref(false);
 
 // 获取网站配置
 const websiteConfig = computed(() => websiteStore.config);
-const title = computed(() => websiteStore.config.name || import.meta.env.VITE_APP_TITLE);
+const title = computed(() => websiteStore.config.name);
+
+// 背景图懒加载（与首页同款）
+const bgLoaded = ref(false);
+watch(
+  () => websiteConfig.value.backgroundImage,
+  (url) => {
+    if (!url || bgLoaded.value) return;
+    const img = new Image();
+    img.onload = () => {
+      bgLoaded.value = true;
+    };
+    img.onerror = () => {
+      bgLoaded.value = true;
+    };
+    img.src = url;
+  },
+  { immediate: true }
+);
 
 const loginForm = ref<LoginData>({
   tenantId: '000000',
@@ -253,6 +260,7 @@ const loginRules: ElFormRules = {
 };
 
 const codeUrl = ref('');
+const captchaImgLoaded = ref(false);
 const loading = ref(false);
 // 验证码开关
 const captchaEnabled = ref(true);
@@ -356,6 +364,7 @@ const getCaptchaConfigInfo = async (tenantId?: string) => {
  */
 const getCode = async () => {
   if (captchaEnabled.value) {
+    captchaImgLoaded.value = false;
     const res = await getCodeImg(loginForm.value.tenantId);
     const { data } = res;
     // Kaptcha 生成的是 PNG 格式，且后端已经包含了 data:image/png;base64, 前缀
@@ -593,19 +602,32 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
 }
 
-.pattern-layer {
+/* ===== 背景图 ===== */
+.login-bg {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 0;
-  opacity: 0.4;
-  background-image:
-    repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255, 255, 255, 0.02) 40px, rgba(255, 255, 255, 0.02) 80px),
-    repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(255, 255, 255, 0.02) 40px, rgba(255, 255, 255, 0.02) 80px),
-    radial-gradient(circle at 30% 40%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 70% 60%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+
+  .bg-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 20, 40, 0.78) 0%, rgba(0, 40, 80, 0.68) 100%);
+  }
+}
+
+.bg-fade-enter-active {
+  transition: opacity 1.2s ease;
+}
+.bg-fade-enter-from {
+  opacity: 0;
 }
 
 .glow-layer {
@@ -650,54 +672,9 @@ onBeforeUnmount(() => {
   }
 }
 
+/* ===== 旧装饰层（保留空规则以防引用） ===== */
 .bg-decoration {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1;
-
-  .circle {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    animation: float 20s infinite ease-in-out;
-
-    &.circle-1 {
-      width: 300px;
-      height: 300px;
-      top: -100px;
-      left: -100px;
-      animation-delay: 0s;
-    }
-
-    &.circle-2 {
-      width: 200px;
-      height: 200px;
-      bottom: -50px;
-      right: 10%;
-      animation-delay: 5s;
-    }
-
-    &.circle-3 {
-      width: 150px;
-      height: 150px;
-      top: 50%;
-      right: -50px;
-      animation-delay: 10s;
-    }
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(180deg);
-  }
+  display: none;
 }
 
 .login-wrapper {
@@ -726,59 +703,36 @@ onBeforeUnmount(() => {
     animation: fadeInLeft 0.8s ease-out;
   }
 
-  .brand-logo {
-    margin-bottom: 30px;
-
-    .logo-icon {
-      width: 80px;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-
-      svg {
-        width: 40px;
-        height: 40px;
-        color: white;
-      }
-    }
-  }
-
   .brand-title {
-    font-size: 48px;
+    font-size: 64px;
     font-weight: 700;
     margin: 0 0 16px 0;
-    letter-spacing: -1px;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #fff 0%, #a8d8ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .brand-subtitle {
     font-size: 20px;
-    opacity: 0.9;
-    margin: 0 0 40px 0;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 300;
+    letter-spacing: 1px;
+    margin: 0 0 16px 0;
   }
 
-  .brand-features {
-    display: flex;
-    gap: 30px;
+  .brand-desc {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.7;
+    margin: 0 0 40px 0;
+    max-width: 420px;
+  }
 
-    .feature-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      .feature-icon {
-        font-size: 28px;
-      }
-
-      .feature-text {
-        font-size: 16px;
-        font-weight: 500;
-      }
-    }
+  // 没有 description 时，subtitle 直接撑开底部间距
+  .brand-subtitle:last-of-type:not(:has(+ .brand-desc)) {
+    margin-bottom: 48px;
   }
 }
 
@@ -797,7 +751,6 @@ onBeforeUnmount(() => {
 .form-card {
   width: 100%;
   background: white;
-  backdrop-filter: blur(20px);
   border-radius: 16px;
   padding: 40px 36px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
@@ -854,17 +807,39 @@ onBeforeUnmount(() => {
 
   .captcha-image {
     margin-left: var(--spacing-xs);
+    flex-shrink: 0;
     width: 110px;
     height: 40px;
     border-radius: var(--radius-md);
     overflow: hidden;
     cursor: pointer;
-    transition: all 0.3s;
+    border: 1px solid #dcdfe6;
+    transition:
+      border-color 0.3s,
+      opacity 0.3s;
+    background: #f5f7fa;
 
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
+    }
+
+    .captcha-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: #909399;
+      font-size: 11px;
+      user-select: none;
+
+      .captcha-icon {
+        font-size: 16px;
+      }
     }
   }
 

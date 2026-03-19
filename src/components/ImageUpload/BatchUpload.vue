@@ -6,14 +6,14 @@
         <el-upload
           ref="uploadRef"
           v-model:file-list="fileList"
+          :accept="props.accept"
           :auto-upload="false"
-          :limit="20"
+          :limit="props.maxCount"
           :multiple="true"
           :on-change="handleFileChange"
           :on-exceed="handleExceed"
           :on-remove="handleRemove"
           :show-file-list="false"
-          accept="image/*"
           class="upload-demo"
           drag
         >
@@ -22,7 +22,9 @@
           </el-icon>
           <div class="el-upload__text">拖拽文件到此处或<em>点击上传</em></div>
           <template #tip>
-            <div class="el-upload__tip">支持 jpg/png/gif/webp 格式，单次最多上传 20 张图片，单张图片不超过 10MB</div>
+            <div class="el-upload__tip">
+              支持 {{ props.accept }} 格式，单次最多上传 {{ props.maxCount }} 张图片，单张图片不超过 {{ props.maxSize }}MB
+            </div>
           </template>
         </el-upload>
       </div>
@@ -328,13 +330,22 @@ interface Props {
   albumId?: number | string; // 相册ID，如果传入则为相册内上传模式
   title?: string;
   guestMode?: boolean; // 游客模式，true时隐藏相册选择
+  // 新增配置项
+  maxCount?: number; // 最大上传数量
+  maxSize?: number; // 单个文件最大大小（MB）
+  accept?: string; // 接受的文件类型
+  concurrent?: number; // 并发上传数量
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   albumId: undefined,
   title: '',
-  guestMode: false
+  guestMode: false,
+  maxCount: 20,
+  maxSize: 10,
+  accept: 'image/*',
+  concurrent: 2
 });
 
 // Emits
@@ -383,7 +394,7 @@ interface ImageItem {
 const imageItems = ref<ImageItem[]>([]);
 
 // 上传队列配置
-const CONCURRENT_UPLOADS = 2; // 同时上传2个文件
+const CONCURRENT_UPLOADS = computed(() => props.concurrent); // 使用props配置
 const uploadQueue = ref<number[]>([]); // 待上传的图片索引队列
 const activeUploads = ref<Set<number>>(new Set()); // 正在上传的图片索引
 
@@ -427,9 +438,9 @@ const handleFileChange = (file: UploadFile) => {
   }
 
   // 验证文件大小
-  const isLt10M = file.raw.size / 1024 / 1024 < 10;
-  if (!isLt10M) {
-    ElMessage.error('图片大小不能超过 10MB！');
+  const isLtMaxSize = file.raw.size / 1024 / 1024 < props.maxSize;
+  if (!isLtMaxSize) {
+    ElMessage.error(`图片大小不能超过 ${props.maxSize}MB！`);
     return;
   }
 
@@ -464,7 +475,7 @@ const handleRemove = (file: UploadFile) => {
 
 // 超出文件数量限制
 const handleExceed = () => {
-  ElMessage.warning('单次最多上传 20 张图片');
+  ElMessage.warning(`单次最多上传 ${props.maxCount} 张图片`);
 };
 
 // 删除图片项
@@ -583,7 +594,7 @@ const uploadSingleImage = async (index: number) => {
  * 处理上传队列
  */
 const processUploadQueue = async () => {
-  while (uploadQueue.value.length > 0 && activeUploads.value.size < CONCURRENT_UPLOADS) {
+  while (uploadQueue.value.length > 0 && activeUploads.value.size < CONCURRENT_UPLOADS.value) {
     const index = uploadQueue.value.shift();
     if (index !== undefined) {
       activeUploads.value.add(index);

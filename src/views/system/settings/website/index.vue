@@ -49,6 +49,27 @@
             <el-text v-if="configDescriptions.name" class="w-full" size="small" type="info">{{ configDescriptions.name }} </el-text>
           </el-form-item>
 
+          <!-- 系统英文名称 -->
+          <el-form-item label="系统英文名称" prop="nameEn">
+            <el-input v-model="formData.nameEn" clearable maxlength="50" placeholder="请输入系统英文名称" show-word-limit />
+            <el-text v-if="configDescriptions.nameEn" class="w-full" size="small" type="info">{{ configDescriptions.nameEn }} </el-text>
+          </el-form-item>
+
+          <!-- 系统背景图 -->
+          <el-form-item label="系统背景图" prop="backgroundImage">
+            <el-text v-if="configDescriptions.backgroundImage" class="w-full" size="small" type="info">
+              {{ configDescriptions.backgroundImage }}
+            </el-text>
+            <ImageUpload
+              v-model="formData.backgroundImage"
+              :disabled="!isEditing"
+              :file-size="5"
+              :file-type="['png', 'jpg', 'jpeg', 'webp']"
+              :limit="1"
+              @upload-success="handleBackgroundImageUpload"
+            />
+          </el-form-item>
+
           <!-- 系统描述 -->
           <el-form-item label="系统描述" prop="description">
             <el-input v-model="formData.description" :rows="3" maxlength="200" placeholder="请输入系统描述" show-word-limit type="textarea" />
@@ -227,6 +248,8 @@ const formData = reactive({
   logo: '',
   favicon: '',
   name: '',
+  nameEn: '',
+  backgroundImage: '',
   description: '',
   copyright: '',
   icp: '',
@@ -242,6 +265,8 @@ const configDescriptions = reactive({
   logo: '',
   favicon: '',
   name: '',
+  nameEn: '',
+  backgroundImage: '',
   description: '',
   copyright: '',
   icp: '',
@@ -257,6 +282,8 @@ const defaultData = reactive({
   logo: '',
   favicon: '',
   name: '',
+  nameEn: '',
+  backgroundImage: '',
   description: '',
   copyright: '',
   icp: '',
@@ -272,6 +299,8 @@ const configIds = reactive({
   logo: null as number | null,
   favicon: null as number | null,
   name: null as number | null,
+  nameEn: null as number | null,
+  backgroundImage: null as number | null,
   description: null as number | null,
   copyright: null as number | null,
   icp: null as number | null,
@@ -287,6 +316,8 @@ const originalData = reactive({
   logo: '',
   favicon: '',
   name: '',
+  nameEn: '',
+  backgroundImage: '',
   description: '',
   copyright: '',
   icp: '',
@@ -300,6 +331,7 @@ const originalData = reactive({
 // LOGO URL（用于预览）
 const logoUrl = ref('');
 const faviconUrl = ref('');
+const backgroundImageUrl = ref('');
 
 // 表单验证规则
 const rules = {
@@ -322,6 +354,8 @@ const loadConfig = async () => {
       'website.logo': 'logo',
       'website.favicon': 'favicon',
       'website.name': 'name',
+      'website.nameEn': 'nameEn',
+      'website.backgroundImage': 'backgroundImage',
       'website.description': 'description',
       'website.copyright': 'copyright',
       'website.icp': 'icp',
@@ -357,6 +391,9 @@ const loadConfig = async () => {
     if (formData.favicon) {
       faviconUrl.value = await getImageUrl(formData.favicon);
     }
+    if (formData.backgroundImage) {
+      backgroundImageUrl.value = await getImageUrl(formData.backgroundImage);
+    }
   } catch (error) {
     console.error('加载配置失败:', error);
   } finally {
@@ -390,6 +427,12 @@ const handleFaviconUpload = (data: any) => {
   formData.favicon = data.ossId;
 };
 
+// 背景图上传成功
+const handleBackgroundImageUpload = (data: any) => {
+  backgroundImageUrl.value = data.url;
+  formData.backgroundImage = data.ossId;
+};
+
 // 保存配置
 const handleSave = async () => {
   loading.value = true;
@@ -402,6 +445,8 @@ const handleSave = async () => {
       logo: { key: 'website.logo', name: '系统LOGO' },
       favicon: { key: 'website.favicon', name: '系统图标' },
       name: { key: 'website.name', name: '系统名称' },
+      nameEn: { key: 'website.nameEn', name: '系统英文名称' },
+      backgroundImage: { key: 'website.backgroundImage', name: '系统背景图' },
       description: { key: 'website.description', name: '系统描述' },
       copyright: { key: 'website.copyright', name: '版权声明' },
       icp: { key: 'website.icp', name: '备案号' },

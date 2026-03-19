@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { ImageAlbumVO, ImageAlbumForm, ImageAlbumQuery } from '@/api/picturebed/imageAlbum/types';
+import { ImageAlbumForm, ImageAlbumQuery, ImageAlbumVO } from '@/api/picturebed/imageAlbum/types';
 import { ImageVO } from '@/api/picturebed/image/types';
 
 /**

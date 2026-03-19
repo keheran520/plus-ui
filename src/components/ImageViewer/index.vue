@@ -1,6 +1,6 @@
 <template>
   <teleport to="body">
-    <div v-if="visible" class="image-viewer-container" @click.self="handleClose" @wheel="handleContainerWheel">
+    <div v-if="visible" class="image-viewer-container" @wheel="handleContainerWheel" @click.self="handleClose">
       <!-- 背景模糊层 -->
       <div :style="{ backgroundImage: `url(${currentImage?.url})` }" class="photo-viewer-bg"></div>
 
@@ -13,7 +13,7 @@
       </div>
 
       <!-- 右上角：操作按钮 -->
-      <div class="viewer-header-right" :class="{ 'with-panel': showInfo }">
+      <div :class="{ 'with-panel': showInfo }" class="viewer-header-right">
         <el-button v-if="isLiked" :icon="Star" circle @click="handleLike" />
         <el-button v-else-if="!isLiked" circle @click="handleLike">
           <el-icon color="#f56c6c">
@@ -26,7 +26,7 @@
       </div>
 
       <!-- 主内容区域 -->
-      <div class="viewer-main" :class="{ 'with-panel': showInfo }">
+      <div :class="{ 'with-panel': showInfo }" class="viewer-main">
         <!-- 图片显示区域 -->
         <div class="image-display-area">
           <!-- 图片 -->
@@ -52,7 +52,7 @@
           <div v-if="showInfo" class="info-panel">
             <div class="info-header">
               <h3>图片信息</h3>
-              <el-button :icon="Close" text @click="showInfo = false" />
+              <el-button :icon="Close" link @click="showInfo = false" />
             </div>
 
             <div class="info-content">
@@ -89,7 +89,7 @@
               <div class="info-item">
                 <label>标签</label>
                 <div class="info-value">
-                  <el-tag v-for="tag in currentImage?.tagList" :key="tag.tagId" class="mr-1" size="small">
+                  <el-tag v-for="tag in currentImage?.tagList" :key="tag.tagId" class="mr-1" effect="plain" size="small" type="info">
                     {{ tag.tagName }}
                   </el-tag>
                   <span v-if="!currentImage?.tagList || currentImage?.tagList.length === 0">-</span>
@@ -141,7 +141,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
-import { ArrowLeft, ArrowRight, Close, InfoFilled, Star, StarFilled, Warning } from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight, Close, InfoFilled, Star, StarFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { getPublicImageDetail } from '@/api/picturebed/open';
 

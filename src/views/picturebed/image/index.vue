@@ -123,6 +123,7 @@
         </el-row>
       </template>
 
+      <!-- 表格视图 -->
       <el-table v-loading="loading" :data="imageList" border @selection-change="handleSelectionChange">
         <el-table-column align="center" type="selection" width="55" />
         <el-table-column v-if="true" align="center" label="图片ID" prop="imageId" />
@@ -328,8 +329,18 @@
       </template>
     </el-drawer>
 
-    <!-- 批量上传组件 -->
-    <BatchUpload v-model="uploadVisible" title="批量上传图片" @success="handleUploadSuccess" />
+    <!-- 批量上传组件（配置为100张） -->
+    <BatchUpload v-model="uploadVisible" :concurrent="5" :max-count="10000" :max-size="20" title="批量上传图片" @success="handleBatchUploadSuccess" />
+
+    <!-- 图片查看器（使用自定义组件） -->
+    <ImageViewer
+      v-model="previewVisible"
+      :image-list="imageList"
+      :initial-index="previewIndex"
+      @download="handleDownloadImage"
+      @like="handleLikeImage"
+      @report="handleReportImage"
+    />
   </div>
 </template>
 
@@ -344,6 +355,7 @@ import { listImageTag, listImageTagByCategory } from '@/api/picturebed/imageTag'
 import { ImageTagVO } from '@/api/picturebed/imageTag/types';
 import ImagePreview from '@/components/ImagePreview/index.vue';
 import BatchUpload from '@/components/ImageUpload/BatchUpload.vue';
+import ImageViewer from '@/components/ImageViewer/index.vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_normal_disable, sys_yes_no } = toRefs<any>(proxy?.useDict('sys_normal_disable', 'sys_yes_no'));
@@ -357,6 +369,8 @@ const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const uploadVisible = ref(false);
+const previewVisible = ref(false);
+const previewIndex = ref(0);
 
 // 下拉选项
 const categoryOptions = ref<ImageCategoryVO[]>([]);
@@ -469,10 +483,35 @@ const handleUploadSuccess = (response: any) => {
   if (response && response.ossId) {
     form.value.ossId = response.ossId;
   }
-  // 批量上传（BatchUpload组件）
-  else if (Array.isArray(response)) {
+};
+
+/** 批量上传成功回调 */
+const handleBatchUploadSuccess = (response: any) => {
+  if (Array.isArray(response)) {
     proxy?.$modal.msgSuccess(`成功上传 ${response.length} 张图片`);
+    uploadVisible.value = false;
     getList();
+  }
+};
+
+/** 点赞图片 */
+const handleLikeImage = (image: any) => {
+  // TODO: 调用点赞API
+  console.log('点赞图片:', image);
+  proxy?.$modal.msgSuccess('点赞成功');
+};
+
+/** 举报图片 */
+const handleReportImage = (image: any) => {
+  // TODO: 调用举报API
+  console.log('举报图片:', image);
+  proxy?.$modal.msgSuccess('举报已提交');
+};
+
+/** 下载图片 */
+const handleDownloadImage = (image: any) => {
+  if (image.url) {
+    window.open(image.url, '_blank');
   }
 };
 
@@ -656,3 +695,5 @@ onMounted(() => {
   getTagList();
 });
 </script>
+
+<style lang="scss" scoped></style>

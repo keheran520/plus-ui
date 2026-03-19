@@ -5,6 +5,8 @@ interface WebsiteConfig {
   logo: string;
   favicon: string;
   name: string;
+  nameEn: string;
+  backgroundImage: string;
   description: string;
   copyright: string;
   icp: string;
@@ -21,6 +23,8 @@ export const useWebsiteStore = defineStore('website', {
       logo: '',
       favicon: '',
       name: '',
+      nameEn: '',
+      backgroundImage: '',
       description: '',
       copyright: '',
       icp: '',
@@ -52,6 +56,8 @@ export const useWebsiteStore = defineStore('website', {
             logo: res.data.logo || '',
             favicon: res.data.favicon || '',
             name: res.data.name || '',
+            nameEn: res.data.nameEn || '',
+            backgroundImage: res.data.backgroundImage || '',
             description: res.data.description || '',
             copyright: res.data.copyright || '',
             icp: res.data.icp || '',

@@ -98,7 +98,6 @@ export interface ImageAlbumVO {
    * 更新时间
    */
   updateTime?: string;
-
 }
 
 export interface ImageAlbumForm extends BaseEntity {
@@ -161,11 +160,9 @@ export interface ImageAlbumForm extends BaseEntity {
    * OSS ID
    */
   ossId?: string;
-
 }
 
 export interface ImageAlbumQuery extends PageQuery {
-
   /**
    * 相册名称
    */

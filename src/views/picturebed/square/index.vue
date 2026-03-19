@@ -68,49 +68,39 @@
     </div>
 
     <!-- 图片瀑布流 -->
-    <div v-loading="loading" class="square-content">
-      <div class="images-waterfall">
-        <div v-for="(image, index) in imageList" :key="image.imageId" class="waterfall-item">
-          <div :style="getImageStyle(image)" class="image-wrapper" @click="handlePreview(index)">
-            <img v-if="image.url" :alt="image.imageName" :src="image.url" />
-
-            <!-- 图片信息叠加层 -->
-            <div class="image-info-overlay">
-              <div class="image-info-content">
-                <p :title="image.imageName || image.originalName" class="image-name">
-                  {{ image.imageName || image.originalName }}
-                </p>
-                <p class="image-meta">
-                  <span class="image-format">{{ image.fileSuffix || 'JPG' }}</span>
-                  <span v-if="image.ossExt?.width && image.ossExt?.height" class="image-dimension">
-                    {{ image.ossExt.width }} × {{ image.ossExt.height }}
-                  </span>
-                  <span class="image-size">{{ formatSize(image.ossExt?.fileSize || 0) }}</span>
-                </p>
-                <p class="image-author">
-                  <el-icon>
-                    <User />
-                  </el-icon>
-                  <span>{{ image?.createByUser?.nickName || '游客' }}</span>
-                </p>
-              </div>
-            </div>
-          </div>
+    <WaterfallLayout
+      :border-radius="5"
+      :column-count="5"
+      :column-gap="5"
+      :has-more="hasMore"
+      :items="imageList"
+      :loading="loading"
+      :padding="5"
+      :row-gap="5"
+      :scale-ratio="1.05"
+      hover-effect="scale"
+      @item-click="handlePreview"
+    >
+      <!-- 自定义遮罩层内容 -->
+      <template #overlay="{ item }">
+        <div class="custom-overlay-content">
+          <p :title="item.imageName || item.originalName" class="image-name">
+            {{ item.imageName || item.originalName }}
+          </p>
+          <p class="image-meta">
+            <span class="image-format">{{ item.fileSuffix || 'JPG' }}</span>
+            <span v-if="item.ossExt?.width && item.ossExt?.height" class="image-dimension"> {{ item.ossExt.width }} × {{ item.ossExt.height }} </span>
+            <span class="image-size">{{ formatSize(item.ossExt?.fileSize || 0) }}</span>
+          </p>
+          <p class="image-author">
+            <el-icon>
+              <User />
+            </el-icon>
+            <span>{{ item?.createByUser?.nickName || '游客' }}</span>
+          </p>
         </div>
-      </div>
-
-      <!-- 加载更多提示 -->
-      <div v-if="hasMore" class="load-more-tip">
-        <span v-if="loading">加载中...</span>
-        <span v-else>滚动加载更多</span>
-      </div>
-      <div v-else-if="imageList.length > 0" class="load-more-tip">
-        <span>没有更多了</span>
-      </div>
-      <div v-else-if="!loading" class="empty-tip">
-        <el-empty description="暂无公开图片" />
-      </div>
-    </div>
+      </template>
+    </WaterfallLayout>
 
     <!-- 图片查看器 -->
     <ImageViewer v-model="previewVisible" :image-list="imageList" :initial-index="previewIndex" />
@@ -122,6 +112,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { CircleCloseFilled, HomeFilled, InfoFilled, Promotion, Search, User } from '@element-plus/icons-vue';
 import ImageViewer from '@/components/ImageViewer/index.vue';
+import WaterfallLayout from '@/components/WaterfallLayout/index.vue';
 import { getPublicImages } from '@/api/picturebed/open';
 import { getHotTags, getSearchSuggestions } from '@/api/picturebed/image';
 
@@ -184,28 +175,8 @@ const handleScroll = () => {
   }
 };
 
-// 计算图片样式
-const getImageStyle = (image: any) => {
-  const width = image.ossExt?.width || 300;
-  const height = image.ossExt?.height || 200;
-  const aspectRatio = height / width;
-
-  return {
-    paddingTop: `${aspectRatio * 100}%`
-  };
-};
-
-// 格式化文件大小
-const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
-};
-
 // 预览图片
-const handlePreview = (index: number) => {
+const handlePreview = (item: any, index: number) => {
   previewIndex.value = index;
   previewVisible.value = true;
 };
@@ -298,6 +269,15 @@ const highlightKeyword = (text: string, keyword: string) => {
   return text.replace(regex, '<span style="color: #409eff; font-weight: bold;">$1</span>');
 };
 
+// 格式化文件大小
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+};
+
 onMounted(() => {
   getImageList();
   window.addEventListener('scroll', handleScroll);
@@ -328,7 +308,7 @@ onUnmounted(() => {
     justify-content: space-between;
     align-items: center;
     margin: 0 auto;
-    padding: 20px 40px;
+    padding: 14px 40px;
     gap: 20px;
 
     .header-left {
@@ -376,140 +356,50 @@ onUnmounted(() => {
   }
 }
 
-// 内容区域
-.square-content {
-  margin: 0 auto;
-  padding: 10px;
-}
-
-// 瀑布流布局
-.images-waterfall {
-  column-count: 5;
-  column-gap: 10px;
-
-  // 响应式断点
-  @media (max-width: 1600px) {
-    column-count: 4;
-  }
-
-  @media (max-width: 1200px) {
-    column-count: 3;
-  }
-
-  @media (max-width: 768px) {
-    column-count: 2;
-  }
-
-  @media (max-width: 480px) {
-    column-count: 1;
-  }
-
-  .waterfall-item {
-    break-inside: avoid;
-    margin-bottom: 10px;
-    cursor: pointer;
-    border-radius: 12px;
+// 自定义遮罩层样式
+.custom-overlay-content {
+  .image-name {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
     overflow: hidden;
-    background: white;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-    &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  .image-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
 
-      .image-wrapper .image-info-overlay {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .image-format {
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      font-weight: 500;
     }
 
-    .image-wrapper {
-      position: relative;
-      width: 100%;
-      overflow: hidden;
-      background: #f5f7fa;
-
-      img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .image-info-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
-        padding: 40px 16px 16px;
-        opacity: 0;
-        transform: translateY(10px);
-        transition: all 0.3s ease;
-        pointer-events: none;
-
-        .image-info-content {
-          .image-name {
-            margin: 0 0 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #ffffff;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          .image-meta {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin: 0 0 8px;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.9);
-
-            .image-format {
-              padding: 2px 6px;
-              background: rgba(255, 255, 255, 0.2);
-              border-radius: 3px;
-              font-weight: 500;
-            }
-
-            .image-dimension,
-            .image-size {
-              color: rgba(255, 255, 255, 0.8);
-            }
-          }
-
-          .image-author {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin: 0;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-
-            .el-icon {
-              font-size: 14px;
-            }
-          }
-        }
-      }
+    .image-dimension,
+    .image-size {
+      color: rgba(255, 255, 255, 0.8);
     }
   }
-}
 
-// 加载提示
-.load-more-tip {
-  text-align: center;
-  padding: 40px 20px;
-  color: #909399;
-  font-size: 14px;
-}
+  .image-author {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
 
-.empty-tip {
-  padding: 80px 20px;
+    .el-icon {
+      font-size: 14px;
+    }
+  }
 }
 </style>

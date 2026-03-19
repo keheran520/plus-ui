@@ -64,11 +64,11 @@ export const delImageCategory = (categoryId: string | number | Array<string | nu
 
 /**
  * 级联删除图片分类（包括所有子分类）
- * @param categoryId
+ * @param categoryIds
  */
-export const delImageCategoryCascade = (categoryId: string | number | Array<string | number>) => {
+export const delImageCategoryCascade = (categoryIds: string | number | Array<string | number>) => {
   return request({
-    url: '/picturebed/imageCategory/cascade/' + categoryId,
+    url: '/picturebed/imageCategory/cascade/' + categoryIds,
     method: 'delete'
   });
 };

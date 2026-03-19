@@ -34,6 +34,11 @@
             <el-button v-hasPermi="['picturebed:imageCategory:add']" icon="Plus" plain type="primary" @click="handleAdd()">新增 </el-button>
           </el-col>
           <el-col :span="1.5">
+            <el-button v-hasPermi="['picturebed:imageCategory:remove']" :loading="deleteLoading" icon="Delete" plain type="danger" @click="handleCascadeDelete"
+              >级联删除
+            </el-button>
+          </el-col>
+          <el-col :span="1.5">
             <el-button icon="Sort" plain type="info" @click="handleToggleExpandAll">展开/折叠</el-button>
           </el-col>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -108,33 +113,34 @@
             <el-tooltip content="新增" placement="top">
               <el-button v-hasPermi="['picturebed:imageCategory:add']" icon="Plus" link type="primary" @click="handleAdd(scope.row)" />
             </el-tooltip>
-            <!-- 如果有子级，显示下拉菜单 -->
-            <el-dropdown
-              v-if="hasChildren(scope.row)"
-              v-hasPermi="['picturebed:imageCategory:remove']"
-              @command="(command: string) => handleDeleteCommand(command, scope.row)"
-            >
-              <el-button icon="Delete" link type="danger">
-                删除
-                <el-icon class="el-icon--right">
-                  <arrow-down />
-                </el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="single">删除当前分类</el-dropdown-item>
-                  <el-dropdown-item command="cascade">级联删除(包括子分类)</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <!-- 如果没有子级，直接显示删除按钮 -->
-            <el-tooltip v-else content="删除" placement="top">
-              <el-button v-hasPermi="['picturebed:imageCategory:remove']" icon="Delete" link type="danger" @click="handleDeleteSingle(scope.row)" />
+            <el-tooltip content="删除" placement="top">
+              <el-button v-hasPermi="['picturebed:imageCategory:remove']" icon="Delete" link type="danger" @click="handleDelete(scope.row)" />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+    <!-- 级联删除对话框 -->
+    <el-dialog v-model="deleteDialog.visible" :title="deleteDialog.title" append-to-body destroy-on-close width="750px">
+      <el-tree
+        ref="categoryTreeRef"
+        :check-strictly="false"
+        :data="imageCategoryOptions"
+        :default-expanded-keys="[0]"
+        :props="{ value: 'categoryId', label: 'categoryName', children: 'children' }"
+        class="tree-border"
+        empty-text="加载中，请稍候"
+        node-key="categoryId"
+        show-checkbox
+      />
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button :loading="deleteLoading" type="primary" @click="submitDeleteForm">确 定</el-button>
+          <el-button @click="cancelCascade">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <!-- 添加或修改图片分类对话框 -->
     <el-drawer v-model="dialog.visible" :title="dialog.title" append-to-body size="600">
       <el-form ref="imageCategoryFormRef" :model="form" :rules="rules" label-position="top" label-width="80px">
@@ -235,14 +241,21 @@ const buttonLoading = ref(false);
 const showSearch = ref(true);
 const isExpandAll = ref(true);
 const loading = ref(false);
+const deleteLoading = ref<boolean>(false);
 
 const queryFormRef = ref<ElFormInstance>();
 const imageCategoryFormRef = ref<ElFormInstance>();
 const imageCategoryTableRef = ref<ElTableInstance>();
+const categoryTreeRef = ref<ElTreeInstance>();
 
 const dialog = reactive<DialogOption>({
   visible: false,
   title: ''
+});
+
+const deleteDialog = reactive<DialogOption>({
+  visible: false,
+  title: '级联删除分类'
 });
 
 const initFormData: ImageCategoryForm = {
@@ -408,40 +421,19 @@ const submitForm = () => {
   });
 };
 
-/** 判断是否有子级 */
-const hasChildren = (row: ImageCategoryVO): boolean => {
-  return row.children && row.children.length > 0;
-};
-
-/** 删除命令处理 */
-const handleDeleteCommand = (command: string, row: ImageCategoryVO) => {
-  if (command === 'single') {
-    handleDeleteSingle(row);
-  } else if (command === 'cascade') {
-    handleDeleteCascade(row);
+/** 删除按钮操作 */
+const handleDelete = async (row: ImageCategoryVO) => {
+  // 检查是否有子分类
+  if (row.children && row.children.length > 0) {
+    proxy?.$modal.msgWarning('存在子分类，请使用工具栏的"级联删除"功能');
+    return;
   }
-};
-
-/** 删除当前分类（单个删除） */
-const handleDeleteSingle = async (row: ImageCategoryVO) => {
+  
   await proxy?.$modal.confirm('是否确认删除分类"' + row.categoryName + '"？');
   loading.value = true;
   await delImageCategory(row.categoryId).finally(() => (loading.value = false));
   await getList();
   proxy?.$modal.msgSuccess('删除成功');
-};
-
-/** 级联删除（包括所有子分类） */
-const handleDeleteCascade = async (row: ImageCategoryVO) => {
-  await proxy?.$modal.confirm('确认要级联删除分类"' + row.categoryName + '"及其所有子分类吗？此操作不可恢复！', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'error'
-  });
-  loading.value = true;
-  await delImageCategoryCascade(row.categoryId).finally(() => (loading.value = false));
-  await getList();
-  proxy?.$modal.msgSuccess('级联删除成功');
 };
 
 /** 图片上传成功回调 */
@@ -452,7 +444,49 @@ const handleUploadSuccess = (response: any) => {
   }
 };
 
+/** 级联删除按钮操作 */
+const handleCascadeDelete = () => {
+  categoryTreeRef.value?.setCheckedKeys([]);
+  getTreeselect();
+  deleteDialog.visible = true;
+};
+
+/** 取消级联删除 */
+const cancelCascade = () => {
+  categoryTreeRef.value?.setCheckedKeys([]);
+  deleteDialog.visible = false;
+};
+
+/** 提交级联删除 */
+const submitDeleteForm = async () => {
+  const categoryIds = categoryTreeRef.value?.getCheckedKeys() as number[];
+  if (!categoryIds || categoryIds.length === 0) {
+    proxy?.$modal.msgWarning('请选择要删除的分类');
+    return;
+  }
+
+  // 检查是否包含默认分类
+  const DEFAULT_CATEGORY_ID = 1;
+  if (categoryIds.includes(DEFAULT_CATEGORY_ID)) {
+    proxy?.$modal.msgWarning('默认分类不允许删除');
+    return;
+  }
+
+  deleteLoading.value = true;
+  await delImageCategoryCascade(categoryIds).finally(() => (deleteLoading.value = false));
+  await getList();
+  proxy?.$modal.msgSuccess('删除成功');
+  deleteDialog.visible = false;
+};
+
 onMounted(() => {
   getList();
 });
 </script>
+
+<style lang="scss" scoped>
+.tree-border {
+  height: 300px;
+  overflow: auto;
+}
+</style>

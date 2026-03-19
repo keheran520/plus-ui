@@ -15,13 +15,7 @@
       <template #default="{ isEditing }">
         <!-- 密码最大错误次数 -->
         <el-form-item label="密码最大错误次数" prop="maxRetryCount" required>
-          <el-input-number
-            v-model.number="formData.maxRetryCount"
-            :disabled="!isEditing"
-            :min="1"
-            :max="10"
-            controls-position="right"
-          />
+          <el-input-number v-model.number="formData.maxRetryCount" :disabled="!isEditing" :max="10" :min="1" controls-position="right" />
           <el-text v-if="configDescriptions.maxRetryCount" class="w-full" size="small" type="info">
             {{ configDescriptions.maxRetryCount }}
           </el-text>
@@ -29,13 +23,7 @@
 
         <!-- 密码锁定时间 -->
         <el-form-item label="密码锁定时间（分钟）" prop="lockTime" required>
-          <el-input-number
-            v-model.number="formData.lockTime"
-            :disabled="!isEditing"
-            :min="1"
-            :max="1440"
-            controls-position="right"
-          />
+          <el-input-number v-model.number="formData.lockTime" :disabled="!isEditing" :max="1440" :min="1" controls-position="right" />
           <el-text v-if="configDescriptions.lockTime" class="w-full" size="small" type="info">
             {{ configDescriptions.lockTime }}
           </el-text>
@@ -43,12 +31,7 @@
 
         <!-- 注册开关 -->
         <el-form-item label="用户注册开关" prop="registerUser">
-          <el-switch
-            v-model="formData.registerUser"
-            :disabled="!isEditing"
-            active-text="开启"
-            inactive-text="关闭"
-          />
+          <el-switch v-model="formData.registerUser" :disabled="!isEditing" active-text="开启" inactive-text="关闭" />
           <el-text v-if="configDescriptions.registerUser" class="w-full" size="small" type="info">
             {{ configDescriptions.registerUser }}
           </el-text>
@@ -56,12 +39,7 @@
 
         <!-- OSS预览开关 -->
         <el-form-item label="OSS预览列表资源" prop="ossPreviewListResource">
-          <el-switch
-            v-model="formData.ossPreviewListResource"
-            :disabled="!isEditing"
-            active-text="开启"
-            inactive-text="关闭"
-          />
+          <el-switch v-model="formData.ossPreviewListResource" :disabled="!isEditing" active-text="开启" inactive-text="关闭" />
           <el-text v-if="configDescriptions.ossPreviewListResource" class="w-full" size="small" type="info">
             {{ configDescriptions.ossPreviewListResource }}
           </el-text>
@@ -70,8 +48,6 @@
         <!-- 配置说明 -->
         <el-divider />
         <el-alert
-          title="配置说明"
-          type="info"
           :closable="false"
           description="
             • 密码最大错误次数：用户登录时密码输入错误的最大次数，超过此次数将锁定账户
@@ -79,6 +55,8 @@
             • 用户注册开关：控制用户是否可以自助注册账号
             • OSS预览列表资源：控制OSS文件预览列表资源显示开关
           "
+          title="配置说明"
+          type="info"
         />
       </template>
     </SettingForm>

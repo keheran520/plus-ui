@@ -107,35 +107,36 @@
         </el-col>
       </el-row>
     </div>
-
     <!-- 筛选栏 -->
     <div class="filter-section mb-6">
-      <el-card :body-style="{ padding: '16px' }" shadow="never">
-        <el-space :size="12" wrap>
-          <el-radio-group v-model="filterStatus" @change="handleFilterChange">
-            <el-radio-button label="">全部</el-radio-button>
-            <el-radio-button label="0">正常</el-radio-button>
-            <el-radio-button label="1">停用</el-radio-button>
-          </el-radio-group>
-          <el-divider direction="vertical" />
-          <el-radio-group v-model="filterPublic" @change="handleFilterChange">
-            <el-radio-button label="">全部</el-radio-button>
-            <el-radio-button label="Y">公开</el-radio-button>
-            <el-radio-button label="N">私密</el-radio-button>
-          </el-radio-group>
-          <el-divider direction="vertical" />
-          <el-select v-model="sortBy" placeholder="排序方式" style="width: 140px" @change="handleSortChange">
-            <el-option label="创建时间" value="createTime" />
-            <el-option label="更新时间" value="updateTime" />
-            <el-option label="图片数量" value="imageCount" />
-            <el-option label="相册名称" value="albumName" />
-          </el-select>
-          <el-select v-model="sortOrder" style="width: 100px" @change="handleSortChange">
-            <el-option label="降序" value="desc" />
-            <el-option label="升序" value="asc" />
-          </el-select>
-        </el-space>
-      </el-card>
+      <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
+        <el-card :body-style="{ padding: '16px' }" shadow="never">
+          <el-space :size="12" wrap>
+            <el-radio-group v-model="filterStatus" @change="handleFilterChange">
+              <el-radio-button label="">全部</el-radio-button>
+              <el-radio-button label="0">正常</el-radio-button>
+              <el-radio-button label="1">停用</el-radio-button>
+            </el-radio-group>
+            <el-divider direction="vertical" />
+            <el-radio-group v-model="filterPublic" @change="handleFilterChange">
+              <el-radio-button label="">全部</el-radio-button>
+              <el-radio-button label="Y">公开</el-radio-button>
+              <el-radio-button label="N">私密</el-radio-button>
+            </el-radio-group>
+            <el-divider direction="vertical" />
+            <el-select v-model="sortBy" placeholder="排序方式" style="width: 140px" @change="handleSortChange">
+              <el-option label="创建时间" value="createTime" />
+              <el-option label="更新时间" value="updateTime" />
+              <el-option label="图片数量" value="imageCount" />
+              <el-option label="相册名称" value="albumName" />
+            </el-select>
+            <el-select v-model="sortOrder" style="width: 100px" @change="handleSortChange">
+              <el-option label="降序" value="desc" />
+              <el-option label="升序" value="asc" />
+            </el-select>
+          </el-space>
+        </el-card>
+      </transition>
     </div>
 
     <!-- 相册网格 -->
@@ -171,7 +172,7 @@
           <el-card :body-style="{ padding: 0 }" class="album-card" shadow="never">
             <!-- 选择框 -->
             <div class="album-checkbox">
-              <el-checkbox v-model="selectedIds" size="large" @click.stop />
+              <el-checkbox :model-value="selectedIds.includes(album.albumId)" size="large" @change="toggleSelection(album.albumId)" @click.stop />
             </div>
             <!-- 状态标签 -->
             <div class="album-badges">
@@ -381,12 +382,13 @@ import {
   Refresh,
   Search,
   Unlock,
-  Upload,
   View
 } from '@element-plus/icons-vue';
 import { addImageAlbum, delImageAlbum, getImageAlbum, listImageAlbum, updateImageAlbum } from '@/api/picturebed/imageAlbum';
 import type { ImageAlbumForm, ImageAlbumQuery, ImageAlbumVO } from '@/api/picturebed/imageAlbum/types';
 import router from '@/router';
+
+const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 // 状态
 const loading = ref(false);
@@ -407,6 +409,16 @@ const totalSize = ref(0);
 
 // 批量选择
 const selectedIds = ref<Array<string | number>>([]);
+
+// 切换选择状态
+const toggleSelection = (albumId: string | number) => {
+  const index = selectedIds.value.indexOf(albumId);
+  if (index > -1) {
+    selectedIds.value.splice(index, 1);
+  } else {
+    selectedIds.value.push(albumId);
+  }
+};
 
 // 数据
 const albumList = ref<ImageAlbumVO[]>([]);

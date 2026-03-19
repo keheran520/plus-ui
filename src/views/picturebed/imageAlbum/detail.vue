@@ -1,79 +1,79 @@
 <template>
-  <div class="album-detail-container">
-    <!-- 页头 -->
-    <el-page-header @back="handleBack" class="bg-white p-5">
-      <template #content>
-        <span class="text-large font-600 mr-3">{{ albumInfo.albumName || '相册详情' }}</span>
-      </template>
-      <template #extra>
-        <div class="header-actions">
-          <el-button :icon="Upload" type="primary" @click="uploadVisible = true">批量上传图片</el-button>
-          <el-button :icon="Plus" type="success" @click="addImageVisible = true">添加已有图片</el-button>
-        </div>
-      </template>
-    </el-page-header>
-
-    <!-- 相册信息卡片 -->
-    <el-card class="album-info-card mb-4" shadow="never">
-      <div class="album-info-content">
-        <div class="album-cover-large">
-          <img v-if="albumInfo.albumCover" :alt="albumInfo.albumName" :src="albumInfo.albumCover" />
-          <div v-else class="cover-placeholder">
-            <el-icon :size="80" color="#d0d0d0">
-              <Picture />
-            </el-icon>
+  <div class="album-detail-wrapper">
+    <div class="album-detail-container">
+      <!-- 页头 -->
+      <el-page-header class="bg-white p-5" @back="handleBack">
+        <template #content>
+          <span class="text-large font-600 mr-3">{{ albumInfo.albumName || '相册详情' }}</span>
+        </template>
+        <template #extra>
+          <div class="header-actions">
+            <el-button :icon="Upload" type="primary" @click="uploadVisible = true">批量上传图片</el-button>
+            <el-button :icon="Plus" type="success" @click="addImageVisible = true">添加已有图片</el-button>
           </div>
-        </div>
+        </template>
+      </el-page-header>
 
-        <div class="album-meta">
-          <h1 class="album-title">{{ albumInfo.albumName }}</h1>
-          <p v-if="albumInfo.description" class="album-description">{{ albumInfo.description }}</p>
-          <p v-else class="album-description text-gray-400">暂无描述</p>
-
-          <div class="album-stats-row">
-            <div class="stat-item">
-              <el-icon :size="18" color="#409eff">
+      <!-- 相册信息卡片 -->
+      <el-card class="album-info-card mb-4" shadow="never">
+        <div class="album-info-content">
+          <div class="album-cover-large">
+            <img v-if="albumInfo.albumCover" :alt="albumInfo.albumName" :src="albumInfo.albumCover" />
+            <div v-else class="cover-placeholder">
+              <el-icon :size="80" color="#d0d0d0">
                 <Picture />
               </el-icon>
-              <span>{{ albumInfo.imageCount || 0 }} 张图片</span>
-            </div>
-            <div class="stat-item">
-              <el-icon :size="18" color="#67c23a">
-                <Folder />
-              </el-icon>
-              <span>{{ formatSize(albumInfo.totalSize) }}</span>
-            </div>
-            <div class="stat-item">
-              <el-icon :size="18" color="#909399">
-                <Clock />
-              </el-icon>
-              <span>{{ formatDate(albumInfo.createTime) }}</span>
             </div>
           </div>
 
-          <div class="album-tags">
-            <el-tag v-if="albumInfo.isPublic === 'Y'" type="success">
-              <el-icon class="mr-1">
-                <Unlock />
-              </el-icon>
-              公开
-            </el-tag>
-            <el-tag v-else type="info">
-              <el-icon class="mr-1">
-                <Lock />
-              </el-icon>
-              私密
-            </el-tag>
-            <el-tag v-if="albumInfo.status === '0'" type="success">正常</el-tag>
-            <el-tag v-else type="danger">已停用</el-tag>
+          <div class="album-meta">
+            <h1 class="album-title">{{ albumInfo.albumName }}</h1>
+            <p v-if="albumInfo.description" class="album-description">{{ albumInfo.description }}</p>
+            <p v-else class="album-description text-gray-400">暂无描述</p>
+
+            <div class="album-stats-row">
+              <div class="stat-item">
+                <el-icon :size="18" color="#409eff">
+                  <Picture />
+                </el-icon>
+                <span>{{ albumInfo.imageCount || 0 }} 张图片</span>
+              </div>
+              <div class="stat-item">
+                <el-icon :size="18" color="#67c23a">
+                  <Folder />
+                </el-icon>
+                <span>{{ formatSize(albumInfo.totalSize) }}</span>
+              </div>
+              <div class="stat-item">
+                <el-icon :size="18" color="#909399">
+                  <Clock />
+                </el-icon>
+                <span>{{ formatDate(albumInfo.createTime) }}</span>
+              </div>
+            </div>
+
+            <div class="album-tags">
+              <el-tag v-if="albumInfo.isPublic === 'Y'" type="success">
+                <el-icon class="mr-1">
+                  <Unlock />
+                </el-icon>
+                公开
+              </el-tag>
+              <el-tag v-else type="info">
+                <el-icon class="mr-1">
+                  <Lock />
+                </el-icon>
+                私密
+              </el-tag>
+              <el-tag v-if="albumInfo.status === '0'" type="success">正常</el-tag>
+              <el-tag v-else type="danger">已停用</el-tag>
+            </div>
           </div>
         </div>
-      </div>
-    </el-card>
-    <div class="detail-main">
-      <!-- 主内容区域：左侧图片网格 + 右侧时间轴 -->
-      <el-card shadow="never">
-        <!-- 左侧：图片网格 -->
+      </el-card>
+      <!-- 主内容区域：图片网格 -->
+      <el-card class="album-info-card mb-4" shadow="never">
+        <!-- 图片网格 -->
         <div class="images-section">
           <div class="section-header">
             <h2 class="section-title">相册图片</h2>
@@ -100,43 +100,39 @@
           </div>
 
           <!-- 图片网格视图（瀑布流） -->
-          <div v-if="viewMode === 'grid'" v-loading="loading" class="images-waterfall">
-            <div v-for="(image, index) in imageList" :key="image.imageId" class="waterfall-item">
-              <div :style="getImageStyle(image)" class="image-wrapper" @click="handlePreviewByIndex(index)">
-                <img v-if="image.url" :src="image.url" :alt="image.imageName" />
-                <div v-else class="flex items-center justify-center bg-gray-100 border border-gray-300 rounded" style="width: 100%; height: 200px">
-                  <span class="text-gray-400 text-sm">无图片</span>
+          <div v-if="viewMode === 'grid'">
+            <WaterfallLayout
+              v-loading="loading"
+              :border-radius="5"
+              :column-count="4"
+              :column-gap="5"
+              :items="imageList"
+              :padding="0"
+              :row-gap="5"
+              :scale-ratio="1.05"
+              :show-load-more="false"
+              hover-effect="scale"
+              @item-click="handlePreviewImage"
+            >
+              <template #overlay="{ item }">
+                <div class="image-overlay-content">
+                  <p :title="item.imageName || item.originalName" class="image-name">
+                    {{ item.imageName || item.originalName }}
+                  </p>
+                  <p class="image-meta">
+                    <span class="image-format">{{ item.fileSuffix || 'JPG' }}</span>
+                    <span v-if="item.ossExt?.width && item.ossExt?.height" class="image-dimension">
+                      {{ item.ossExt.width }} × {{ item.ossExt.height }}
+                    </span>
+                    <span class="image-size">{{ formatSize(item.ossExt?.fileSize || 0) }}</span>
+                  </p>
+                  <p v-if="item.createByUser" class="image-author">
+                    <el-icon><User /></el-icon>
+                    <span>{{ item.createByUser.nickName }}</span>
+                  </p>
                 </div>
-
-                <!-- 图片信息叠加层 -->
-                <div class="image-info-overlay">
-                  <div class="image-info-content">
-                    <p class="image-name" :title="image.imageName || image.originalName">
-                      {{ image.imageName || image.originalName }}
-                    </p>
-                    <p class="image-meta">
-                      <span class="image-format">{{ image.fileSuffix || 'JPG' }}</span>
-                      <span class="image-dimension" v-if="image.ossExt?.width && image.ossExt?.height">
-                        {{ image.ossExt.width }} × {{ image.ossExt.height }}
-                      </span>
-                      <span class="image-size">{{ formatSize(image.ossExt?.fileSize || 0) }}</span>
-                    </p>
-                    <p class="image-author" v-if="image.createByUser">
-                      <el-icon>
-                        <User />
-                      </el-icon>
-                      {{ image.createByUser.nickName }}
-                    </p>
-                  </div>
-
-                  <!--                  &lt;!&ndash; 操作按钮 &ndash;&gt;-->
-                  <!--                  <div class="image-actions">-->
-                  <!--                    <el-button :icon="Download" circle size="small" type="success" @click.stop="handleDownload(image)" />-->
-                  <!--                    <el-button :icon="Delete" circle size="small" type="danger" @click.stop="handleDeleteImage(image)" />-->
-                  <!--                  </div>-->
-                </div>
-              </div>
-            </div>
+              </template>
+            </WaterfallLayout>
           </div>
 
           <!-- 图片列表视图 -->
@@ -193,56 +189,23 @@
           </div>
         </div>
       </el-card>
-      <!-- 主内容区域：左侧图片网格 + 右侧时间轴 -->
-      <el-card shadow="never">
-        <!-- 右侧：时间轴 -->
-        <div class="timeline-section">
-          <div class="section-header">
-            <h2 class="section-title">时间轴</h2>
-          </div>
-
-          <el-timeline class="timeline-content">
-            <el-timeline-item
-              v-for="(group, index) in timelineData"
-              :key="index"
-              :color="index === 0 ? '#409eff' : '#909399'"
-              :timestamp="group.date"
-              placement="top"
-            >
-              <el-card shadow="hover">
-                <div class="timeline-header">
-                  <h3>{{ group.label }}</h3>
-                  <el-tag size="small">{{ group.images.length }} 张</el-tag>
-                </div>
-                <div class="timeline-images">
-                  <div v-for="img in group.images.slice(0, 6)" :key="img.imageId" class="timeline-image" @click="handlePreview(img)">
-                    <img :alt="img.imageName" :src="img.url" />
-                  </div>
-                  <div v-if="group.images.length > 6" class="timeline-more" @click="scrollToDate(group.date)">
-                    <span>+{{ group.images.length - 6 }}</span>
-                  </div>
-                </div>
-              </el-card>
-            </el-timeline-item>
-          </el-timeline>
-        </div>
-      </el-card>
     </div>
+
     <!-- 图片查看器 -->
     <ImageViewer
       v-model="previewVisible"
       :image-list="imageList"
       :initial-index="previewIndex"
+      @download="handleDownload"
       @like="handleLikeImage"
       @report="handleReportImage"
-      @download="handleDownload"
     />
 
     <!-- 批量上传组件 -->
     <BatchUpload v-model="uploadVisible" :album-id="albumInfo.albumId" title="批量上传图片到相册" @success="handleUploadSuccess" />
 
     <!-- 添加已有图片弹窗 -->
-    <AddImageToAlbum v-model="addImageVisible" :album-id="albumInfo.albumId" @success="handleAddImageSuccess" />
+    <AddImageToAlbum v-if="albumInfo.albumId" v-model="addImageVisible" :album-id="albumInfo.albumId" @success="handleAddImageSuccess" />
   </div>
 </template>
 
@@ -250,30 +213,15 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import {
-  ArrowLeft,
-  Clock,
-  Delete,
-  Download,
-  Folder,
-  Grid,
-  List,
-  Lock,
-  Picture,
-  Plus,
-  Search,
-  Unlock,
-  Upload,
-  User,
-  View
-} from '@element-plus/icons-vue';
-import { getImageAlbum, getAlbumImages } from '@/api/picturebed/imageAlbum';
+import { Clock, Delete, Download, Folder, Grid, List, Lock, Picture, Plus, Search, Unlock, Upload, User, View } from '@element-plus/icons-vue';
+import { getAlbumImages, getImageAlbum } from '@/api/picturebed/imageAlbum';
 import { removeFromAlbum } from '@/api/picturebed/image';
 import type { ImageAlbumVO } from '@/api/picturebed/imageAlbum/types';
 import BatchUpload from '@/components/ImageUpload/BatchUpload.vue';
 import ImagePreview from '@/components/ImagePreview/index.vue';
 import ImageViewer from '@/components/ImageViewer/index.vue';
 import AddImageToAlbum from './components/AddImageToAlbum.vue';
+import WaterfallLayout from '@/components/WaterfallLayout/index.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -312,31 +260,6 @@ const queryParams = computed(() => {
   return viewMode.value === 'grid' ? gridParams.value : listParams.value;
 });
 
-// 时间轴数据
-const timelineData = computed(() => {
-  const groups: Record<string, any[]> = {};
-
-  imageList.value.forEach((img) => {
-    const date = new Date(img.createTime);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const key = `${year}-${month.toString().padStart(2, '0')}`;
-
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(img);
-  });
-
-  return Object.keys(groups)
-    .sort((a, b) => b.localeCompare(a))
-    .map((key) => ({
-      date: key,
-      label: `${key.split('-')[0]}年${key.split('-')[1]}月`,
-      images: groups[key]
-    }));
-});
-
 // 获取相册详情
 const getAlbumDetail = async () => {
   const res = await getImageAlbum(route.params.id as string);
@@ -345,10 +268,17 @@ const getAlbumDetail = async () => {
 
 // 获取图片列表
 const getImageList = async () => {
+  // 检查 albumId 是否存在
+  const albumId = route.params.id as string;
+  if (!albumId || albumId === 'undefined') {
+    console.warn('albumId is undefined, skipping getImageList');
+    return;
+  }
+  
   loading.value = true;
   try {
     const params = viewMode.value === 'grid' ? gridParams.value : listParams.value;
-    const res = await getAlbumImages(route.params.id as string, params);
+    const res = await getAlbumImages(albumId, params);
     imageList.value = res.rows || [];
     total.value = res.total || 0;
 
@@ -386,6 +316,7 @@ const handleAddImageSuccess = () => {
 const handleUploadSuccess = (data: any) => {
   ElMessage({ message: `成功上传 ${data.length} 张图片`, type: 'success', plain: true });
   // 刷新图片列表
+  getAlbumDetail();
   getImageList();
 };
 
@@ -396,9 +327,11 @@ const handlePreview = (image: any) => {
   previewVisible.value = true;
 };
 
-// 通过索引预览图片（用于瀑布流视图）
-const handlePreviewByIndex = (index: number) => {
-  previewIndex.value = index;
+// 预览图片（用于瀑布流视图）
+const handlePreviewImage = (item: any, index: number) => {
+  // 在imageList中找到这个图片的正确索引
+  const actualIndex = imageList.value.findIndex((img) => img.imageId === item.imageId);
+  previewIndex.value = actualIndex >= 0 ? actualIndex : index;
   previewVisible.value = true;
 };
 
@@ -443,28 +376,6 @@ const handleRemoveImage = (image: any) => {
     .catch(() => {});
 };
 
-// 滚动到指定日期
-const scrollToDate = (date: string) => {
-  ElMessage.info(`滚动到 ${date}`);
-};
-
-// 计算图片样式（根据宽高比）
-const getImageStyle = (image: any) => {
-  const width = image.ossExt?.width || 300;
-  const height = image.ossExt?.height || 200;
-  const aspectRatio = height / width;
-
-  // 限制最小和最大高度
-  const minHeight = 150;
-  const maxHeight = 400;
-  const calculatedHeight = Math.min(Math.max(aspectRatio * 100, minHeight), maxHeight);
-
-  return {
-    paddingTop: `${calculatedHeight}%`,
-    position: 'relative' as const
-  };
-};
-
 // 格式化文件大小
 const formatSize = (bytes: number | undefined) => {
   if (!bytes) return '0 B';
@@ -495,12 +406,19 @@ const formatDate = (date: string | Date | undefined) => {
 const loadMore = async () => {
   if (isLoadingMore.value || !hasMore.value || viewMode.value !== 'grid') return;
 
+  // 检查 albumId 是否存在
+  const albumId = route.params.id as string;
+  if (!albumId || albumId === 'undefined') {
+    console.warn('albumId is undefined, skipping loadMore');
+    return;
+  }
+
   isLoadingMore.value = true;
   gridParams.value.pageNum++;
 
   try {
     // 调用API加载下一页
-    const res = await getAlbumImages(route.params.id as string, gridParams.value);
+    const res = await getAlbumImages(albumId, gridParams.value);
     const newImages = res.rows || [];
 
     if (newImages.length > 0) {
@@ -538,6 +456,12 @@ const handleScroll = () => {
 
 // 监听视图模式切换
 watch(viewMode, (newMode, oldMode) => {
+  // 检查 albumId 是否存在，避免在离开页面后触发
+  const albumId = route.params.id as string;
+  if (!albumId || albumId === 'undefined') {
+    return;
+  }
+  
   if (newMode !== oldMode) {
     // 切换视图时重置当前视图的分页参数
     if (newMode === 'grid') {
@@ -552,8 +476,12 @@ watch(viewMode, (newMode, oldMode) => {
 });
 
 onMounted(() => {
-  getAlbumDetail();
-  getImageList();
+  // 只在 albumId 存在时才加载数据
+  const albumId = route.params.id as string;
+  if (albumId && albumId !== 'undefined') {
+    getAlbumDetail();
+    getImageList();
+  }
 
   // 添加滚动监听
   window.addEventListener('scroll', handleScroll);
@@ -648,20 +576,7 @@ onUnmounted(() => {
 
 // 主内容区域
 .detail-main {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 20px;
-  margin: 0 var(--spacing-md);
-
-  // 响应式：中等屏幕
-  @media (max-width: 1400px) {
-    grid-template-columns: 1fr 280px;
-  }
-
-  // 响应式：小屏幕（时间轴移到下方）
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr;
-  }
+  display: block;
 }
 
 // 左侧图片区域
@@ -686,152 +601,64 @@ onUnmounted(() => {
     }
   }
 
-  // 瀑布流布局
-  .images-waterfall {
-    column-count: 4;
-    column-gap: 16px;
-
-    // 响应式断点
-    @media (max-width: 1400px) {
-      column-count: 3;
-    }
-
-    @media (max-width: 1024px) {
-      column-count: 2;
-    }
-
-    @media (max-width: 768px) {
-      column-count: 1;
-    }
-
-    .waterfall-item {
-      break-inside: avoid;
-      margin-bottom: 16px;
-      cursor: pointer;
-      border-radius: 8px;
-      overflow: hidden;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-
-        .image-info-overlay {
-          opacity: 1;
-        }
-      }
-
-      .image-wrapper {
-        position: relative;
-        width: 100%;
-        overflow: hidden;
-        background: #f5f7fa;
-        cursor: pointer;
-
-        :deep(.el-image) {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          cursor: pointer;
-        }
-
-        img {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        // 悬停时显示信息层
-        &:hover .image-info-overlay {
-          opacity: 1;
-        }
-
-        .image-info-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
-          padding: 40px 12px 12px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          pointer-events: none;
-
-          .image-info-content {
-            pointer-events: none;
-
-            .image-name {
-              margin: 0 0 6px;
-              font-size: 14px;
-              font-weight: 500;
-              color: #ffffff;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            }
-
-            .image-meta {
-              display: flex;
-              gap: 8px;
-              align-items: center;
-              margin: 0 0 6px;
-              font-size: 12px;
-              color: rgba(255, 255, 255, 0.9);
-
-              .image-format {
-                padding: 2px 6px;
-                background: rgba(255, 255, 255, 0.2);
-                border-radius: 3px;
-                font-weight: 500;
-              }
-
-              .image-dimension {
-                color: rgba(255, 255, 255, 0.8);
-              }
-
-              .image-size {
-                color: rgba(255, 255, 255, 0.8);
-              }
-            }
-
-            .image-author {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-              margin: 0;
-              font-size: 12px;
-              color: rgba(255, 255, 255, 0.7);
-
-              .el-icon {
-                font-size: 14px;
-              }
-            }
-          }
-
-          .image-actions {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            display: flex;
-            gap: 8px;
-            pointer-events: auto;
-          }
-        }
-      }
-    }
-  }
-
   // 图片列表
   .images-list {
     :deep(.el-table) {
       border-radius: 8px;
+    }
+  }
+
+  // 自定义瀑布流遮罩层样式
+  :deep(.image-overlay-content) {
+    .image-name {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .image-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.9) !important;
+
+      .image-format {
+        padding: 2px 6px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+        font-weight: 500;
+        color: #ffffff !important;
+      }
+
+      .image-dimension,
+      .image-size {
+        color: rgba(255, 255, 255, 0.8) !important;
+      }
+    }
+
+    .image-author {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin: 0;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7) !important;
+
+      .el-icon {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7) !important;
+      }
+
+      span {
+        color: rgba(255, 255, 255, 0.7) !important;
+      }
     }
   }
 
@@ -846,12 +673,28 @@ onUnmounted(() => {
 
 // 右侧时间轴
 .timeline-section {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   max-height: calc(100vh - 400px);
   overflow-y: auto;
+  overflow-x: hidden;
+
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
 
   // 响应式：小屏幕时调整高度
   @media (max-width: 1200px) {
@@ -859,9 +702,15 @@ onUnmounted(() => {
   }
 
   .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+    padding: 0 4px;
 
     .section-title {
+      display: flex;
+      align-items: center;
       margin: 0;
       font-size: 18px;
       font-weight: 600;
@@ -870,6 +719,34 @@ onUnmounted(() => {
   }
 
   .timeline-content {
+    padding-right: 4px;
+
+    :deep(.el-timeline-item__wrapper) {
+      padding-left: 24px;
+    }
+
+    :deep(.el-timeline-item__timestamp) {
+      font-size: 13px;
+      font-weight: 500;
+      color: #606266;
+    }
+
+    .timeline-card {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid #e4e7ed;
+
+      &:hover {
+        border-color: #409eff;
+        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+        transform: translateX(4px);
+      }
+
+      :deep(.el-card__body) {
+        padding: 16px;
+      }
+    }
+
     .timeline-header {
       display: flex;
       justify-content: space-between;
@@ -878,7 +755,7 @@ onUnmounted(() => {
 
       h3 {
         margin: 0;
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
         color: #303133;
       }
@@ -887,19 +764,27 @@ onUnmounted(() => {
     .timeline-images {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 6px;
+      margin-bottom: 12px;
 
       .timeline-image {
         width: 100%;
         padding-top: 100%;
         position: relative;
-        border-radius: 4px;
+        border-radius: 6px;
         overflow: hidden;
         cursor: pointer;
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
+        background: #f5f7fa;
 
         &:hover {
-          transform: scale(1.05);
+          transform: scale(1.08);
+          z-index: 10;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+          .image-overlay {
+            opacity: 1;
+          }
         }
 
         img {
@@ -910,32 +795,76 @@ onUnmounted(() => {
           height: 100%;
           object-fit: cover;
         }
+
+        .image-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          color: white;
+        }
       }
 
       .timeline-more {
         width: 100%;
         padding-top: 100%;
         position: relative;
-        border-radius: 4px;
-        background: #f5f7fa;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.3s ease;
 
-        span {
+        &:hover {
+          transform: scale(1.08);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        > * {
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          font-size: 16px;
-          font-weight: 600;
-          color: #909399;
+          color: white;
         }
 
-        &:hover {
-          background: #e4e7ed;
+        .el-icon {
+          top: 35%;
         }
+
+        span {
+          top: 65%;
+          font-size: 14px;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .timeline-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+
+      .el-text {
+        display: flex;
+        align-items: center;
+      }
+
+      .el-link {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
       }
     }
   }

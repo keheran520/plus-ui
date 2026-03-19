@@ -3,33 +3,33 @@
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
-          <el-form ref="queryFormRef" :model="queryParams" :inline="true">
+          <el-form ref="queryFormRef" :inline="true" :model="queryParams">
             <el-form-item label="相册名称" prop="albumName">
-              <el-input v-model="queryParams.albumName" placeholder="请输入相册名称" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.albumName" clearable placeholder="请输入相册名称" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="相册编码" prop="albumCode">
-              <el-input v-model="queryParams.albumCode" placeholder="请输入相册编码" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.albumCode" clearable placeholder="请输入相册编码" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="相册封面URL" prop="albumCover">
-              <el-input v-model="queryParams.albumCover" placeholder="请输入相册封面URL" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.albumCover" clearable placeholder="请输入相册封面URL" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="相册描述" prop="description">
-              <el-input v-model="queryParams.description" placeholder="请输入相册描述" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.description" clearable placeholder="请输入相册描述" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="图片数量" prop="imageCount">
-              <el-input v-model="queryParams.imageCount" placeholder="请输入图片数量" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.imageCount" clearable placeholder="请输入图片数量" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="总大小(字节)" prop="totalSize">
-              <el-input v-model="queryParams.totalSize" placeholder="请输入总大小(字节)" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.totalSize" clearable placeholder="请输入总大小(字节)" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="是否公开(0否 1是)" prop="isPublic">
-              <el-input v-model="queryParams.isPublic" placeholder="请输入是否公开(0否 1是)" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.isPublic" clearable placeholder="请输入是否公开(0否 1是)" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item label="显示顺序" prop="sortOrder">
-              <el-input v-model="queryParams.sortOrder" placeholder="请输入显示顺序" clearable @keyup.enter="handleQuery" />
+              <el-input v-model="queryParams.sortOrder" clearable placeholder="请输入显示顺序" @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+              <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
@@ -41,50 +41,54 @@
       <template #header>
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
-            <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['picturebed:imageAlbum:add']">新增</el-button>
+            <el-button v-hasPermi="['picturebed:imageAlbum:add']" icon="Plus" plain type="primary" @click="handleAdd">新增</el-button>
           </el-col>
           <el-col :span="1.5">
-            <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['picturebed:imageAlbum:edit']">修改</el-button>
+            <el-button v-hasPermi="['picturebed:imageAlbum:edit']" :disabled="single" icon="Edit" plain type="success" @click="handleUpdate()"
+              >修改</el-button
+            >
           </el-col>
           <el-col :span="1.5">
-            <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['picturebed:imageAlbum:remove']">删除</el-button>
+            <el-button v-hasPermi="['picturebed:imageAlbum:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()"
+              >删除</el-button
+            >
           </el-col>
           <el-col :span="1.5">
-            <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['picturebed:imageAlbum:export']">导出</el-button>
+            <el-button v-hasPermi="['picturebed:imageAlbum:export']" icon="Download" plain type="warning" @click="handleExport">导出</el-button>
           </el-col>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
       </template>
 
-      <el-table v-loading="loading" border :data="imageAlbumList" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="相册ID" align="center" prop="albumId" v-if="true" />
-        <el-table-column label="相册名称" align="center" prop="albumName" />
-        <el-table-column label="相册编码" align="center" prop="albumCode" />
-        <el-table-column label="相册封面URL" align="center" prop="albumCover" />
-        <el-table-column label="相册描述" align="center" prop="description" />
-        <el-table-column label="图片数量" align="center" prop="imageCount" />
-        <el-table-column label="总大小(字节)" align="center" prop="totalSize" />
-        <el-table-column label="是否公开(0否 1是)" align="center" prop="isPublic" />
-        <el-table-column label="显示顺序" align="center" prop="sortOrder" />
-        <el-table-column label="状态(0正常 1停用)" align="center" prop="status" />
-        <el-table-column label="备注" align="center" prop="remark" />
-        <el-table-column label="操作" align="center" fixed="right"  class-name="small-padding fixed-width">
+      <el-table v-loading="loading" :data="imageAlbumList" border @selection-change="handleSelectionChange">
+        <el-table-column align="center" type="selection" width="55" />
+        <el-table-column v-if="true" align="center" label="相册ID" prop="albumId" />
+        <el-table-column align="center" label="相册名称" prop="albumName" />
+        <el-table-column align="center" label="相册编码" prop="albumCode" />
+        <el-table-column align="center" label="相册封面URL" prop="albumCover" />
+        <el-table-column align="center" label="相册描述" prop="description" />
+        <el-table-column align="center" label="图片数量" prop="imageCount" />
+        <el-table-column align="center" label="总大小(字节)" prop="totalSize" />
+        <el-table-column align="center" label="是否公开(0否 1是)" prop="isPublic" />
+        <el-table-column align="center" label="显示顺序" prop="sortOrder" />
+        <el-table-column align="center" label="状态(0正常 1停用)" prop="status" />
+        <el-table-column align="center" label="备注" prop="remark" />
+        <el-table-column align="center" class-name="small-padding fixed-width" fixed="right" label="操作">
           <template #default="scope">
             <el-tooltip content="修改" placement="top">
-              <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['picturebed:imageAlbum:edit']"></el-button>
+              <el-button v-hasPermi="['picturebed:imageAlbum:edit']" icon="Edit" link type="primary" @click="handleUpdate(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="删除" placement="top">
-              <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['picturebed:imageAlbum:remove']"></el-button>
+              <el-button v-hasPermi="['picturebed:imageAlbum:remove']" icon="Delete" link type="primary" @click="handleDelete(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
     </el-card>
     <!-- 添加或修改图片相册对话框 -->
-    <el-dialog :title="dialog.title" v-model="dialog.visible" width="500px" append-to-body>
+    <el-dialog v-model="dialog.visible" :title="dialog.title" append-to-body width="500px">
       <el-form ref="imageAlbumFormRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="相册名称" prop="albumName">
           <el-input v-model="form.albumName" placeholder="请输入相册名称" />
@@ -93,10 +97,10 @@
           <el-input v-model="form.albumCode" placeholder="请输入相册编码" />
         </el-form-item>
         <el-form-item label="相册封面URL" prop="albumCover">
-            <el-input v-model="form.albumCover" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.albumCover" placeholder="请输入内容" type="textarea" />
         </el-form-item>
         <el-form-item label="相册描述" prop="description">
-            <el-input v-model="form.description" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.description" placeholder="请输入内容" type="textarea" />
         </el-form-item>
         <el-form-item label="图片数量" prop="imageCount">
           <el-input v-model="form.imageCount" placeholder="请输入图片数量" />
@@ -111,7 +115,7 @@
           <el-input v-model="form.sortOrder" placeholder="请输入显示顺序" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-            <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.remark" placeholder="请输入内容" type="textarea" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -124,9 +128,9 @@
   </div>
 </template>
 
-<script setup name="ImageAlbum" lang="ts">
-import { listImageAlbum, getImageAlbum, delImageAlbum, addImageAlbum, updateImageAlbum } from '@/api/picturebed/imageAlbum';
-import { ImageAlbumVO, ImageAlbumQuery, ImageAlbumForm } from '@/api/picturebed/imageAlbum/types';
+<script lang="ts" name="ImageAlbum" setup>
+import { addImageAlbum, delImageAlbum, getImageAlbum, listImageAlbum, updateImageAlbum } from '@/api/picturebed/imageAlbum';
+import { ImageAlbumForm, ImageAlbumQuery, ImageAlbumVO } from '@/api/picturebed/imageAlbum/types';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -158,10 +162,10 @@ const initFormData: ImageAlbumForm = {
   isPublic: undefined,
   sortOrder: undefined,
   status: undefined,
-  remark: undefined,
-}
+  remark: undefined
+};
 const data = reactive<PageData<ImageAlbumForm, ImageAlbumQuery>>({
-  form: {...initFormData},
+  form: { ...initFormData },
   queryParams: {
     pageNum: 1,
     pageSize: 10,
@@ -174,31 +178,16 @@ const data = reactive<PageData<ImageAlbumForm, ImageAlbumQuery>>({
     isPublic: undefined,
     sortOrder: undefined,
     status: undefined,
-    params: {
-    }
+    params: {}
   },
   rules: {
-    albumId: [
-      { required: true, message: "相册ID不能为空", trigger: "blur" }
-    ],
-    albumName: [
-      { required: true, message: "相册名称不能为空", trigger: "blur" }
-    ],
-    imageCount: [
-      { required: true, message: "图片数量不能为空", trigger: "blur" }
-    ],
-    totalSize: [
-      { required: true, message: "总大小(字节)不能为空", trigger: "blur" }
-    ],
-    isPublic: [
-      { required: true, message: "是否公开(0否 1是)不能为空", trigger: "blur" }
-    ],
-    sortOrder: [
-      { required: true, message: "显示顺序不能为空", trigger: "blur" }
-    ],
-    status: [
-      { required: true, message: "状态(0正常 1停用)不能为空", trigger: "change" }
-    ],
+    albumId: [{ required: true, message: '相册ID不能为空', trigger: 'blur' }],
+    albumName: [{ required: true, message: '相册名称不能为空', trigger: 'blur' }],
+    imageCount: [{ required: true, message: '图片数量不能为空', trigger: 'blur' }],
+    totalSize: [{ required: true, message: '总大小(字节)不能为空', trigger: 'blur' }],
+    isPublic: [{ required: true, message: '是否公开(0否 1是)不能为空', trigger: 'blur' }],
+    sortOrder: [{ required: true, message: '显示顺序不能为空', trigger: 'blur' }],
+    status: [{ required: true, message: '状态(0正常 1停用)不能为空', trigger: 'change' }]
   }
 });
 
@@ -211,55 +200,55 @@ const getList = async () => {
   imageAlbumList.value = res.rows;
   total.value = res.total;
   loading.value = false;
-}
+};
 
 /** 取消按钮 */
 const cancel = () => {
   reset();
   dialog.visible = false;
-}
+};
 
 /** 表单重置 */
 const reset = () => {
-  form.value = {...initFormData};
+  form.value = { ...initFormData };
   imageAlbumFormRef.value?.resetFields();
-}
+};
 
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1;
   getList();
-}
+};
 
 /** 重置按钮操作 */
 const resetQuery = () => {
   queryFormRef.value?.resetFields();
   handleQuery();
-}
+};
 
 /** 多选框选中数据 */
 const handleSelectionChange = (selection: ImageAlbumVO[]) => {
-  ids.value = selection.map(item => item.albumId);
+  ids.value = selection.map((item) => item.albumId);
   single.value = selection.length != 1;
   multiple.value = !selection.length;
-}
+};
 
 /** 新增按钮操作 */
 const handleAdd = () => {
   reset();
   dialog.visible = true;
-  dialog.title = "添加图片相册";
-}
+  dialog.title = '添加图片相册';
+};
 
 /** 修改按钮操作 */
 const handleUpdate = async (row?: ImageAlbumVO) => {
   reset();
-  const _albumId = row?.albumId || ids.value[0]
+  const _albumId = row?.albumId || ids.value[0];
   const res = await getImageAlbum(_albumId);
   Object.assign(form.value, res.data);
   dialog.visible = true;
-  dialog.title = "修改图片相册";
-}
+  dialog.title = '修改图片相册';
+};
 
 /** 提交按钮 */
 const submitForm = () => {
@@ -267,32 +256,36 @@ const submitForm = () => {
     if (valid) {
       buttonLoading.value = true;
       if (form.value.albumId) {
-        await updateImageAlbum(form.value).finally(() =>  buttonLoading.value = false);
+        await updateImageAlbum(form.value).finally(() => (buttonLoading.value = false));
       } else {
-        await addImageAlbum(form.value).finally(() =>  buttonLoading.value = false);
+        await addImageAlbum(form.value).finally(() => (buttonLoading.value = false));
       }
-      proxy?.$modal.msgSuccess("操作成功");
+      proxy?.$modal.msgSuccess('操作成功');
       dialog.visible = false;
       await getList();
     }
   });
-}
+};
 
 /** 删除按钮操作 */
 const handleDelete = async (row?: ImageAlbumVO) => {
   const _albumIds = row?.albumId || ids.value;
-  await proxy?.$modal.confirm('是否确认删除图片相册编号为"' + _albumIds + '"的数据项？').finally(() => loading.value = false);
+  await proxy?.$modal.confirm('是否确认删除图片相册编号为"' + _albumIds + '"的数据项？').finally(() => (loading.value = false));
   await delImageAlbum(_albumIds);
-  proxy?.$modal.msgSuccess("删除成功");
+  proxy?.$modal.msgSuccess('删除成功');
   await getList();
-}
+};
 
 /** 导出按钮操作 */
 const handleExport = () => {
-  proxy?.download('picturebed/imageAlbum/export', {
-    ...queryParams.value
-  }, `imageAlbum_${new Date().getTime()}.xlsx`)
-}
+  proxy?.download(
+    'picturebed/imageAlbum/export',
+    {
+      ...queryParams.value
+    },
+    `imageAlbum_${new Date().getTime()}.xlsx`
+  );
+};
 
 onMounted(() => {
   getList();

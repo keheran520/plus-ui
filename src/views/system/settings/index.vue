@@ -1,6 +1,6 @@
 <template>
   <div class="p-4">
-    <el-card class="settings-card" shadow="hover">
+    <div class="settings-card">
       <SettingTabs v-model="activeTab" :tabs="tabList">
         <!-- 网站配置 -->
         <div v-show="activeTab === 'website'">
@@ -42,7 +42,7 @@
           <Client />
         </div>
       </SettingTabs>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -84,10 +84,4 @@ const tabList = [
 ];
 </script>
 
-<style lang="scss" scoped>
-.settings-card {
-  :deep(.el-card__body) {
-    padding: 0;
-  }
-}
-</style>
+<style lang="scss" scoped></style>
