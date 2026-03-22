@@ -11,11 +11,12 @@
   </section>
 </template>
 
-<script setup name="AppMain" lang="ts">
+<script lang="ts" name="AppMain" setup>
 import { useSettingsStore } from '@/store/modules/settings';
 import { useTagsViewStore } from '@/store/modules/tagsView';
 
 import IframeToggle from './IframeToggle/index.vue';
+
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const route = useRoute();
 const tagsViewStore = useTagsViewStore();
@@ -60,7 +61,7 @@ function addIframe() {
   overflow: hidden;
   background: #fafbfc;
 }
-html.dark{
+html.dark {
   .app-main {
     background: black;
   }

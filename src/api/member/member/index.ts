@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { MemberVO, MemberForm, MemberQuery } from '@/api/member/member/types';
+import { MemberVO, MemberForm, MemberOverviewVO, MemberQuery } from '@/api/member/member/types';
 
 /**
  * 查询会员列表
@@ -11,6 +11,14 @@ import { MemberVO, MemberForm, MemberQuery } from '@/api/member/member/types';
 export const listMember = (query?: MemberQuery): AxiosPromise<MemberVO[]> => {
   return request({
     url: '/member/member/list',
+    method: 'get',
+    params: query
+  });
+};
+
+export const getMemberOverview = (query?: MemberQuery): AxiosPromise<MemberOverviewVO> => {
+  return request({
+    url: '/member/member/overview',
     method: 'get',
     params: query
   });
@@ -185,5 +193,13 @@ export const getLinkedUserIds = (): AxiosPromise<number[]> => {
   return request({
     url: '/member/member/linkedUserIds',
     method: 'get'
+  });
+};
+
+export const adjustGrowth = (data: { id: number; growthValue: number; changeType: string; remark?: string }) => {
+  return request({
+    url: '/member/member/adjustGrowth',
+    method: 'post',
+    params: data
   });
 };

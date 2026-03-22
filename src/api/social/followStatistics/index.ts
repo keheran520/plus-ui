@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import type { SocialFollowStatisticsForm, SocialFollowStatisticsQuery, SocialFollowStatisticsVO } from './types';
+import type { SocialFollowStatisticsForm, SocialFollowStatisticsPanelVO, SocialFollowStatisticsQuery, SocialFollowStatisticsVO } from './types';
 
 // 查询用户关注统计列表
 export const listSocialFollowStatistics = (query: SocialFollowStatisticsQuery) => {
@@ -10,10 +10,25 @@ export const listSocialFollowStatistics = (query: SocialFollowStatisticsQuery) =
   });
 };
 
+export const listSocialFollowStatisticsPanel = (query: SocialFollowStatisticsQuery) => {
+  return request<SocialFollowStatisticsPanelVO[]>({
+    url: '/social/followStatistics/panel/list',
+    method: 'get',
+    params: query
+  });
+};
+
 // 查询用户关注统计详细
 export const getSocialFollowStatistics = (statId: number | string) => {
   return request<SocialFollowStatisticsVO>({
     url: `/social/followStatistics/${statId}`,
+    method: 'get'
+  });
+};
+
+export const getSocialFollowStatisticsPanel = (statId: number | string) => {
+  return request<SocialFollowStatisticsPanelVO>({
+    url: `/social/followStatistics/panel/${statId}`,
     method: 'get'
   });
 };
@@ -87,6 +102,18 @@ export const getHotUsers = (sortBy: string, pageQuery?: any) => {
     url: '/social/followStatistics/hot',
     method: 'get',
     params: { 
+      sortBy,
+      pageNum: pageQuery?.pageNum || 1,
+      pageSize: pageQuery?.pageSize || 10
+    }
+  });
+};
+
+export const getPanelHotUsers = (sortBy: string, pageQuery?: any) => {
+  return request<SocialFollowStatisticsPanelVO[]>({
+    url: '/social/followStatistics/panel/hot',
+    method: 'get',
+    params: {
       sortBy,
       pageNum: pageQuery?.pageNum || 1,
       pageSize: pageQuery?.pageSize || 10

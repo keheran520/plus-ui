@@ -200,11 +200,11 @@ const loadUnreadCount = async () => {
     console.log('[Navbar] 开始获取未读消息数量...');
     const { data } = await getUnreadCount();
     console.log('[Navbar] API返回未读数量:', data);
-    
+
     const oldCount = newNotice.value;
     newNotice.value = data || 0;
     console.log('[Navbar] 徽章数字更新:', oldCount, '->', newNotice.value);
-    
+
     // 同时刷新 notice 组件的消息列表
     if (noticeRef.value && noticeRef.value.getTableData) {
       console.log('[Navbar] 刷新notice组件消息列表');
@@ -220,7 +220,7 @@ const updateUnreadCount = (count: number) => {
   const oldCount = newNotice.value;
   newNotice.value = count;
   console.log('[Navbar] 直接更新徽章数字:', oldCount, '->', newNotice.value);
-  
+
   // 异步刷新 notice 组件的消息列表（不阻塞）
   setTimeout(() => {
     if (noticeRef.value && noticeRef.value.getTableData) {
@@ -252,10 +252,10 @@ onMounted(() => {
       }
     });
   }
-  
+
   // 监听自定义事件，从消息中心页面更新徽章数量
   window.addEventListener('update-unread-count', handleUpdateUnreadCount as EventListener);
-  
+
   // 初始加载
   loadUnreadCount();
   // 每30秒刷新一次

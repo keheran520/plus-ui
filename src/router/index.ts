@@ -178,6 +178,39 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/mall',
+    component: Layout,
+    redirect: '/mall/category',
+    name: 'Mall',
+    meta: { title: '商城管理', icon: 'dashboard' },
+    children: [
+      {
+        path: 'category',
+        component: () => import('@/views/mall/category/index.vue'),
+        name: 'MallCategory',
+        meta: { title: '商品分类', icon: 'chart' }
+      },
+      {
+        path: 'brand',
+        component: () => import('@/views/mall/brand/index.vue'),
+        name: 'MallBrand',
+        meta: { title: '品牌管理', icon: 'peoples' }
+      },
+      {
+        path: 'goods',
+        component: () => import('@/views/mall/goods/index.vue'),
+        name: 'MallGoods',
+        meta: { title: '商品管理', icon: 'monitor' }
+      },
+      {
+        path: 'order',
+        component: () => import('@/views/mall/order/index.vue'),
+        name: 'MallOrder',
+        meta: { title: '订单管理', icon: 'bell' }
+      }
+    ]
+  },
+  {
     path: '/pve',
     component: Layout,
     hidden: true,

@@ -96,6 +96,17 @@ export interface MemberVO {
 
 }
 
+export interface MemberOverviewVO {
+  totalMembers: number;
+  activeMembers: number;
+  frozenMembers: number;
+  todayNewMembers: number;
+  totalBalance: number;
+  totalPoints: number;
+  totalGrowthValue: number;
+  totalConsumeAmount: number;
+}
+
 export interface MemberForm extends BaseEntity {
   /**
    * 主键

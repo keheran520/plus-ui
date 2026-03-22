@@ -1,314 +1,132 @@
 <template>
-  <div class="p-2">
-    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="mb-[10px]">
-        <el-card shadow="hover">
-          <el-form ref="queryFormRef" :model="queryParams" :inline="true">
-            <el-form-item label="会员ID" prop="memberId">
-              <el-input v-model="queryParams.memberId" placeholder="请输入会员ID" clearable @keyup.enter="handleQuery" style="width: 180px" />
-            </el-form-item>
-            <el-form-item label="变动类型" prop="changeType">
-              <el-select v-model="queryParams.changeType" placeholder="请选择变动类型" clearable style="width: 150px">
-                <el-option label="签到" value="1" />
-                <el-option label="消费获得" value="2" />
-                <el-option label="兑换" value="3" />
-                <el-option label="过期" value="4" />
-                <el-option label="系统调整" value="5" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="业务单号" prop="businessNo">
-              <el-input v-model="queryParams.businessNo" placeholder="请输入业务单号" clearable @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="过期时间" prop="expireTime">
-              <el-date-picker clearable
-                v-model="queryParams.expireTime"
-                type="date"
-                value-format="YYYY-MM-DD"
-                placeholder="请选择过期时间"
-              />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
+  <div class="log-page">
+    <section class="log-hero">
+      <div>
+        <span class="hero-tag">Points Ledger</span>
+        <h1>积分记录</h1>
+        <p>聚焦积分获取、消耗和过期流向，便于核对会员激励是否按预期生效。</p>
       </div>
-    </transition>
+      <div class="hero-metric">
+        <span>记录数</span>
+        <strong>{{ total }}</strong>
+      </div>
+    </section>
 
-    <el-card shadow="never">
-      <template #header>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['member:pointsLog:add']">新增</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['member:pointsLog:edit']">修改</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['member:pointsLog:remove']">删除</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['member:pointsLog:export']">导出</el-button>
-          </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-        </el-row>
-      </template>
-
-      <el-table v-loading="loading" border stripe :data="pointsLogList" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="序号" type="index" width="60" align="center" />
-        <el-table-column label="会员ID" align="center" prop="memberId" width="100" />
-        <el-table-column label="变动类型" align="center" prop="changeType" width="120">
-          <template #default="scope">
-            <el-tag v-if="scope.row.changeType === '1'" type="success">签到</el-tag>
-            <el-tag v-else-if="scope.row.changeType === '2'" type="primary">消费获得</el-tag>
-            <el-tag v-else-if="scope.row.changeType === '3'" type="warning">兑换</el-tag>
-            <el-tag v-else-if="scope.row.changeType === '4'" type="info">过期</el-tag>
-            <el-tag v-else type="danger">系统调整</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="变动积分" align="center" prop="changePoints" width="120">
-          <template #default="scope">
-            <span :style="{ color: scope.row.changePoints >= 0 ? '#67C23A' : '#F56C6C', fontWeight: 'bold' }">
-              {{ scope.row.changePoints >= 0 ? '+' : '' }}{{ scope.row.changePoints }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="变动前积分" align="center" prop="pointsBefore" width="120" />
-        <el-table-column label="变动后积分" align="center" prop="pointsAfter" width="120" />
-        <el-table-column label="业务单号" align="center" prop="businessNo" width="200" show-overflow-tooltip />
-        <el-table-column label="过期时间" align="center" prop="expireTime" width="180">
-          <template #default="scope">
-            <span v-if="scope.row.expireTime" :class="{ 'text-danger': isExpired(scope.row.expireTime) }">
-              {{ parseTime(scope.row.expireTime, '{y}-{m}-{d}') }}
-            </span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="变动时间" align="center" prop="createTime" width="180" />
-        <el-table-column label="备注" align="center" prop="remark" min-width="150" show-overflow-tooltip />
-        <el-table-column label="操作" align="center" width="120" fixed="right" class-name="small-padding fixed-width">
-          <template #default="scope">
-            <el-tooltip content="删除" placement="top">
-              <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['member:pointsLog:remove']"></el-button>
-            </el-tooltip>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
-    </el-card>
-    <!-- 添加或修改会员积分记录对话框 -->
-    <el-dialog :title="dialog.title" v-model="dialog.visible" width="500px" append-to-body>
-      <el-form ref="pointsLogFormRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="会员ID" prop="memberId">
-          <el-input v-model="form.memberId" placeholder="请输入会员ID" />
+    <el-card shadow="never" class="panel-card">
+      <el-form ref="queryRef" :inline="true" :model="queryParams">
+        <el-form-item label="会员ID">
+          <el-input v-model="queryParams.memberId" clearable placeholder="请输入会员ID" @keyup.enter="handleQuery" />
         </el-form-item>
-        <el-form-item label="变动积分" prop="changePoints">
-          <el-input v-model="form.changePoints" placeholder="请输入变动积分" />
+        <el-form-item label="变动类型">
+          <el-select v-model="queryParams.changeType" clearable placeholder="全部类型" style="width: 180px">
+            <el-option label="签到" value="1" />
+            <el-option label="消费获得" value="2" />
+            <el-option label="兑换" value="3" />
+            <el-option label="过期" value="4" />
+            <el-option label="系统调整" value="5" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="变动前积分" prop="pointsBefore">
-          <el-input v-model="form.pointsBefore" placeholder="请输入变动前积分" />
+        <el-form-item label="业务单号">
+          <el-input v-model="queryParams.businessNo" clearable placeholder="请输入业务单号" @keyup.enter="handleQuery" />
         </el-form-item>
-        <el-form-item label="变动后积分" prop="pointsAfter">
-          <el-input v-model="form.pointsAfter" placeholder="请输入变动后积分" />
-        </el-form-item>
-        <el-form-item label="业务单号" prop="businessNo">
-          <el-input v-model="form.businessNo" placeholder="请输入业务单号" />
-        </el-form-item>
-        <el-form-item label="过期时间" prop="expireTime">
-          <el-date-picker clearable
-            v-model="form.expireTime"
-            type="datetime"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            placeholder="请选择过期时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-            <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          <el-button v-hasPermi="['member:pointsLog:export']" icon="Download" @click="handleExport">导出</el-button>
         </el-form-item>
       </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
+    </el-card>
+
+    <el-card shadow="never" class="panel-card">
+      <el-table v-loading="loading" :data="pointsLogList" stripe border>
+        <el-table-column label="会员ID" prop="memberId" width="100" align="center" />
+        <el-table-column label="变动类型" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag :type="typeTag(row.changeType)">{{ typeLabel(row.changeType) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="变动积分" width="120" align="center">
+          <template #default="{ row }">
+            <span :class="['delta-text', row.changePoints >= 0 ? 'delta-text--plus' : 'delta-text--minus']">
+              {{ row.changePoints >= 0 ? '+' : '' }}{{ row.changePoints || 0 }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="变动前积分" prop="pointsBefore" width="120" align="center" />
+        <el-table-column label="变动后积分" prop="pointsAfter" width="120" align="center" />
+        <el-table-column label="过期时间" prop="expireTime" width="170" align="center" />
+        <el-table-column label="业务单号" prop="businessNo" min-width="180" show-overflow-tooltip />
+        <el-table-column label="创建时间" prop="createTime" width="170" align="center" />
+        <el-table-column label="备注" prop="remark" min-width="200" show-overflow-tooltip />
+      </el-table>
+
+      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+    </el-card>
   </div>
 </template>
 
-<script setup name="PointsLog" lang="ts">
-import { listPointsLog, getPointsLog, delPointsLog, addPointsLog, updatePointsLog } from '@/api/member/pointsLog';
-import { PointsLogVO, PointsLogQuery, PointsLogForm } from '@/api/member/pointsLog/types';
+<script setup lang="ts">
+import { listPointsLog } from '@/api/member/pointsLog';
 
-const { proxy } = getCurrentInstance() as ComponentInternalInstance;
-
-const pointsLogList = ref<PointsLogVO[]>([]);
-const buttonLoading = ref(false);
-const loading = ref(true);
-const showSearch = ref(true);
-const ids = ref<Array<string | number>>([]);
-const single = ref(true);
-const multiple = ref(true);
+const { proxy } = getCurrentInstance() as any;
+const queryRef = ref();
+const loading = ref(false);
 const total = ref(0);
+const pointsLogList = ref<any[]>([]);
+const queryParams = ref<any>({ pageNum: 1, pageSize: 10, memberId: undefined, changeType: undefined, businessNo: undefined });
 
-const queryFormRef = ref<ElFormInstance>();
-const pointsLogFormRef = ref<ElFormInstance>();
-
-const dialog = reactive<DialogOption>({
-  visible: false,
-  title: ''
-});
-
-const initFormData: PointsLogForm = {
-  id: undefined,
-  memberId: undefined,
-  changeType: undefined,
-  changePoints: undefined,
-  pointsBefore: undefined,
-  pointsAfter: undefined,
-  businessNo: undefined,
-  expireTime: undefined,
-  remark: undefined,
-}
-const data = reactive<PageData<PointsLogForm, PointsLogQuery>>({
-  form: {...initFormData},
-  queryParams: {
-    pageNum: 1,
-    pageSize: 10,
-    memberId: undefined,
-    changeType: undefined,
-    changePoints: undefined,
-    pointsBefore: undefined,
-    pointsAfter: undefined,
-    businessNo: undefined,
-    expireTime: undefined,
-    params: {
-    }
-  },
-  rules: {
-    id: [
-      { required: true, message: "主键不能为空", trigger: "blur" }
-    ],
-    memberId: [
-      { required: true, message: "会员ID不能为空", trigger: "blur" }
-    ],
-    changeType: [
-      { required: true, message: "变动类型不能为空", trigger: "change" }
-    ],
-    changePoints: [
-      { required: true, message: "变动积分不能为空", trigger: "blur" }
-    ],
-    pointsBefore: [
-      { required: true, message: "变动前积分不能为空", trigger: "blur" }
-    ],
-    pointsAfter: [
-      { required: true, message: "变动后积分不能为空", trigger: "blur" }
-    ],
-  }
-});
-
-const { queryParams, form, rules } = toRefs(data);
-
-/** 查询会员积分记录列表 */
-const getList = async () => {
+async function getList() {
   loading.value = true;
-  const res = await listPointsLog(queryParams.value);
-  pointsLogList.value = res.rows;
-  total.value = res.total;
-  loading.value = false;
+  try {
+    const res = await listPointsLog(queryParams.value);
+    pointsLogList.value = res.rows || [];
+    total.value = res.total || 0;
+  } finally {
+    loading.value = false;
+  }
 }
 
-/** 取消按钮 */
-const cancel = () => {
-  reset();
-  dialog.visible = false;
-}
-
-/** 表单重置 */
-const reset = () => {
-  form.value = {...initFormData};
-  pointsLogFormRef.value?.resetFields();
-}
-
-/** 搜索按钮操作 */
-const handleQuery = () => {
+function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
 }
 
-/** 重置按钮操作 */
-const resetQuery = () => {
-  queryFormRef.value?.resetFields();
-  handleQuery();
+function resetQuery() {
+  queryParams.value = { pageNum: 1, pageSize: 10, memberId: undefined, changeType: undefined, businessNo: undefined };
+  queryRef.value?.resetFields?.();
+  getList();
 }
 
-/** 多选框选中数据 */
-const handleSelectionChange = (selection: PointsLogVO[]) => {
-  ids.value = selection.map(item => item.id);
-  single.value = selection.length != 1;
-  multiple.value = !selection.length;
+function handleExport() {
+  proxy.download('member/pointsLog/export', { ...queryParams.value }, `member_points_log_${Date.now()}.xlsx`);
 }
 
-/** 新增按钮操作 */
-const handleAdd = () => {
-  reset();
-  dialog.visible = true;
-  dialog.title = "添加会员积分记录";
+function typeLabel(type: string) {
+  return ({ '1': '签到', '2': '消费获得', '3': '兑换', '4': '过期', '5': '系统调整' } as Record<string, string>)[type] || '其他';
 }
 
-/** 修改按钮操作 */
-const handleUpdate = async (row?: PointsLogVO) => {
-  reset();
-  const _id = row?.id || ids.value[0]
-  const res = await getPointsLog(_id);
-  Object.assign(form.value, res.data);
-  dialog.visible = true;
-  dialog.title = "修改会员积分记录";
-}
-
-/** 提交按钮 */
-const submitForm = () => {
-  pointsLogFormRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      buttonLoading.value = true;
-      if (form.value.id) {
-        await updatePointsLog(form.value).finally(() =>  buttonLoading.value = false);
-      } else {
-        await addPointsLog(form.value).finally(() =>  buttonLoading.value = false);
-      }
-      proxy?.$modal.msgSuccess("操作成功");
-      dialog.visible = false;
-      await getList();
-    }
-  });
-}
-
-/** 删除按钮操作 */
-const handleDelete = async (row?: PointsLogVO) => {
-  const _ids = row?.id || ids.value;
-  await proxy?.$modal.confirm('是否确认删除会员积分记录编号为"' + _ids + '"的数据项？').finally(() => loading.value = false);
-  await delPointsLog(_ids);
-  proxy?.$modal.msgSuccess("删除成功");
-  await getList();
-}
-
-/** 导出按钮操作 */
-const handleExport = () => {
-  proxy?.download('member/pointsLog/export', {
-    ...queryParams.value
-  }, `pointsLog_${new Date().getTime()}.xlsx`)
-}
-
-/** 判断是否已过期 */
-const isExpired = (expireTime: string) => {
-  if (!expireTime) return false;
-  return new Date(expireTime).getTime() < new Date().getTime();
+function typeTag(type: string) {
+  return ({ '1': 'success', '2': 'primary', '3': 'warning', '4': 'info', '5': 'danger' } as Record<string, string>)[type] || 'info';
 }
 
 onMounted(() => {
   getList();
 });
 </script>
+
+<style scoped>
+.log-page { padding: 16px; background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%); min-height: 100%; }
+.log-hero { display: flex; justify-content: space-between; gap: 18px; padding: 24px; border-radius: 24px; background: linear-gradient(135deg, #273452 0%, #556f92 100%); color: #fff; }
+.hero-tag { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 12px; }
+.log-hero h1 { margin: 12px 0 8px; font-size: 30px; }
+.log-hero p { margin: 0; color: rgba(255,255,255,.76); max-width: 640px; }
+.hero-metric { min-width: 120px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.1); }
+.hero-metric span, .hero-metric strong { display: block; }
+.hero-metric span { font-size: 12px; color: rgba(255,255,255,.72); }
+.hero-metric strong { margin-top: 10px; font-size: 28px; }
+.panel-card { margin-top: 18px; border: none; border-radius: 22px; box-shadow: 0 12px 34px rgba(27,46,67,.08); }
+.delta-text { font-weight: 600; }
+.delta-text--plus { color: #1f9d70; }
+.delta-text--minus { color: #d3544a; }
+@media (max-width: 900px) { .log-hero { flex-direction: column; } }
+</style>

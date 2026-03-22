@@ -61,3 +61,10 @@ export const delGrowthLog = (id: string | number | Array<string | number>) => {
     method: 'delete'
   });
 };
+
+export const getGrowthLogByMemberId = (memberId: number) => {
+  return request({
+    url: '/member/growthLog/member/' + memberId,
+    method: 'get'
+  });
+};

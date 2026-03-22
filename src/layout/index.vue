@@ -75,7 +75,7 @@ onMounted(() => {
 onMounted(() => {
   // 初始化 SSE
   initSSE(import.meta.env.VITE_APP_BASE_API + '/resource/sse');
-  
+
   // 请求浏览器通知权限
   requestNotificationPermission();
 });

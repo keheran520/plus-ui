@@ -1,26 +1,26 @@
 export interface SocialFollowStatisticsVO {
   /**
-   * 统计ID
+   * 统计 ID
    */
   statId: string | number;
 
   /**
-   * 用户ID
+   * 用户 ID
    */
   userId: string | number;
 
   /**
-   * 关注数（我关注的人数）
+   * 关注数
    */
   followingCount: number;
 
   /**
-   * 粉丝数（关注我的人数）
+   * 粉丝数
    */
   followerCount: number;
 
   /**
-   * 好友数（互相关注的人数）
+   * 好友数
    */
   friendCount: number;
 
@@ -40,7 +40,7 @@ export interface SocialFollowStatisticsVO {
   updateTime: string;
 
   /**
-   * 用户昵称
+   * 昵称
    */
   nickName?: string;
 
@@ -53,16 +53,33 @@ export interface SocialFollowStatisticsVO {
    * 头像
    */
   avatar?: string;
+
+  /**
+   * 租户 ID
+   */
+  tenantId?: string | number;
+
+  /**
+   * 创建人
+   */
+  createBy?: string;
+
+  /**
+   * 更新人
+   */
+  updateBy?: string;
 }
+
+export interface SocialFollowStatisticsPanelVO extends SocialFollowStatisticsVO {}
 
 export interface SocialFollowStatisticsForm extends BaseEntity {
   /**
-   * 统计ID
+   * 统计 ID
    */
   statId?: string | number;
 
   /**
-   * 用户ID
+   * 用户 ID
    */
   userId?: string | number;
 
@@ -89,7 +106,7 @@ export interface SocialFollowStatisticsForm extends BaseEntity {
 
 export interface SocialFollowStatisticsQuery extends PageQuery {
   /**
-   * 用户ID
+   * 用户 ID
    */
   userId?: string | number;
 
@@ -99,9 +116,19 @@ export interface SocialFollowStatisticsQuery extends PageQuery {
   minFollowingCount?: number;
 
   /**
+   * 最大关注数
+   */
+  maxFollowingCount?: number;
+
+  /**
    * 最小粉丝数
    */
   minFollowerCount?: number;
+
+  /**
+   * 最大粉丝数
+   */
+  maxFollowerCount?: number;
 
   /**
    * 最小好友数
@@ -109,7 +136,12 @@ export interface SocialFollowStatisticsQuery extends PageQuery {
   minFriendCount?: number;
 
   /**
+   * 最大好友数
+   */
+  maxFriendCount?: number;
+
+  /**
    * 日期范围参数
    */
-  params?: any;
+  params?: Record<string, any>;
 }

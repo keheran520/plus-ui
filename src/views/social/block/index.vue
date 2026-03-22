@@ -1,290 +1,236 @@
 <template>
-  <div class="p-2">
-    <!-- 统计卡片 -->
-    <el-row :gutter="10" class="mb-[10px]">
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
-              <el-icon :size="32"><WarningFilled /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ statistics.totalBlocks || 0 }}</div>
-              <div class="stat-label">总屏蔽数</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)">
-              <el-icon :size="32"><TrendCharts /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ statistics.todayBlocks || 0 }}</div>
-              <div class="stat-label">今日新增</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
-              <el-icon :size="32"><User /></el-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ statistics.activeUsers || 0 }}</div>
-              <div class="stat-label">活跃用户数</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 搜索区域 -->
+  <div class="social-manage-page">
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="mb-[10px]">
-        <el-card shadow="never">
-          <el-form ref="queryRef" :inline="true" :model="queryParams">
-            <el-form-item label="屏蔽者ID" prop="userId">
-              <el-input v-model="queryParams.userId" clearable placeholder="请输入屏蔽者ID" style="width: 150px" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item label="被屏蔽者ID" prop="blockedUserId">
-              <el-input
-                v-model="queryParams.blockedUserId"
-                clearable
-                placeholder="请输入被屏蔽者ID"
-                style="width: 150px"
-                @keyup.enter="handleQuery"
-              />
-            </el-form-item>
-            <el-form-item label="创建时间">
-              <el-date-picker
-                v-model="dateRange"
-                end-placeholder="结束日期"
-                range-separator="-"
-                start-placeholder="开始日期"
-                style="width: 240px"
-                type="daterange"
-                value-format="YYYY-MM-DD"
-              />
-            </el-form-item>
-            <el-form-item>
-              <el-button icon="Search" type="primary" @click="handleQuery">搜索</el-button>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </el-card>
-      </div>
+      <section v-show="showSearch" class="filter-panel">
+        <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
+          <el-form-item label="屏蔽者ID" prop="userId">
+            <el-input v-model="queryParams.userId" clearable placeholder="请输入屏蔽者ID" class="field-sm" @keyup.enter="handleQuery" />
+          </el-form-item>
+          <el-form-item label="被屏蔽者ID" prop="blockedUserId">
+            <el-input v-model="queryParams.blockedUserId" clearable placeholder="请输入被屏蔽者ID" class="field-sm" @keyup.enter="handleQuery" />
+          </el-form-item>
+          <el-form-item label="创建时间">
+            <el-date-picker
+              v-model="dateRange"
+              type="daterange"
+              value-format="YYYY-MM-DD"
+              range-separator="-"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              class="field-date"
+            />
+          </el-form-item>
+          <el-form-item class="filter-actions">
+            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </section>
     </transition>
 
-    <!-- 操作按钮和表格区域 -->
-    <el-card shadow="never">
-      <template #header>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['social:block:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">
-              批量删除
-            </el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button v-hasPermi="['social:block:export']" icon="Download" plain type="warning" @click="handleExport">导出</el-button>
-          </el-col>
+    <section class="list-panel">
+      <header class="panel-toolbar">
+        <div class="toolbar-title">
+          <span class="title-text">拉黑记录</span>
+          <span class="title-meta">{{ total }} 条记录</span>
+        </div>
+        <div class="toolbar-actions">
+          <el-button v-hasPermi="['social:block:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">
+            批量删除
+          </el-button>
+          <el-button v-hasPermi="['social:block:export']" plain icon="Download" @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
-        </el-row>
-      </template>
+        </div>
+      </header>
 
-      <!-- 数据表格 -->
-      <el-table
-        v-loading="loading"
-        :data="blockList"
-        :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
-        border
-        highlight-current-row
-        stripe
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column align="center" fixed type="selection" width="50" />
-        <el-table-column align="center" label="黑名单ID" prop="blockId" width="120" />
-        <el-table-column align="center" label="屏蔽者" width="200">
+      <el-table v-loading="loading" :data="blockList" class="social-table" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="48" align="center" />
+        <el-table-column label="记录ID" prop="blockId" width="120" align="center" />
+        <el-table-column label="屏蔽者ID" width="140" align="center">
           <template #default="{ row }">
-            <div class="user-info">
-              <div class="user-id">ID: {{ row.userId }}</div>
-              <div class="user-name">{{ row.nickName || row.userName || '-' }}</div>
-            </div>
+            <el-link type="primary" @click="openUserDrawer(row.userId)">{{ row.userId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="被屏蔽者" width="200">
+        <el-table-column label="被屏蔽者ID" width="140" align="center">
           <template #default="{ row }">
-            <div class="user-info">
-              <div class="user-id">ID: {{ row.blockedUserId }}</div>
-              <div class="user-name">{{ row.blockedNickName || row.blockedUserName || '-' }}</div>
-            </div>
+            <el-link type="primary" @click="openUserDrawer(row.blockedUserId)">{{ row.blockedUserId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column :show-overflow-tooltip="true" align="center" label="屏蔽原因" min-width="250" prop="blockReason">
+        <el-table-column label="屏蔽原因" prop="blockReason" min-width="240" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ row.blockReason || '-' }}
+            <span>{{ row.blockReason || '暂无' }}</span>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="创建时间" prop="createTime" sortable width="180" />
-        <el-table-column align="center" class-name="small-padding" fixed="right" label="操作" width="100">
+        <el-table-column label="创建时间" prop="createTime" width="180" align="center" />
+        <el-table-column label="操作" width="110" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button v-hasPermi="['social:block:remove']" icon="Delete" link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button v-hasPermi="['social:block:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
-    </el-card>
+    </section>
+
+    <UserStatsDrawer v-model:visible="userDrawerVisible" :user-id="selectedUserId" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { delSocialBlock, getBlockOverview, listSocialBlock } from '@/api/social/block';
-import type { SocialBlockQuery, SocialBlockVO } from '@/api/social/block/types';
+import type { FormInstance } from 'element-plus'
+import { delSocialBlock, listSocialBlock } from '@/api/social/block'
+import type { SocialBlockQuery, SocialBlockVO } from '@/api/social/block/types'
+import UserStatsDrawer from '../components/UserStatsDrawer.vue'
 
-const { proxy } = getCurrentInstance() as any;
+const { proxy } = getCurrentInstance() as any
 
-const blockList = ref<SocialBlockVO[]>([]);
-const loading = ref(true);
-const showSearch = ref(true);
-const ids = ref<Array<string | number>>([]);
-const multiple = ref(true);
-const total = ref(0);
-const dateRange = ref<[string, string]>();
-const statistics = ref<any>({});
+const queryRef = ref<FormInstance>()
+const blockList = ref<SocialBlockVO[]>([])
+const loading = ref(true)
+const showSearch = ref(true)
+const ids = ref<Array<string | number>>([])
+const multiple = ref(true)
+const total = ref(0)
+const dateRange = ref<[string, string]>()
+const userDrawerVisible = ref(false)
+const selectedUserId = ref<string | number>()
 
 const queryParams = ref<SocialBlockQuery>({
   pageNum: 1,
   pageSize: 10,
   userId: undefined,
   blockedUserId: undefined
-});
+})
 
-/** 加载统计数据 */
-function loadStatistics() {
-  getBlockOverview()
-    .then((response: any) => {
-      statistics.value = response.data || {};
-    })
-    .catch(() => {});
-}
-
-/** 查询黑名单列表 */
 function getList() {
-  loading.value = true;
-  const params = proxy.addDateRange(queryParams.value, dateRange.value);
+  loading.value = true
+  const params = proxy.addDateRange(queryParams.value, dateRange.value)
   listSocialBlock(params)
     .then((response: any) => {
-      blockList.value = response.rows;
-      total.value = response.total;
-      loading.value = false;
+      blockList.value = response.rows
+      total.value = response.total
     })
-    .catch(() => {
-      loading.value = false;
-    });
+    .finally(() => {
+      loading.value = false
+    })
 }
 
-/** 搜索按钮操作 */
 function handleQuery() {
-  queryParams.value.pageNum = 1;
-  getList();
+  queryParams.value.pageNum = 1
+  getList()
 }
 
-/** 重置按钮操作 */
 function resetQuery() {
-  dateRange.value = undefined;
-  proxy.resetForm('queryRef');
-  handleQuery();
+  dateRange.value = undefined
+  queryRef.value?.resetFields()
+  handleQuery()
 }
 
-/** 多选框选中数据 */
 function handleSelectionChange(selection: SocialBlockVO[]) {
-  ids.value = selection.map((item) => item.blockId);
-  multiple.value = !selection.length;
+  ids.value = selection.map((item) => item.blockId)
+  multiple.value = !selection.length
 }
 
-/** 删除按钮操作 */
+function openUserDrawer(userId: string | number) {
+  selectedUserId.value = userId
+  userDrawerVisible.value = true
+}
+
 function handleDelete(row?: SocialBlockVO) {
-  const blockIds = row ? [row.blockId] : ids.value;
+  const blockIds = row ? [row.blockId] : ids.value
   proxy.$modal
-    .confirm('确认删除选中的黑名单记录吗？')
+    .confirm('确认删除选中的拉黑记录吗？')
+    .then(() => delSocialBlock(blockIds))
     .then(() => {
-      return delSocialBlock(blockIds);
+      getList()
+      proxy.$modal.msgSuccess('删除成功')
     })
-    .then(() => {
-      getList();
-      loadStatistics();
-      proxy.$modal.msgSuccess('删除成功');
-    })
-    .catch(() => {});
+    .catch(() => {})
 }
 
-/** 导出按钮操作 */
 function handleExport() {
-  proxy.download(
-    'social/block/export',
-    {
-      ...queryParams.value
-    },
-    `block_${new Date().getTime()}.xlsx`
-  );
+  proxy.download('social/block/export', { ...queryParams.value }, `block_${new Date().getTime()}.xlsx`)
 }
 
-loadStatistics();
-getList();
+getList()
 </script>
 
-<style lang="scss" scoped>
-.stat-card {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
-
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    margin-right: 15px;
-  }
-
-  .stat-content {
-    flex: 1;
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: bold;
-      color: #303133;
-      line-height: 1.2;
-    }
-
-    .stat-label {
-      font-size: 14px;
-      color: #909399;
-      margin-top: 5px;
-    }
-  }
+<style scoped lang="scss">
+.social-manage-page {
+  padding: 16px;
+  background: #f6f8fb;
+  min-height: calc(100vh - 84px);
 }
 
-.user-info {
-  .user-id {
-    font-size: 12px;
-    color: #909399;
-    margin-bottom: 4px;
-  }
+.filter-panel,
+.list-panel {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
 
-  .user-name {
-    font-size: 14px;
-    color: #303133;
-    font-weight: 500;
-  }
+.filter-panel {
+  padding: 16px 18px 2px;
+  margin-bottom: 14px;
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.filter-actions {
+  margin-left: auto;
+}
+
+.field-sm {
+  width: 150px;
+}
+
+.field-date {
+  width: 240px;
+}
+
+.list-panel {
+  padding: 14px 16px 4px;
+}
+
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.toolbar-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.title-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #182230;
+}
+
+.title-meta {
+  font-size: 12px;
+  color: #7a8699;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+:deep(.social-table) {
+  --el-table-border-color: #edf1f7;
+  --el-table-header-bg-color: #f8fafc;
 }
 </style>
