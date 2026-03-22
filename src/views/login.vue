@@ -144,19 +144,65 @@
               </el-form-item>
             </template>
 
-            <div class="form-options">
+            <!-- 扫码登录（PC 展示二维码，手机 App 扫码确认） -->
+            <template v-if="loginType === 'qrcode'">
+              <div class="qrcode-panel">
+                <div v-if="qrCodeStatus === 'waiting'" class="qrcode-inner">
+                  <div v-if="qrCodeUrl" class="qrcode-image">
+                    <img :src="qrCodeUrl" alt="扫码登录" />
+                  </div>
+                  <div v-if="qrCodeUrl" class="qrcode-countdown">
+                    <span class="cd-text">二维码将在</span>
+                    <span class="cd-time">{{ formatQrTime(qrCodeCountdown) }}</span>
+                    <span class="cd-text">后过期</span>
+                  </div>
+                  <div v-else class="qrcode-loading">
+                    <el-icon class="is-loading"><Loading /></el-icon>
+                    <p>正在生成二维码...</p>
+                  </div>
+                  <p class="qrcode-tip">请使用手机 App 扫描，在手机上确认登录</p>
+                </div>
+                <div v-else-if="qrCodeStatus === 'scanned'" class="qrcode-status">
+                  <el-icon class="status-icon scanned"><Check /></el-icon>
+                  <p>已扫描，请在手机上确认</p>
+                </div>
+                <div v-else-if="qrCodeStatus === 'confirmed'" class="qrcode-status">
+                  <el-icon class="status-icon confirmed"><Check /></el-icon>
+                  <p>登录成功，正在跳转...</p>
+                </div>
+                <div v-else-if="qrCodeStatus === 'expired'" class="qrcode-status">
+                  <el-icon class="status-icon expired"><Close /></el-icon>
+                  <p>二维码已过期</p>
+                  <el-button size="small" type="primary" @click="generateQrCodeLogin">刷新二维码</el-button>
+                </div>
+                <div v-else-if="qrCodeStatus === 'cancelled'" class="qrcode-status">
+                  <el-icon class="status-icon cancelled"><Close /></el-icon>
+                  <p>已取消登录</p>
+                  <el-button size="small" type="primary" @click="generateQrCodeLogin">刷新二维码</el-button>
+                </div>
+              </div>
+            </template>
+
+            <div v-if="loginType !== 'qrcode'" class="form-options">
               <el-checkbox v-model="loginForm.rememberMe">{{ proxy.$t('login.rememberPassword') }}</el-checkbox>
             </div>
 
-            <el-button :loading="loading" class="login-btn" size="large" type="primary" @click.prevent="handleLogin">
+            <el-button
+              v-if="loginType !== 'qrcode'"
+              :loading="loading"
+              class="login-btn"
+              size="large"
+              type="primary"
+              @click.prevent="handleLogin"
+            >
               <span v-if="!loading">{{ proxy.$t('login.login') }}</span>
               <span v-else>{{ proxy.$t('login.logging') }}</span>
             </el-button>
-            <div v-if="register" class="register-link">
+            <div v-if="register && loginType !== 'qrcode'" class="register-link">
               还没有账户？
               <router-link :to="'/register'" class="link-text">立即注册</router-link>
             </div>
-            <div class="social-login">
+            <div v-if="loginType !== 'qrcode'" class="social-login">
               <div class="divider">
                 <span>或使用第三方登录</span>
               </div>
@@ -187,7 +233,16 @@
 </template>
 
 <script lang="ts" setup>
-import { getCaptchaConfig, getCodeImg, getRegisterConfig, getTenantList, sendEmailVerifyCode, sendPhoneVerifyCode } from '@/api/login';
+import {
+  generateQrCode,
+  getCaptchaConfig,
+  getCodeImg,
+  getQrCodeStatus,
+  getRegisterConfig,
+  getTenantList,
+  sendEmailVerifyCode,
+  sendPhoneVerifyCode
+} from '@/api/login';
 import { authBinding } from '@/api/system/social/auth';
 import { useUserStore } from '@/store/modules/user';
 import { useWebsiteStore } from '@/store/modules/website';
@@ -196,6 +251,8 @@ import { to } from 'await-to-js';
 import { HttpStatus } from '@/enums/RespEnum';
 import { useI18n } from 'vue-i18n';
 import { showBehaviorCaptcha } from '@/utils/behaviorCaptcha';
+import { setToken } from '@/utils/auth';
+import { Loading, Check, Close } from '@element-plus/icons-vue';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -275,12 +332,22 @@ const loginRef = ref<ElFormInstance>();
 const tenantList = ref<TenantVO[]>([]);
 
 // 登录方式
-const loginType = ref<'password' | 'email' | 'phoneverify'>('password');
+const loginType = ref<'password' | 'email' | 'phoneverify' | 'qrcode'>('password');
 const loginTypeOptions = [
   { label: '密码登录', value: 'password' },
   { label: '邮箱登录', value: 'email' },
-  { label: '号码登录', value: 'phoneverify' }
+  { label: '号码登录', value: 'phoneverify' },
+  { label: '扫码登录', value: 'qrcode' }
 ];
+
+// PC 扫码登录
+const qrCodeToken = ref('');
+const qrCodeUrl = ref('');
+const qrCodeStatus = ref('waiting');
+const qrCodePollTimer = ref<ReturnType<typeof setInterval> | null>(null);
+const qrCodeExpireTime = ref(300);
+const qrCodeCountdown = ref(300);
+const qrCodeCountdownTimer = ref<ReturnType<typeof setInterval> | null>(null);
 
 // 邮箱验证码倒计时
 const emailCountdown = ref(0);
@@ -298,6 +365,118 @@ watch(
   },
   { immediate: true }
 );
+
+watch(loginType, (newType) => {
+  if (newType === 'qrcode') {
+    generateQrCodeLogin();
+  } else {
+    stopQrCodePolling();
+    stopQrCodeCountdown();
+  }
+});
+
+const stopQrCodePolling = () => {
+  if (qrCodePollTimer.value) {
+    clearInterval(qrCodePollTimer.value);
+    qrCodePollTimer.value = null;
+  }
+};
+
+const stopQrCodeCountdown = () => {
+  if (qrCodeCountdownTimer.value) {
+    clearInterval(qrCodeCountdownTimer.value);
+    qrCodeCountdownTimer.value = null;
+  }
+};
+
+const formatQrTime = (seconds: number) => {
+  const s = Math.max(0, seconds);
+  const mins = Math.floor(s / 60);
+  const secs = s % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
+
+const generateQrCodeLogin = async () => {
+  qrCodeStatus.value = 'waiting';
+  qrCodeUrl.value = '';
+  qrCodeToken.value = '';
+  stopQrCodeCountdown();
+  stopQrCodePolling();
+
+  try {
+    const res = await generateQrCode(loginForm.value.tenantId);
+    if (res.code === HttpStatus.SUCCESS && res.data) {
+      qrCodeToken.value = res.data.qrCodeToken;
+      qrCodeExpireTime.value = res.data.expireTime || 300;
+      qrCodeCountdown.value = qrCodeExpireTime.value;
+
+      const QRCodeModule = await import('qrcode');
+      const QRCode = QRCodeModule.default || QRCodeModule;
+      const qrCodeData = JSON.stringify({
+        token: qrCodeToken.value,
+        type: 'login'
+      });
+      const url = await QRCode.toDataURL(qrCodeData, { width: 200, margin: 2 });
+      qrCodeUrl.value = url;
+      startQrCodeCountdown();
+      startQrCodePolling();
+    } else {
+      ElMessage.error(res.msg || '生成二维码失败');
+    }
+  } catch (e) {
+    console.error(e);
+    ElMessage.error('生成二维码失败');
+  }
+};
+
+const startQrCodePolling = () => {
+  stopQrCodePolling();
+  qrCodePollTimer.value = setInterval(() => {
+    if (!qrCodeToken.value) return;
+    getQrCodeStatus(qrCodeToken.value, loginForm.value.tenantId)
+      .then((res) => {
+        if (res.code !== HttpStatus.SUCCESS || !res.data) return;
+        const status = res.data.status as string;
+        qrCodeStatus.value = status;
+        if (status === 'confirmed') {
+          const accessToken = res.data.access_token;
+          if (accessToken) {
+            stopQrCodePolling();
+            stopQrCodeCountdown();
+            setToken(accessToken);
+            userStore.token = accessToken;
+            const query = router.currentRoute.value.query;
+            const otherQueryParams = Object.keys(query).reduce(
+              (acc: Record<string, string | string[] | undefined>, cur) => {
+                if (cur !== 'redirect') acc[cur] = query[cur] as string | string[] | undefined;
+                return acc;
+              },
+              {}
+            );
+            const redirectUrl = (redirect.value as string) || '/index';
+            router.push({ path: redirectUrl, query: otherQueryParams });
+          }
+        } else if (status === 'expired' || status === 'cancelled') {
+          stopQrCodePolling();
+          stopQrCodeCountdown();
+        }
+      })
+      .catch(() => undefined);
+  }, 2000);
+};
+
+const startQrCodeCountdown = () => {
+  stopQrCodeCountdown();
+  qrCodeCountdown.value = qrCodeExpireTime.value;
+  qrCodeCountdownTimer.value = setInterval(() => {
+    qrCodeCountdown.value--;
+    if (qrCodeCountdown.value <= 0) {
+      stopQrCodeCountdown();
+      qrCodeStatus.value = 'expired';
+      stopQrCodePolling();
+    }
+  }, 1000);
+};
 
 const handleLogin = () => {
   loginRef.value?.validate(async (valid: boolean, fields: any) => {
@@ -590,6 +769,8 @@ onBeforeUnmount(() => {
     clearInterval(phoneCountdownTimer);
     phoneCountdownTimer = null;
   }
+  stopQrCodePolling();
+  stopQrCodeCountdown();
 });
 </script>
 
@@ -911,6 +1092,75 @@ onBeforeUnmount(() => {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
+      }
+    }
+  }
+
+  .qrcode-panel {
+    min-height: 220px;
+    padding: 8px 0 16px;
+    text-align: center;
+
+    .qrcode-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qrcode-image img {
+      width: 200px;
+      height: 200px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+
+    .qrcode-countdown {
+      font-size: 13px;
+      color: #666;
+
+      .cd-time {
+        font-weight: 600;
+        color: var(--el-color-primary);
+        margin: 0 4px;
+      }
+    }
+
+    .qrcode-loading {
+      padding: 40px 0;
+      color: #999;
+    }
+
+    .qrcode-tip {
+      font-size: 12px;
+      color: #999;
+      margin: 0;
+    }
+
+    .qrcode-status {
+      padding: 32px 16px;
+
+      .status-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+
+        &.scanned {
+          color: var(--el-color-primary);
+        }
+
+        &.confirmed {
+          color: var(--el-color-success);
+        }
+
+        &.expired,
+        &.cancelled {
+          color: var(--el-color-danger);
+        }
+      }
+
+      p {
+        margin: 0 0 12px;
+        color: #666;
       }
     }
   }

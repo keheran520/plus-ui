@@ -111,18 +111,18 @@
 </template>
 
 <script lang="ts" setup>
-import { delSocialFavorite, listSocialFavorite } from '@/api/social/favorite'
-import type { SocialFavoriteQuery, SocialFavoriteVO } from '@/api/social/favorite/types'
+import { delSocialFavorite, listSocialFavorite } from '@/api/social/favorite';
+import type { SocialFavoriteQuery, SocialFavoriteVO } from '@/api/social/favorite/types';
 
-const { proxy } = getCurrentInstance() as any
+const { proxy } = getCurrentInstance() as any;
 
-const favoriteList = ref<SocialFavoriteVO[]>([])
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref<Array<string | number>>([])
-const multiple = ref(true)
-const total = ref(0)
-const dateRange = ref<[string, string]>()
+const favoriteList = ref<SocialFavoriteVO[]>([]);
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dateRange = ref<[string, string]>();
 
 const queryParams = ref<SocialFavoriteQuery>({
   pageNum: 1,
@@ -131,55 +131,55 @@ const queryParams = ref<SocialFavoriteQuery>({
   targetId: undefined,
   userId: undefined,
   folderId: undefined
-})
+});
 
 /** 查询收藏列表 */
 function getList() {
-  loading.value = true
-  const params = proxy.addDateRange(queryParams.value, dateRange.value)
+  loading.value = true;
+  const params = proxy.addDateRange(queryParams.value, dateRange.value);
   listSocialFavorite(params)
     .then((response: any) => {
-      favoriteList.value = response.rows
-      total.value = response.total
-      loading.value = false
+      favoriteList.value = response.rows;
+      total.value = response.total;
+      loading.value = false;
     })
     .catch(() => {
-      loading.value = false
-    })
+      loading.value = false;
+    });
 }
 
 /** 搜索按钮操作 */
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 /** 重置按钮操作 */
 function resetQuery() {
-  dateRange.value = undefined
-  proxy.resetForm('queryRef')
-  handleQuery()
+  dateRange.value = undefined;
+  proxy.resetForm('queryRef');
+  handleQuery();
 }
 
 /** 多选框选中数据 */
 function handleSelectionChange(selection: SocialFavoriteVO[]) {
-  ids.value = selection.map((item) => item.favoriteId)
-  multiple.value = !selection.length
+  ids.value = selection.map((item) => item.favoriteId);
+  multiple.value = !selection.length;
 }
 
 /** 删除按钮操作 */
 function handleDelete(row?: SocialFavoriteVO) {
-  const favoriteIds = row ? [row.favoriteId] : ids.value
+  const favoriteIds = row ? [row.favoriteId] : ids.value;
   proxy.$modal
     .confirm('确认删除选中的收藏记录吗？')
     .then(() => {
-      return delSocialFavorite(favoriteIds)
+      return delSocialFavorite(favoriteIds);
     })
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess('删除成功')
+      getList();
+      proxy.$modal.msgSuccess('删除成功');
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 /** 导出按钮操作 */
@@ -190,8 +190,8 @@ function handleExport() {
       ...queryParams.value
     },
     `favorite_${new Date().getTime()}.xlsx`
-  )
+  );
 }
 
-getList()
+getList();
 </script>

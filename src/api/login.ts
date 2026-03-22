@@ -195,3 +195,28 @@ export function getTenantList(isToken: boolean): AxiosPromise<TenantInfo> {
     method: 'get'
   });
 }
+
+/** PC 扫码登录：生成会话 */
+export function generateQrCode(tenantId?: string): AxiosPromise<{ qrCodeToken: string; expireTime: number }> {
+  return request({
+    url: '/qrCodeLogin/generate',
+    method: 'get',
+    headers: {
+      isToken: false,
+      'X-Tenant-Id': tenantId || '000000'
+    }
+  });
+}
+
+/** PC 扫码登录：轮询状态 */
+export function getQrCodeStatus(qrCodeToken: string, tenantId?: string): AxiosPromise<{ status: string; access_token?: string; message?: string }> {
+  return request({
+    url: '/qrCodeLogin/status',
+    method: 'get',
+    headers: {
+      isToken: false,
+      'X-Tenant-Id': tenantId || '000000'
+    },
+    params: { qrCodeToken }
+  });
+}
