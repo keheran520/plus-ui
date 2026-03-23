@@ -1,7 +1,7 @@
 <template>
   <div class="stats-page">
     <section class="summary-grid">
-      <div v-for="card in summaryCards" :key="card.key" :class="`summary-card--${card.theme}`" class="summary-card">
+      <div v-for="card in summaryCards" :key="card.key" :class="`summary-card summary-card--${card.theme}`">
         <div class="summary-card__head">
           <div class="summary-card__icon">
             <el-icon :size="18">
@@ -21,10 +21,9 @@
           <h2 class="panel__title">互动趋势</h2>
           <el-radio-group v-model="trendTargetType" size="small" @change="loadTrendData">
             <el-radio-button value="">全部</el-radio-button>
-            <el-radio-button value="image">图片</el-radio-button>
-            <el-radio-button value="album">相册</el-radio-button>
-            <el-radio-button value="article">文章</el-radio-button>
-            <el-radio-button value="video">视频</el-radio-button>
+            <el-radio-button v-for="item in social_target_type" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </el-radio-button>
           </el-radio-group>
         </header>
         <div ref="trendChartRef" class="chart"></div>
@@ -44,16 +43,13 @@
       </article>
     </section>
 
-    <section class="top-grid">
+    <section class="top-grid top-grid--single">
       <article class="panel">
         <header class="panel__header">
-          <h2 class="panel__title">热度内容榜</h2>
-          <el-select v-model="hotTargetType" clearable placeholder="全部类型" size="small" style="width: 120px" @change="loadHotContent">
+          <h2 class="panel__title">热门内容榜单</h2>
+          <el-select v-model="hotTargetType" class="panel-select" clearable placeholder="全部类型" size="small" @change="loadHotContent">
             <el-option label="全部" value="" />
-            <el-option label="图片" value="image" />
-            <el-option label="相册" value="album" />
-            <el-option label="文章" value="article" />
-            <el-option label="视频" value="video" />
+            <el-option v-for="item in social_target_type" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </header>
 
@@ -61,7 +57,7 @@
           <button v-for="(item, index) in hotContent" :key="`${item.targetType}-${item.targetId}`" class="rank-item" type="button">
             <span class="rank-item__index">{{ index + 1 }}</span>
             <div class="rank-item__main">
-              <div class="rank-item__name">{{ getTargetTypeLabel(item.targetType) }} #{{ item.targetId }}</div>
+              <div class="rank-item__name">{{ getDictLabel(social_target_type, item.targetType) }} #{{ item.targetId }}</div>
               <div class="rank-item__meta">
                 点赞 {{ formatCount(item.likeCount) }} / 收藏 {{ formatCount(item.favoriteCount) }} / 评论 {{ formatCount(item.commentCount) }}
               </div>
@@ -70,40 +66,36 @@
           </button>
         </div>
       </article>
+    </section>
 
-      <article class="panel">
+    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
+      <section v-show="showSearch" class="panel filter-panel">
         <header class="panel__header">
           <h2 class="panel__title">筛选条件</h2>
         </header>
 
-        <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-          <el-form v-show="showSearch" :model="queryParams" class="query-form" inline>
-            <el-form-item label="内容类型">
-              <el-select v-model="queryParams.targetType" clearable placeholder="请选择内容类型">
-                <el-option label="图片" value="image" />
-                <el-option label="相册" value="album" />
-                <el-option label="文章" value="article" />
-                <el-option label="视频" value="video" />
-                <el-option label="评论" value="comment" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="内容ID">
-              <el-input v-model="queryParams.targetId" clearable placeholder="请输入内容ID" @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-        </transition>
-      </article>
-    </section>
+        <el-form :model="queryParams" class="query-form" inline>
+          <el-form-item label="内容类型">
+            <el-select v-model="queryParams.targetType" clearable placeholder="请选择内容类型">
+              <el-option v-for="item in social_target_type" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="内容ID">
+            <el-input v-model="queryParams.targetId" clearable placeholder="请输入内容ID" @keyup.enter="handleQuery" />
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
+            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </section>
+    </transition>
 
     <section class="panel">
       <div class="list-toolbar">
         <div class="list-toolbar__left">
-          <el-button v-hasPermi="['social:statistics:edit']" type="success" plain icon="Refresh" @click="handleBatchRefresh">批量刷新</el-button>
-          <el-button v-hasPermi="['social:statistics:export']" plain icon="Download" @click="handleExport">导出</el-button>
+          <el-button v-hasPermi="['social:statistics:edit']" icon="Refresh" plain type="success" @click="handleBatchRefresh">批量刷新</el-button>
+          <el-button v-hasPermi="['social:statistics:export']" icon="Download" plain @click="handleExport">导出</el-button>
         </div>
       </div>
 
@@ -116,27 +108,27 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column align="center" type="selection" width="50" />
-        <el-table-column label="内容类型" width="110" align="center">
+        <el-table-column align="center" label="内容类型" width="110">
           <template #default="{ row }">
-            <el-tag effect="plain" round>{{ getTargetTypeLabel(row.targetType) }}</el-tag>
+            <dict-tag :options="social_target_type" :value="row.targetType" />
           </template>
         </el-table-column>
-        <el-table-column label="内容ID" prop="targetId" width="120" align="center" />
+        <el-table-column align="center" label="内容ID" prop="targetId" width="120" />
         <el-table-column label="标题" min-width="220">
           <template #default="{ row }">
             <div class="table-main">
-              <div class="table-main__name">{{ row.targetTitle || `${getTargetTypeLabel(row.targetType)} #${row.targetId}` }}</div>
-              <div class="table-main__meta">热度分 {{ formatCount(calculateScore(row)) }}</div>
+              <div class="table-main__name">{{ row.targetTitle || `${getDictLabel(social_target_type, row.targetType)} #${row.targetId}` }}</div>
+              <div class="table-main__meta">热度分 {{ formatCount(row.score) }}</div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="点赞" prop="likeCount" width="90" align="center" />
-        <el-table-column label="收藏" prop="favoriteCount" width="90" align="center" />
-        <el-table-column label="评论" prop="commentCount" width="90" align="center" />
-        <el-table-column label="转发" prop="shareCount" width="90" align="center" />
-        <el-table-column label="浏览" prop="viewCount" width="90" align="center" />
-        <el-table-column label="更新时间" prop="updateTime" width="180" align="center" />
-        <el-table-column label="操作" fixed="right" width="150">
+        <el-table-column align="center" label="点赞" prop="likeCount" width="90" />
+        <el-table-column align="center" label="收藏" prop="favoriteCount" width="90" />
+        <el-table-column align="center" label="评论" prop="commentCount" width="90" />
+        <el-table-column align="center" label="转发" prop="shareCount" width="90" />
+        <el-table-column align="center" label="浏览" prop="viewCount" width="90" />
+        <el-table-column align="center" label="更新时间" prop="updateTime" width="180" />
+        <el-table-column fixed="right" label="操作" width="150">
           <template #default="{ row }">
             <el-button v-hasPermi="['social:statistics:edit']" link type="primary" @click="handleRefresh(row)">刷新</el-button>
             <el-button v-hasPermi="['social:statistics:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
@@ -150,18 +142,27 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue'
 import { ChatDotRound, DataAnalysis, Share, Star, StarFilled } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { batchRefreshStatistics, delSocialStatistics, getHotContent, getStatisticsOverview, getTrendData, listSocialStatistics, refreshStatistics } from '@/api/social/statistics'
+import {
+  batchRefreshStatistics,
+  delSocialStatistics,
+  getHotContent,
+  getStatisticsOverview,
+  getTrendData,
+  listSocialStatistics,
+  refreshStatistics
+} from '@/api/social/statistics'
 import type { SocialStatisticsQuery, SocialStatisticsVO } from '@/api/social/statistics/types'
 
 const { proxy } = getCurrentInstance() as any
+const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'))
 
 const trendChartRef = ref<HTMLDivElement>()
 const mixChartRef = ref<HTMLDivElement>()
 
-const statisticsList = ref<any[]>([])
+const statisticsList = ref<SocialStatisticsVO[]>([])
 const hotContent = ref<any[]>([])
 const loading = ref(false)
 const hotLoading = ref(false)
@@ -209,17 +210,8 @@ function formatCount(value?: number | string | null) {
   return Number.isFinite(numericValue) ? numericValue.toLocaleString('zh-CN') : '0'
 }
 
-function getTargetTypeLabel(value?: string) {
-  if (value === 'image') return '图片'
-  if (value === 'album') return '相册'
-  if (value === 'article') return '文章'
-  if (value === 'video') return '视频'
-  if (value === 'comment') return '评论'
-  return value || '未知'
-}
-
-function calculateScore(row: Partial<SocialStatisticsVO>) {
-  return Number(row.likeCount || 0) + Number(row.favoriteCount || 0) * 2 + Number(row.commentCount || 0) * 3 + Number(row.shareCount || 0) * 4
+function getDictLabel(options: DictDataOption[] = [], value?: string | number) {
+  return options.find((item) => String(item.value) === String(value))?.label || value || '未知'
 }
 
 function ensureTrendChart() {
@@ -239,21 +231,58 @@ function renderTrendChart() {
   if (!chart) return
   chart.setOption({
     tooltip: { trigger: 'axis' },
-    grid: { left: 36, right: 18, top: 28, bottom: 28, containLabel: true },
+    grid: { left: 52, right: 24, top: 28, bottom: 34, containLabel: true },
+    legend: {
+      top: 0,
+      textStyle: { color: '#64748b', fontSize: 12 }
+    },
     xAxis: {
       type: 'category',
       data: trendData.value.map((item) => item.date),
-      axisLine: { lineStyle: { color: '#cbd5e1' } }
+      boundaryGap: false,
+      axisLine: { lineStyle: { color: '#cbd5e1' } },
+      axisLabel: { color: '#64748b', margin: 12 }
     },
     yAxis: {
       type: 'value',
+      axisLabel: { color: '#64748b' },
       splitLine: { lineStyle: { color: '#eef2f7' } }
     },
     series: [
-      { name: '点赞', type: 'line', smooth: true, data: trendData.value.map((item) => item.likeCount), itemStyle: { color: '#2563eb' }, areaStyle: { color: 'rgba(37,99,235,.08)' } },
-      { name: '收藏', type: 'line', smooth: true, data: trendData.value.map((item) => item.favoriteCount), itemStyle: { color: '#f97316' } },
-      { name: '评论', type: 'line', smooth: true, data: trendData.value.map((item) => item.commentCount), itemStyle: { color: '#16a34a' } },
-      { name: '转发', type: 'line', smooth: true, data: trendData.value.map((item) => item.shareCount), itemStyle: { color: '#7c3aed' } }
+      {
+        name: '点赞',
+        type: 'line',
+        smooth: true,
+        symbolSize: 6,
+        data: trendData.value.map((item) => item.likeCount),
+        itemStyle: { color: '#2563eb' },
+        lineStyle: { width: 2 },
+        areaStyle: { color: 'rgba(37,99,235,.08)' }
+      },
+      {
+        name: '收藏',
+        type: 'line',
+        smooth: true,
+        symbolSize: 6,
+        data: trendData.value.map((item) => item.favoriteCount),
+        itemStyle: { color: '#f97316' }
+      },
+      {
+        name: '评论',
+        type: 'line',
+        smooth: true,
+        symbolSize: 6,
+        data: trendData.value.map((item) => item.commentCount),
+        itemStyle: { color: '#16a34a' }
+      },
+      {
+        name: '转发',
+        type: 'line',
+        smooth: true,
+        symbolSize: 6,
+        data: trendData.value.map((item) => item.shareCount),
+        itemStyle: { color: '#7c3aed' }
+      }
     ]
   })
 }
@@ -263,13 +292,18 @@ function renderMixChart() {
   if (!chart) return
   chart.setOption({
     tooltip: { trigger: 'item' },
-    legend: { bottom: 0 },
+    legend: {
+      bottom: 0,
+      icon: 'circle',
+      textStyle: { color: '#64748b', fontSize: 12 }
+    },
     series: [
       {
         type: 'pie',
         radius: ['42%', '72%'],
-        center: ['50%', '44%'],
-        label: { formatter: '{b}\n{d}%' },
+        center: ['50%', '42%'],
+        avoidLabelOverlap: true,
+        label: { color: '#475569', formatter: '{b}\n{d}%' },
         data: [
           { name: '点赞', value: overview.value.totalLikes, itemStyle: { color: '#2563eb' } },
           { name: '收藏', value: overview.value.totalFavorites, itemStyle: { color: '#f97316' } },
@@ -343,13 +377,10 @@ async function handleRefresh(row: SocialStatisticsVO) {
 }
 
 async function handleBatchRefresh() {
-  if (!queryParams.value.targetType) {
-    proxy?.$modal?.msgWarning('请先选择内容类型')
-    return
-  }
   try {
-    await proxy?.$modal?.confirm(`确认批量刷新 ${getTargetTypeLabel(queryParams.value.targetType)} 的统计吗？`)
-    await batchRefreshStatistics(queryParams.value.targetType)
+    const targetLabel = queryParams.value.targetType ? getDictLabel(social_target_type.value, queryParams.value.targetType) : '全部类型'
+    await proxy?.$modal?.confirm(`确认批量刷新 ${targetLabel} 的统计吗？`)
+    await batchRefreshStatistics(queryParams.value.targetType as string)
     proxy?.$modal?.msgSuccess('批量刷新成功')
     await Promise.all([getList(), loadOverview(), loadHotContent(), loadTrendData()])
   } catch {
@@ -424,6 +455,10 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.top-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .panel,
 .summary-card {
   background: #fff;
@@ -495,6 +530,10 @@ onBeforeUnmount(() => {
   padding: 16px;
 }
 
+.filter-panel {
+  padding-bottom: 8px;
+}
+
 .panel__header,
 .list-toolbar {
   display: flex;
@@ -508,6 +547,10 @@ onBeforeUnmount(() => {
   color: #303133;
   font-size: 16px;
   font-weight: 600;
+}
+
+.panel-select {
+  width: 120px;
 }
 
 .legend,
@@ -630,6 +673,10 @@ onBeforeUnmount(() => {
   .list-toolbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .panel-select {
+    width: 100%;
   }
 
   .rank-item {

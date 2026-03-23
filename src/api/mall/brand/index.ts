@@ -1,8 +1,14 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { MallBrandForm, MallBrandQuery, MallBrandVO } from '@/api/mall/brand/types';
+import { BrandVO, BrandForm, BrandQuery } from '@/api/mall/brand/types';
 
-export const listMallBrand = (query?: MallBrandQuery): AxiosPromise<MallBrandVO[]> => {
+/**
+ * 查询品牌列表
+ * @param query
+ * @returns {*}
+ */
+
+export const listBrand = (query?: BrandQuery): AxiosPromise<BrandVO[]> => {
   return request({
     url: '/mall/brand/list',
     method: 'get',
@@ -10,30 +16,46 @@ export const listMallBrand = (query?: MallBrandQuery): AxiosPromise<MallBrandVO[
   });
 };
 
-export const getMallBrand = (id: string | number): AxiosPromise<MallBrandVO> => {
+/**
+ * 查询品牌详细
+ * @param id
+ */
+export const getBrand = (id: string | number): AxiosPromise<BrandVO> => {
   return request({
     url: '/mall/brand/' + id,
     method: 'get'
   });
 };
 
-export const addMallBrand = (data: MallBrandForm) => {
+/**
+ * 新增品牌
+ * @param data
+ */
+export const addBrand = (data: BrandForm) => {
   return request({
     url: '/mall/brand',
     method: 'post',
-    data
+    data: data
   });
 };
 
-export const updateMallBrand = (data: MallBrandForm) => {
+/**
+ * 修改品牌
+ * @param data
+ */
+export const updateBrand = (data: BrandForm) => {
   return request({
     url: '/mall/brand',
     method: 'put',
-    data
+    data: data
   });
 };
 
-export const delMallBrand = (id: string | number | Array<string | number>) => {
+/**
+ * 删除品牌
+ * @param id
+ */
+export const delBrand = (id: string | number | Array<string | number>) => {
   return request({
     url: '/mall/brand/' + id,
     method: 'delete'

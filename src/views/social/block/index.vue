@@ -4,24 +4,24 @@
       <section v-show="showSearch" class="filter-panel">
         <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
           <el-form-item label="屏蔽者ID" prop="userId">
-            <el-input v-model="queryParams.userId" clearable placeholder="请输入屏蔽者ID" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.userId" class="field-sm" clearable placeholder="请输入屏蔽者ID" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="被屏蔽者ID" prop="blockedUserId">
-            <el-input v-model="queryParams.blockedUserId" clearable placeholder="请输入被屏蔽者ID" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.blockedUserId" class="field-sm" clearable placeholder="请输入被屏蔽者ID" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="创建时间">
             <el-date-picker
               v-model="dateRange"
-              type="daterange"
-              value-format="YYYY-MM-DD"
+              class="field-date"
+              end-placeholder="结束日期"
               range-separator="-"
               start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              class="field-date"
+              type="daterange"
+              value-format="YYYY-MM-DD"
             />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -35,34 +35,34 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['social:block:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">
+          <el-button v-hasPermi="['social:block:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">
             批量删除
           </el-button>
-          <el-button v-hasPermi="['social:block:export']" plain icon="Download" @click="handleExport">导出</el-button>
+          <el-button v-hasPermi="['social:block:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
       </header>
 
       <el-table v-loading="loading" :data="blockList" class="social-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" />
-        <el-table-column label="记录ID" prop="blockId" width="120" align="center" />
-        <el-table-column label="屏蔽者ID" width="140" align="center">
+        <el-table-column align="center" type="selection" width="48" />
+        <el-table-column align="center" label="记录ID" prop="blockId" width="120" />
+        <el-table-column align="center" label="屏蔽者ID" width="140">
           <template #default="{ row }">
             <el-link type="primary" @click="openUserDrawer(row.userId)">{{ row.userId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="被屏蔽者ID" width="140" align="center">
+        <el-table-column align="center" label="被屏蔽者ID" width="140">
           <template #default="{ row }">
             <el-link type="primary" @click="openUserDrawer(row.blockedUserId)">{{ row.blockedUserId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="屏蔽原因" prop="blockReason" min-width="240" show-overflow-tooltip>
+        <el-table-column label="屏蔽原因" min-width="240" prop="blockReason" show-overflow-tooltip>
           <template #default="{ row }">
             <span>{{ row.blockReason || '暂无' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" width="180" align="center" />
-        <el-table-column label="操作" width="110" fixed="right" align="center">
+        <el-table-column align="center" label="创建时间" prop="createTime" width="180" />
+        <el-table-column align="center" fixed="right" label="操作" width="110">
           <template #default="{ row }">
             <el-button v-hasPermi="['social:block:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
@@ -77,85 +77,85 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'element-plus'
-import { delSocialBlock, listSocialBlock } from '@/api/social/block'
-import type { SocialBlockQuery, SocialBlockVO } from '@/api/social/block/types'
-import UserStatsDrawer from '../components/UserStatsDrawer.vue'
+import type { FormInstance } from 'element-plus';
+import { delSocialBlock, listSocialBlock } from '@/api/social/block';
+import type { SocialBlockQuery, SocialBlockVO } from '@/api/social/block/types';
+import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
-const { proxy } = getCurrentInstance() as any
+const { proxy } = getCurrentInstance() as any;
 
-const queryRef = ref<FormInstance>()
-const blockList = ref<SocialBlockVO[]>([])
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref<Array<string | number>>([])
-const multiple = ref(true)
-const total = ref(0)
-const dateRange = ref<[string, string]>()
-const userDrawerVisible = ref(false)
-const selectedUserId = ref<string | number>()
+const queryRef = ref<FormInstance>();
+const blockList = ref<SocialBlockVO[]>([]);
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dateRange = ref<[string, string]>();
+const userDrawerVisible = ref(false);
+const selectedUserId = ref<string | number>();
 
 const queryParams = ref<SocialBlockQuery>({
   pageNum: 1,
   pageSize: 10,
   userId: undefined,
   blockedUserId: undefined
-})
+});
 
 function getList() {
-  loading.value = true
-  const params = proxy.addDateRange(queryParams.value, dateRange.value)
+  loading.value = true;
+  const params = proxy.addDateRange(queryParams.value, dateRange.value);
   listSocialBlock(params)
     .then((response: any) => {
-      blockList.value = response.rows
-      total.value = response.total
+      blockList.value = response.rows;
+      total.value = response.total;
     })
     .finally(() => {
-      loading.value = false
-    })
+      loading.value = false;
+    });
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 function resetQuery() {
-  dateRange.value = undefined
-  queryRef.value?.resetFields()
-  handleQuery()
+  dateRange.value = undefined;
+  queryRef.value?.resetFields();
+  handleQuery();
 }
 
 function handleSelectionChange(selection: SocialBlockVO[]) {
-  ids.value = selection.map((item) => item.blockId)
-  multiple.value = !selection.length
+  ids.value = selection.map((item) => item.blockId);
+  multiple.value = !selection.length;
 }
 
 function openUserDrawer(userId: string | number) {
-  selectedUserId.value = userId
-  userDrawerVisible.value = true
+  selectedUserId.value = userId;
+  userDrawerVisible.value = true;
 }
 
 function handleDelete(row?: SocialBlockVO) {
-  const blockIds = row ? [row.blockId] : ids.value
+  const blockIds = row ? [row.blockId] : ids.value;
   proxy.$modal
     .confirm('确认删除选中的拉黑记录吗？')
     .then(() => delSocialBlock(blockIds))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess('删除成功')
+      getList();
+      proxy.$modal.msgSuccess('删除成功');
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleExport() {
-  proxy.download('social/block/export', { ...queryParams.value }, `block_${new Date().getTime()}.xlsx`)
+  proxy.download('social/block/export', { ...queryParams.value }, `block_${new Date().getTime()}.xlsx`);
 }
 
-getList()
+getList();
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .social-manage-page {
   padding: 16px;
   background: #f6f8fb;

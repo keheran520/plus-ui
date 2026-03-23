@@ -4,13 +4,13 @@
       <section v-show="showSearch" class="filter-panel">
         <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
           <el-form-item label="用户ID" prop="userId">
-            <el-input v-model="queryParams.userId" clearable placeholder="请输入用户ID" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.userId" class="field-sm" clearable placeholder="请输入用户ID" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="收藏夹名称" prop="folderName">
-            <el-input v-model="queryParams.folderName" clearable placeholder="请输入收藏夹名称" class="field-md" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.folderName" class="field-md" clearable placeholder="请输入收藏夹名称" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="是否公开" prop="isPublic">
-            <el-select v-model="queryParams.isPublic" clearable placeholder="请选择" class="field-sm">
+            <el-select v-model="queryParams.isPublic" class="field-sm" clearable placeholder="请选择">
               <el-option label="私密" value="0" />
               <el-option label="公开" value="1" />
             </el-select>
@@ -18,16 +18,16 @@
           <el-form-item label="创建时间">
             <el-date-picker
               v-model="dateRange"
-              type="daterange"
-              value-format="YYYY-MM-DD"
+              class="field-date"
+              end-placeholder="结束日期"
               range-separator="-"
               start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              class="field-date"
+              type="daterange"
+              value-format="YYYY-MM-DD"
             />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -41,38 +41,38 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['social:favoriteFolder:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
-          <el-button v-hasPermi="['social:favoriteFolder:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">
+          <el-button v-hasPermi="['social:favoriteFolder:add']" icon="Plus" plain type="primary" @click="handleAdd">新增</el-button>
+          <el-button v-hasPermi="['social:favoriteFolder:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">
             批量删除
           </el-button>
-          <el-button v-hasPermi="['social:favoriteFolder:export']" plain icon="Download" @click="handleExport">导出</el-button>
+          <el-button v-hasPermi="['social:favoriteFolder:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
       </header>
 
       <el-table v-loading="loading" :data="folderList" class="social-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" />
-        <el-table-column label="收藏夹ID" prop="folderId" width="110" align="center" />
-        <el-table-column label="用户ID" width="120" align="center">
+        <el-table-column align="center" type="selection" width="48" />
+        <el-table-column align="center" label="收藏夹ID" prop="folderId" width="110" />
+        <el-table-column align="center" label="用户ID" width="120">
           <template #default="{ row }">
             <el-link type="primary" @click="openUserDrawer(row.userId)">{{ row.userId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="收藏夹名称" prop="folderName" min-width="220" show-overflow-tooltip />
-        <el-table-column label="描述" prop="folderDesc" min-width="220" show-overflow-tooltip>
+        <el-table-column label="收藏夹名称" min-width="220" prop="folderName" show-overflow-tooltip />
+        <el-table-column label="描述" min-width="220" prop="folderDesc" show-overflow-tooltip>
           <template #default="{ row }">
             <span>{{ row.folderDesc || '暂无' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="公开状态" width="100" align="center">
+        <el-table-column align="center" label="公开状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.isPublic === '1' ? 'success' : 'info'" effect="light" round>{{ row.isPublic === '1' ? '公开' : '私密' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="内容数" prop="itemCount" width="90" align="center" />
-        <el-table-column label="排序" prop="sortOrder" width="90" align="center" />
-        <el-table-column label="创建时间" prop="createTime" width="180" align="center" />
-        <el-table-column label="操作" width="150" fixed="right" align="center">
+        <el-table-column align="center" label="内容数" prop="itemCount" width="90" />
+        <el-table-column align="center" label="排序" prop="sortOrder" width="90" />
+        <el-table-column align="center" label="创建时间" prop="createTime" width="180" />
+        <el-table-column align="center" fixed="right" label="操作" width="150">
           <template #default="{ row }">
             <el-button v-hasPermi="['social:favoriteFolder:edit']" link type="primary" @click="handleUpdate(row)">编辑</el-button>
             <el-button v-hasPermi="['social:favoriteFolder:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
@@ -92,7 +92,7 @@
           <el-input v-model="form.folderName" maxlength="100" placeholder="请输入收藏夹名称" />
         </el-form-item>
         <el-form-item label="描述" prop="folderDesc">
-          <el-input v-model="form.folderDesc" :rows="3" maxlength="500" type="textarea" placeholder="请输入描述" show-word-limit />
+          <el-input v-model="form.folderDesc" :rows="3" maxlength="500" placeholder="请输入描述" show-word-limit type="textarea" />
         </el-form-item>
         <el-form-item label="是否公开" prop="isPublic">
           <el-radio-group v-model="form.isPublic">
@@ -120,27 +120,33 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'element-plus'
-import { addSocialFavoriteFolder, delSocialFavoriteFolder, getSocialFavoriteFolder, listSocialFavoriteFolder, updateSocialFavoriteFolder } from '@/api/social/favoriteFolder'
-import type { SocialFavoriteFolderForm, SocialFavoriteFolderQuery, SocialFavoriteFolderVO } from '@/api/social/favoriteFolder/types'
-import UserStatsDrawer from '../components/UserStatsDrawer.vue'
+import type { FormInstance } from 'element-plus';
+import {
+  addSocialFavoriteFolder,
+  delSocialFavoriteFolder,
+  getSocialFavoriteFolder,
+  listSocialFavoriteFolder,
+  updateSocialFavoriteFolder
+} from '@/api/social/favoriteFolder';
+import type { SocialFavoriteFolderForm, SocialFavoriteFolderQuery, SocialFavoriteFolderVO } from '@/api/social/favoriteFolder/types';
+import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
-const { proxy } = getCurrentInstance() as any
+const { proxy } = getCurrentInstance() as any;
 
-const queryRef = ref<FormInstance>()
-const formRef = ref<FormInstance>()
-const folderList = ref<SocialFavoriteFolderVO[]>([])
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref<Array<string | number>>([])
-const multiple = ref(true)
-const total = ref(0)
-const dateRange = ref<[string, string]>()
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const submitLoading = ref(false)
-const userDrawerVisible = ref(false)
-const selectedUserId = ref<string | number>()
+const queryRef = ref<FormInstance>();
+const formRef = ref<FormInstance>();
+const folderList = ref<SocialFavoriteFolderVO[]>([]);
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dateRange = ref<[string, string]>();
+const dialogVisible = ref(false);
+const dialogTitle = ref('');
+const submitLoading = ref(false);
+const userDrawerVisible = ref(false);
+const selectedUserId = ref<string | number>();
 
 const queryParams = ref<SocialFavoriteFolderQuery>({
   pageNum: 1,
@@ -148,7 +154,7 @@ const queryParams = ref<SocialFavoriteFolderQuery>({
   userId: undefined,
   folderName: undefined,
   isPublic: undefined
-})
+});
 
 const form = ref<SocialFavoriteFolderForm>({
   folderId: undefined,
@@ -158,46 +164,46 @@ const form = ref<SocialFavoriteFolderForm>({
   isPublic: '0',
   coverUrl: '',
   sortOrder: 0
-})
+});
 
 const rules = ref({
   userId: [{ required: true, message: '用户ID不能为空', trigger: 'blur' }],
   folderName: [{ required: true, message: '收藏夹名称不能为空', trigger: 'blur' }],
   isPublic: [{ required: true, message: '请选择公开状态', trigger: 'change' }]
-})
+});
 
 function getList() {
-  loading.value = true
-  const params = proxy.addDateRange(queryParams.value, dateRange.value)
+  loading.value = true;
+  const params = proxy.addDateRange(queryParams.value, dateRange.value);
   listSocialFavoriteFolder(params)
     .then((response: any) => {
-      folderList.value = response.rows
-      total.value = response.total
+      folderList.value = response.rows;
+      total.value = response.total;
     })
     .finally(() => {
-      loading.value = false
-    })
+      loading.value = false;
+    });
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 function resetQuery() {
-  dateRange.value = undefined
-  queryRef.value?.resetFields()
-  handleQuery()
+  dateRange.value = undefined;
+  queryRef.value?.resetFields();
+  handleQuery();
 }
 
 function handleSelectionChange(selection: SocialFavoriteFolderVO[]) {
-  ids.value = selection.map((item) => item.folderId)
-  multiple.value = !selection.length
+  ids.value = selection.map((item) => item.folderId);
+  multiple.value = !selection.length;
 }
 
 function openUserDrawer(userId: string | number) {
-  selectedUserId.value = userId
-  userDrawerVisible.value = true
+  selectedUserId.value = userId;
+  userDrawerVisible.value = true;
 }
 
 function resetForm() {
@@ -209,61 +215,61 @@ function resetForm() {
     isPublic: '0',
     coverUrl: '',
     sortOrder: 0
-  }
-  formRef.value?.resetFields()
+  };
+  formRef.value?.resetFields();
 }
 
 function handleAdd() {
-  resetForm()
-  dialogVisible.value = true
-  dialogTitle.value = '新增收藏夹'
+  resetForm();
+  dialogVisible.value = true;
+  dialogTitle.value = '新增收藏夹';
 }
 
 async function handleUpdate(row: SocialFavoriteFolderVO) {
-  resetForm()
-  const res = await getSocialFavoriteFolder(row.folderId)
-  form.value = res.data
-  dialogVisible.value = true
-  dialogTitle.value = '编辑收藏夹'
+  resetForm();
+  const res = await getSocialFavoriteFolder(row.folderId);
+  form.value = res.data;
+  dialogVisible.value = true;
+  dialogTitle.value = '编辑收藏夹';
 }
 
 function submitForm() {
   formRef.value?.validate((valid: boolean) => {
-    if (!valid) return
-    submitLoading.value = true
-    const request = form.value.folderId ? updateSocialFavoriteFolder(form.value) : addSocialFavoriteFolder(form.value)
+    if (!valid) return;
+    submitLoading.value = true;
+    const request = form.value.folderId ? updateSocialFavoriteFolder(form.value) : addSocialFavoriteFolder(form.value);
     request
       .then(() => {
-        proxy.$modal.msgSuccess(form.value.folderId ? '修改成功' : '新增成功')
-        dialogVisible.value = false
-        getList()
+        proxy.$modal.msgSuccess(form.value.folderId ? '修改成功' : '新增成功');
+        dialogVisible.value = false;
+        getList();
       })
       .finally(() => {
-        submitLoading.value = false
-      })
-  })
+        submitLoading.value = false;
+      });
+  });
 }
 
 function handleDelete(row?: SocialFavoriteFolderVO) {
-  const folderIds = row ? [row.folderId] : ids.value
+  const folderIds = row ? [row.folderId] : ids.value;
   proxy.$modal
     .confirm('确认删除选中的收藏夹吗？')
     .then(() => delSocialFavoriteFolder(folderIds))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess('删除成功')
+      getList();
+      proxy.$modal.msgSuccess('删除成功');
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleExport() {
-  proxy.download('social/favoriteFolder/export', { ...queryParams.value }, `favoriteFolder_${new Date().getTime()}.xlsx`)
+  proxy.download('social/favoriteFolder/export', { ...queryParams.value }, `favoriteFolder_${new Date().getTime()}.xlsx`);
 }
 
-getList()
+getList();
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .social-manage-page {
   padding: 16px;
   background: #f6f8fb;

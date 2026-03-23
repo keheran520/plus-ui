@@ -4,26 +4,24 @@
       <section v-show="showSearch" class="filter-panel">
         <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
           <el-form-item label="关注者ID" prop="userId">
-            <el-input v-model="queryParams.userId" clearable placeholder="请输入关注者ID" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.userId" class="field-sm" clearable placeholder="请输入关注者ID" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="被关注者ID" prop="followedUserId">
-            <el-input v-model="queryParams.followedUserId" clearable placeholder="请输入被关注者ID" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.followedUserId" class="field-sm" clearable placeholder="请输入被关注者ID" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="关注类型" prop="followType">
-            <el-select v-model="queryParams.followType" clearable placeholder="请选择关注类型" class="field-sm">
-              <el-option label="普通关注" value="normal" />
-              <el-option label="特别关注" value="special" />
-              <el-option label="悄悄关注" value="quiet" />
+            <el-select v-model="queryParams.followType" class="field-sm" clearable placeholder="请选择关注类型">
+              <el-option v-for="item in social_follow_type" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="互关状态" prop="isMutual">
-            <el-select v-model="queryParams.isMutual" clearable placeholder="请选择互关状态" class="field-sm">
+            <el-select v-model="queryParams.isMutual" class="field-sm" clearable placeholder="请选择互关状态">
               <el-option label="单向" value="0" />
               <el-option label="互关" value="1" />
             </el-select>
           </el-form-item>
           <el-form-item label="来源" prop="followSource">
-            <el-select v-model="queryParams.followSource" clearable placeholder="请选择来源" class="field-sm">
+            <el-select v-model="queryParams.followSource" class="field-sm" clearable placeholder="请选择来源">
               <el-option label="搜索" value="search" />
               <el-option label="推荐" value="recommend" />
               <el-option label="主页" value="profile" />
@@ -33,16 +31,16 @@
           <el-form-item label="创建时间">
             <el-date-picker
               v-model="dateRange"
-              type="daterange"
-              value-format="YYYY-MM-DD"
+              class="field-date"
+              end-placeholder="结束日期"
               range-separator="-"
               start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              class="field-date"
+              type="daterange"
+              value-format="YYYY-MM-DD"
             />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -56,51 +54,47 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['social:follow:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">
-            批量删除
-          </el-button>
-          <el-button v-hasPermi="['social:follow:export']" plain icon="Download" @click="handleExport">导出</el-button>
+          <el-button v-hasPermi="['social:follow:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">批量删除</el-button>
+          <el-button v-hasPermi="['social:follow:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
       </header>
 
       <el-table v-loading="loading" :data="followList" class="social-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" />
-        <el-table-column label="关注ID" prop="followId" width="100" align="center" />
-        <el-table-column label="关注者ID" width="130" align="center">
+        <el-table-column align="center" type="selection" width="48" />
+        <el-table-column align="center" label="关注ID" prop="followId" width="100" />
+        <el-table-column align="center" label="关注者ID" width="130">
           <template #default="{ row }">
             <el-link type="primary" @click="openUserDrawer(row.userId)">{{ row.userId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="被关注者ID" width="130" align="center">
+        <el-table-column align="center" label="被关注者ID" width="130">
           <template #default="{ row }">
             <el-link type="primary" @click="openUserDrawer(row.followedUserId)">{{ row.followedUserId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="关注类型" width="120" align="center">
+        <el-table-column align="center" label="关注类型" width="120">
           <template #default="{ row }">
-            <el-tag effect="light" round :type="row.followType === 'special' ? 'warning' : row.followType === 'quiet' ? 'info' : 'success'">
-              {{ getFollowTypeLabel(row.followType) }}
-            </el-tag>
+            <dict-tag :options="social_follow_type" :value="row.followType" />
           </template>
         </el-table-column>
-        <el-table-column label="互关状态" width="110" align="center">
+        <el-table-column align="center" label="互关状态" width="110">
           <template #default="{ row }">
             <el-tag :type="row.isMutual === '1' ? 'danger' : 'info'" effect="light" round>{{ row.isMutual === '1' ? '互关' : '单向' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="来源" width="110" align="center">
+        <el-table-column align="center" label="来源" width="110">
           <template #default="{ row }">
             <el-tag effect="plain" round>{{ getSourceLabel(row.followSource) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip>
+        <el-table-column label="备注" min-width="180" prop="remark" show-overflow-tooltip>
           <template #default="{ row }">
             <span>{{ row.remark || '暂无' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" width="180" align="center" />
-        <el-table-column label="操作" width="110" fixed="right" align="center">
+        <el-table-column align="center" label="创建时间" prop="createTime" width="180" />
+        <el-table-column align="center" fixed="right" label="操作" width="110">
           <template #default="{ row }">
             <el-button v-hasPermi="['social:follow:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
@@ -115,12 +109,14 @@
 </template>
 
 <script lang="ts" setup>
+import { getCurrentInstance, ref, toRefs } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { delSocialFollow, listSocialFollow } from '@/api/social/follow'
 import type { SocialFollowQuery, SocialFollowVO } from '@/api/social/follow/types'
 import UserStatsDrawer from '../components/UserStatsDrawer.vue'
 
 const { proxy } = getCurrentInstance() as any
+const { social_follow_type } = toRefs<any>(proxy?.useDict('social_follow_type'))
 
 const queryRef = ref<FormInstance>()
 const followList = ref<SocialFollowVO[]>([])
@@ -142,12 +138,6 @@ const queryParams = ref<SocialFollowQuery>({
   isMutual: undefined,
   followSource: undefined
 })
-
-function getFollowTypeLabel(value?: string) {
-  if (value === 'special') return '特别关注'
-  if (value === 'quiet') return '悄悄关注'
-  return '普通关注'
-}
 
 function getSourceLabel(value?: string) {
   if (value === 'search') return '搜索'
@@ -210,7 +200,7 @@ function handleExport() {
 getList()
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .social-manage-page {
   padding: 16px;
   background: #f6f8fb;
@@ -261,31 +251,41 @@ getList()
 
 .toolbar-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
 }
 
 .title-text {
+  color: #0f172a;
   font-size: 16px;
   font-weight: 600;
-  color: #182230;
 }
 
 .title-meta {
-  font-size: 12px;
-  color: #7a8699;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .toolbar-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
 }
 
-:deep(.social-table) {
-  --el-table-border-color: #edf1f7;
-  --el-table-header-bg-color: #f8fafc;
+@media (max-width: 768px) {
+  .social-manage-page {
+    padding: 12px;
+  }
+
+  .panel-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 </style>

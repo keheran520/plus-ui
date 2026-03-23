@@ -4,32 +4,32 @@
       <section v-show="showSearch" class="filter-panel">
         <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
           <el-form-item :label="TEXT.targetType" prop="targetType">
-            <el-select v-model="queryParams.targetType" clearable :placeholder="TEXT.targetTypePlaceholder" class="field-md">
+            <el-select v-model="queryParams.targetType" :placeholder="TEXT.targetTypePlaceholder" class="field-md" clearable>
               <el-option v-for="item in targetTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item :label="TEXT.targetId" prop="targetId">
-            <el-input v-model="queryParams.targetId" clearable :placeholder="TEXT.targetIdPlaceholder" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.targetId" :placeholder="TEXT.targetIdPlaceholder" class="field-sm" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="TEXT.userId" prop="userId">
-            <el-input v-model="queryParams.userId" clearable :placeholder="TEXT.userIdPlaceholder" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.userId" :placeholder="TEXT.userIdPlaceholder" class="field-sm" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="TEXT.folderId" prop="folderId">
-            <el-input v-model="queryParams.folderId" clearable :placeholder="TEXT.folderIdPlaceholder" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.folderId" :placeholder="TEXT.folderIdPlaceholder" class="field-sm" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="TEXT.createTime">
             <el-date-picker
               v-model="dateRange"
+              :end-placeholder="TEXT.endDate"
+              :start-placeholder="TEXT.startDate"
+              class="field-date"
+              range-separator="-"
               type="daterange"
               value-format="YYYY-MM-DD"
-              range-separator="-"
-              :start-placeholder="TEXT.startDate"
-              :end-placeholder="TEXT.endDate"
-              class="field-date"
             />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ TEXT.search }}</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">{{ TEXT.search }}</el-button>
             <el-button icon="Refresh" @click="resetQuery">{{ TEXT.reset }}</el-button>
           </el-form-item>
         </el-form>
@@ -43,10 +43,10 @@
           <span class="title-meta">{{ total }} {{ TEXT.records }}</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['social:favorite:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">
+          <el-button v-hasPermi="['social:favorite:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">
             {{ TEXT.batchDelete }}
           </el-button>
-          <el-button v-hasPermi="['social:favorite:export']" plain icon="Download" @click="handleExport">
+          <el-button v-hasPermi="['social:favorite:export']" icon="Download" plain @click="handleExport">
             {{ TEXT.export }}
           </el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
@@ -54,8 +54,8 @@
       </header>
 
       <el-table v-loading="loading" :data="favoriteList" class="social-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" />
-        <el-table-column :label="TEXT.userId" min-width="140" align="center">
+        <el-table-column align="center" type="selection" width="48" />
+        <el-table-column :label="TEXT.userId" align="center" min-width="140">
           <template #default="{ row }">
             <el-link type="primary" @click="openUserDrawer(row.userId)">{{ row.userId }}</el-link>
           </template>
@@ -64,7 +64,7 @@
           <template #default="{ row }">
             <div class="stack-cell">
               <div class="tag-line">
-                <el-tag effect="plain" size="small" round>{{ getTargetTypeLabel(row.targetType) }}</el-tag>
+                <dict-tag :options="social_target_type" :value="row.targetType" />
               </div>
               <span class="main-line">{{ row.targetTitle || `${TEXT.targetId} #${row.targetId}` }}</span>
               <span class="sub-line">ID: {{ row.targetId }}</span>
@@ -81,15 +81,15 @@
             <span>{{ row.remark || TEXT.noData }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="TEXT.createTime" prop="createTime" width="180" align="center" />
-        <el-table-column :label="TEXT.action" width="110" fixed="right" align="center">
+        <el-table-column :label="TEXT.createTime" align="center" prop="createTime" width="180" />
+        <el-table-column :label="TEXT.action" align="center" fixed="right" width="110">
           <template #default="{ row }">
             <el-button v-hasPermi="['social:favorite:remove']" link type="danger" @click="handleDelete(row)">{{ TEXT.delete }}</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
     </section>
 
     <UserStatsDrawer v-model:visible="userDrawerVisible" :user-id="selectedUserId" />
@@ -97,14 +97,16 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, getCurrentInstance, ref, toRefs } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { delSocialFavorite, listSocialFavorite } from '@/api/social/favorite'
-import type { SocialFavoriteQuery, SocialFavoriteVO } from '@/api/social/favorite/types'
-import UserStatsDrawer from '../components/UserStatsDrawer.vue'
+import { delSocialFavorite, listSocialFavorite } from '@/api/social/favorite';
+import type { SocialFavoriteQuery, SocialFavoriteVO } from '@/api/social/favorite/types';
+import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
-const { proxy } = getCurrentInstance() as any
-const { t } = useI18n()
+const { proxy } = getCurrentInstance() as any;
+const { t } = useI18n();
+const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'))
 
 const TEXT = computed(() => ({
   tableTitle: t('socialFavorite.tableTitle'),
@@ -135,18 +137,18 @@ const TEXT = computed(() => ({
   delete: t('socialFavorite.delete'),
   confirmDelete: t('socialFavorite.confirmDelete'),
   successDelete: t('socialFavorite.successDelete')
-}))
+}));
 
-const queryRef = ref<FormInstance>()
-const favoriteList = ref<SocialFavoriteVO[]>([])
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref<Array<string | number>>([])
-const multiple = ref(true)
-const total = ref(0)
-const dateRange = ref<[string, string]>()
-const userDrawerVisible = ref(false)
-const selectedUserId = ref<string | number>()
+const queryRef = ref<FormInstance>();
+const favoriteList = ref<SocialFavoriteVO[]>([]);
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dateRange = ref<[string, string]>();
+const userDrawerVisible = ref(false);
+const selectedUserId = ref<string | number>();
 
 const queryParams = ref<SocialFavoriteQuery>({
   pageNum: 1,
@@ -155,73 +157,68 @@ const queryParams = ref<SocialFavoriteQuery>({
   targetId: undefined,
   userId: undefined,
   folderId: undefined
-})
+});
 
-const targetTypeOptions = computed(() => [
-  { label: t('socialFavorite.targetImage'), value: 'image' },
-  { label: t('socialFavorite.targetAlbum'), value: 'album' },
-  { label: t('socialFavorite.targetArticle'), value: 'article' },
-  { label: t('socialFavorite.targetVideo'), value: 'video' }
-])
+const targetTypeOptions = computed(() => social_target_type.value || [])
 
 function getTargetTypeLabel(value?: string) {
-  return targetTypeOptions.value.find((item) => item.value === value)?.label || value || '-'
+  return targetTypeOptions.value.find((item: DictDataOption) => String(item.value) === String(value))?.label || value || '-'
 }
 
 function getList() {
-  loading.value = true
-  const params = proxy.addDateRange(queryParams.value, dateRange.value)
+  loading.value = true;
+  const params = proxy.addDateRange(queryParams.value, dateRange.value);
   listSocialFavorite(params)
     .then((response: any) => {
-      favoriteList.value = response.rows
-      total.value = response.total
+      favoriteList.value = response.rows;
+      total.value = response.total;
     })
     .finally(() => {
-      loading.value = false
-    })
+      loading.value = false;
+    });
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 function resetQuery() {
-  dateRange.value = undefined
-  queryRef.value?.resetFields()
-  handleQuery()
+  dateRange.value = undefined;
+  queryRef.value?.resetFields();
+  handleQuery();
 }
 
 function handleSelectionChange(selection: SocialFavoriteVO[]) {
-  ids.value = selection.map((item) => item.favoriteId)
-  multiple.value = !selection.length
+  ids.value = selection.map((item) => item.favoriteId);
+  multiple.value = !selection.length;
 }
 
 function openUserDrawer(userId: string | number) {
-  selectedUserId.value = userId
-  userDrawerVisible.value = true
+  selectedUserId.value = userId;
+  userDrawerVisible.value = true;
 }
 
 function handleDelete(row?: SocialFavoriteVO) {
-  const favoriteIds = row ? [row.favoriteId] : ids.value
+  const favoriteIds = row ? [row.favoriteId] : ids.value;
   proxy.$modal
     .confirm(TEXT.value.confirmDelete)
     .then(() => delSocialFavorite(favoriteIds))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess(TEXT.value.successDelete)
+      getList();
+      proxy.$modal.msgSuccess(TEXT.value.successDelete);
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleExport() {
-  proxy.download('social/favorite/export', { ...queryParams.value }, `favorite_${new Date().getTime()}.xlsx`)
+  proxy.download('social/favorite/export', { ...queryParams.value }, `favorite_${new Date().getTime()}.xlsx`);
 }
 
-getList()
+getList();
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .social-manage-page {
   padding: 16px;
   background: #f6f8fb;

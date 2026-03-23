@@ -1,162 +1,147 @@
 <template>
-  <div class="level-page">
-    <section class="level-hero">
-      <div>
-        <span class="hero-tag">Level Strategy</span>
-        <h1>会员等级体系</h1>
-        <p>用成长值、折扣和权益把会员分层做清楚，让运营策略更容易落地。</p>
-      </div>
-      <div class="hero-metrics">
-        <div class="metric-box">
-          <span>等级数量</span>
-          <strong>{{ total }}</strong>
-        </div>
-        <div class="metric-box">
-          <span>启用等级</span>
-          <strong>{{ activeCount }}</strong>
-        </div>
-      </div>
-    </section>
-
-    <el-card shadow="never" class="panel-card">
-      <template #header>
-        <div class="panel-header">
-          <div>
-            <h3>筛选条件</h3>
-            <p>支持按名称、编码和状态快速定位等级配置。</p>
-          </div>
-        </div>
-      </template>
-      <el-form ref="queryRef" :inline="true" :model="queryParams">
+  <div class="member-level-page">
+    <section class="filter-panel">
+      <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
         <el-form-item label="等级名称">
-          <el-input v-model="queryParams.levelName" clearable placeholder="请输入等级名称" @keyup.enter="handleQuery" />
+          <el-input v-model="queryParams.levelName" clearable class="field-sm" placeholder="请输入等级名称" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="等级编码">
-          <el-input v-model="queryParams.levelCode" clearable placeholder="请输入编码" @keyup.enter="handleQuery" />
+          <el-input v-model="queryParams.levelCode" clearable class="field-sm" placeholder="请输入等级编码" @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" clearable placeholder="全部状态" style="width: 160px">
+          <el-select v-model="queryParams.status" clearable class="field-sm" placeholder="全部状态">
             <el-option label="启用" value="0" />
             <el-option label="停用" value="1" />
           </el-select>
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="filter-actions">
           <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
-    </el-card>
+    </section>
 
-    <el-card shadow="never" class="panel-card">
-      <template #header>
-        <div class="panel-header">
-          <div>
-            <h3>等级列表</h3>
-            <p>等级由低到高排列，当前以成长值为升级核心。</p>
-          </div>
-          <div class="actions">
-            <el-button v-hasPermi="['member:level:add']" type="primary" icon="Plus" @click="handleAdd">新增等级</el-button>
-          </div>
+    <section class="list-panel">
+      <header class="panel-toolbar">
+        <div class="toolbar-title">
+          <span class="title-text">会员等级</span>
+          <span class="title-meta">固定内置 V1-V7，仅支持维护展示信息与成长门槛</span>
         </div>
-      </template>
+      </header>
 
-      <el-table v-loading="loading" :data="levelList" stripe border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" />
-        <el-table-column label="等级信息" min-width="240">
+      <el-table v-loading="loading" :data="levelList" class="manage-table">
+        <el-table-column label="等级" min-width="220">
           <template #default="{ row }">
-            <div class="level-info">
-              <strong>{{ row.levelName }}</strong>
-              <span>{{ row.levelCode }}</span>
+            <div class="stack-cell">
+              <div class="stack-main">
+                <span class="main-line">{{ row.levelName }}</span>
+                <el-tag v-if="row.builtIn" size="small" effect="plain" round>内置</el-tag>
+              </div>
+              <span class="sub-line">{{ row.levelCode }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="等级图片" width="120" align="center">
+          <template #default="{ row }">
+            <div class="image-box">
+              <el-image v-if="row.levelImage" :src="row.levelImage" fit="cover" preview-teleported class="level-image" />
+              <div v-else class="image-placeholder">{{ row.levelCode }}</div>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="排序" prop="levelSort" width="90" align="center" />
-        <el-table-column label="所需成长值" prop="requiredGrowth" width="130" align="center" />
-        <el-table-column label="折扣率" width="120" align="center">
-          <template #default="{ row }">{{ row.discountRate }}%</template>
-        </el-table-column>
-        <el-table-column label="权益说明" prop="benefits" min-width="240" show-overflow-tooltip />
-        <el-table-column label="状态" width="110" align="center">
+        <el-table-column label="所需成长值" prop="requiredGrowth" width="120" align="center" />
+        <el-table-column label="权益说明" prop="benefits" min-width="280" show-overflow-tooltip />
+        <el-table-column label="状态" width="120" align="center">
           <template #default="{ row }">
-            <el-switch v-model="row.status" active-value="0" inactive-value="1" @change="handleStatusChange(row)" />
+            <el-switch
+              v-model="row.status"
+              active-value="0"
+              inactive-value="1"
+              :disabled="isV1(row)"
+              @change="handleStatusChange(row)"
+            />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right" align="center">
+        <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip />
+        <el-table-column label="操作" width="110" fixed="right" align="center">
           <template #default="{ row }">
             <el-button v-hasPermi="['member:level:edit']" link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button v-hasPermi="['member:level:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
-    </el-card>
+    </section>
 
-    <el-drawer v-model="dialog.visible" :title="dialog.title" size="680px" :close-on-click-modal="false">
+    <el-drawer v-model="dialog.visible" :title="dialog.title" size="640px" :close-on-click-modal="false">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <div class="form-grid">
           <el-form-item label="等级名称" prop="levelName">
-            <el-input v-model="form.levelName" maxlength="50" />
+            <el-input v-model="form.levelName" maxlength="50" placeholder="请输入等级名称" />
           </el-form-item>
           <el-form-item label="等级编码" prop="levelCode">
-            <el-input v-model="form.levelCode" maxlength="50" />
+            <el-input v-model="form.levelCode" maxlength="50" :disabled="Boolean(form.builtIn)" placeholder="系统内置编码不可修改" />
           </el-form-item>
           <el-form-item label="排序" prop="levelSort">
-            <el-input-number v-model="form.levelSort" :min="0" controls-position="right" style="width: 100%" />
+            <el-input-number v-model="form.levelSort" :min="1" controls-position="right" style="width: 100%" />
           </el-form-item>
           <el-form-item label="所需成长值" prop="requiredGrowth">
             <el-input-number v-model="form.requiredGrowth" :min="0" controls-position="right" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="折扣率" prop="discountRate">
-            <el-input-number v-model="form.discountRate" :min="0" :max="100" :precision="2" controls-position="right" style="width: 100%" />
-          </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-radio-group v-model="form.status">
-              <el-radio label="0">启用</el-radio>
-              <el-radio label="1">停用</el-radio>
-            </el-radio-group>
-          </el-form-item>
         </div>
+        <el-form-item label="等级图片" prop="levelImage">
+          <image-upload v-model="form.ossId" :limit="1" @upload-success="handleUploadSuccess" />
+          <div v-if="form.levelImage" class="image-preview">
+            <el-image :src="form.levelImage" fit="cover" preview-teleported class="preview-image" />
+          </div>
+        </el-form-item>
         <el-form-item label="等级权益" prop="benefits">
-          <el-input v-model="form.benefits" type="textarea" :rows="5" maxlength="500" show-word-limit placeholder="建议填写清晰可读的权益描述" />
+          <el-input v-model="form.benefits" type="textarea" :rows="5" maxlength="500" show-word-limit placeholder="请输入等级权益说明" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="200" show-word-limit />
+          <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="补充运营说明" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialog.visible = false">取消</el-button>
-        <el-button type="primary" :loading="buttonLoading" @click="submitForm">保存</el-button>
+        <div class="drawer-footer">
+          <el-button @click="dialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="buttonLoading" @click="submitForm">保存</el-button>
+        </div>
       </template>
     </el-drawer>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { addLevel, delLevel, getLevel, listLevel, updateLevel } from '@/api/member/level';
+import { getCurrentInstance, onMounted, reactive, ref } from 'vue'
+import { getLevel, listLevel, updateLevel } from '@/api/member/level'
+import ImageUpload from '@/components/ImageUpload/index.vue'
 
-const { proxy } = getCurrentInstance() as any;
-const queryRef = ref();
-const formRef = ref();
+const { proxy } = getCurrentInstance() as any
 
-const loading = ref(false);
-const buttonLoading = ref(false);
-const total = ref(0);
-const ids = ref<Array<string | number>>([]);
-const levelList = ref<any[]>([]);
-const dialog = reactive({ visible: false, title: '' });
+const queryRef = ref()
+const formRef = ref()
+
+const loading = ref(false)
+const buttonLoading = ref(false)
+const total = ref(0)
+const levelList = ref<any[]>([])
+const dialog = reactive({ visible: false, title: '' })
 
 const createForm = () => ({
   id: undefined,
   levelName: '',
   levelCode: '',
-  levelSort: 0,
-  discountRate: 100,
+  levelSort: 1,
   requiredGrowth: 0,
+  ossId: undefined,
+  levelImage: '',
   benefits: '',
   status: '0',
-  remark: ''
-});
+  remark: '',
+  builtIn: false
+})
 
 const queryParams = ref<any>({
   pageNum: 1,
@@ -164,118 +149,254 @@ const queryParams = ref<any>({
   levelName: undefined,
   levelCode: undefined,
   status: undefined
-});
+})
 
-const form = ref<any>(createForm());
+const form = ref<any>(createForm())
+
 const rules = {
   levelName: [{ required: true, message: '请输入等级名称', trigger: 'blur' }],
   levelCode: [{ required: true, message: '请输入等级编码', trigger: 'blur' }],
-  levelSort: [{ required: true, message: '请输入排序', trigger: 'blur' }],
-  requiredGrowth: [{ required: true, message: '请输入所需成长值', trigger: 'blur' }],
-  discountRate: [{ required: true, message: '请输入折扣率', trigger: 'blur' }]
-};
-
-const activeCount = computed(() => levelList.value.filter((item) => item.status === '0').length);
+  levelSort: [{ required: true, message: '请输入排序值', trigger: 'blur' }],
+  requiredGrowth: [{ required: true, message: '请输入所需成长值', trigger: 'blur' }]
+}
 
 async function getList() {
-  loading.value = true;
+  loading.value = true
   try {
-    const res = await listLevel(queryParams.value);
-    levelList.value = (res.rows || []).sort((a: any, b: any) => Number(a.levelSort || 0) - Number(b.levelSort || 0));
-    total.value = res.total || 0;
+    const res = await listLevel(queryParams.value)
+    levelList.value = (res.rows || []).sort((a: any, b: any) => Number(a.levelSort || 0) - Number(b.levelSort || 0))
+    total.value = res.total || 0
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1;
-  getList();
+  queryParams.value.pageNum = 1
+  getList()
 }
 
 function resetQuery() {
-  queryParams.value = { pageNum: 1, pageSize: 10, levelName: undefined, levelCode: undefined, status: undefined };
-  queryRef.value?.resetFields?.();
-  getList();
+  queryParams.value = {
+    pageNum: 1,
+    pageSize: 10,
+    levelName: undefined,
+    levelCode: undefined,
+    status: undefined
+  }
+  queryRef.value?.resetFields?.()
+  getList()
 }
 
-function handleSelectionChange(selection: any[]) {
-  ids.value = selection.map((item) => item.id);
+function isV1(row: any) {
+  return String(row?.levelCode || '').toUpperCase() === 'V1'
 }
 
-function handleAdd() {
-  form.value = createForm();
-  dialog.title = '新增等级';
-  dialog.visible = true;
+function handleUploadSuccess(response: any) {
+  if (!response?.ossId) {
+    return
+  }
+  form.value.ossId = response.ossId
+  form.value.levelImage = response.url || ''
 }
 
 async function handleEdit(row: any) {
-  const res = await getLevel(row.id);
-  form.value = { ...createForm(), ...res.data };
-  dialog.title = '编辑等级';
-  dialog.visible = true;
+  const res = await getLevel(row.id)
+  form.value = { ...createForm(), ...res.data }
+  dialog.title = `编辑 ${form.value.levelName}`
+  dialog.visible = true
 }
 
 function submitForm() {
   formRef.value?.validate(async (valid: boolean) => {
-    if (!valid) return;
-    buttonLoading.value = true;
+    if (!valid) return
+    buttonLoading.value = true
     try {
-      if (form.value.id) {
-        await updateLevel(form.value);
-      } else {
-        await addLevel(form.value);
-      }
-      proxy.$modal.msgSuccess('保存成功');
-      dialog.visible = false;
-      await getList();
+      await updateLevel({
+        id: form.value.id,
+        levelName: form.value.levelName,
+        levelCode: form.value.levelCode,
+        levelSort: form.value.levelSort,
+        requiredGrowth: form.value.requiredGrowth,
+        ossId: form.value.ossId,
+        levelImage: form.value.levelImage,
+        benefits: form.value.benefits,
+        remark: form.value.remark
+      })
+      proxy.$modal.msgSuccess('等级信息已更新')
+      dialog.visible = false
+      await getList()
     } finally {
-      buttonLoading.value = false;
+      buttonLoading.value = false
     }
-  });
-}
-
-async function handleDelete(row: any) {
-  const target = row?.id || ids.value;
-  await proxy.$modal.confirm('确认删除选中的等级配置吗？');
-  await delLevel(target);
-  proxy.$modal.msgSuccess('删除成功');
-  await getList();
+  })
 }
 
 async function handleStatusChange(row: any) {
-  await updateLevel({ ...row });
-  proxy.$modal.msgSuccess('状态已更新');
-  await getList();
+  const nextStatus = row.status
+  const previousStatus = nextStatus === '0' ? '1' : '0'
+  if (isV1(row) && nextStatus === '1') {
+    row.status = '0'
+    proxy.$modal.msgWarning('默认等级 V1 不允许停用')
+    return
+  }
+  try {
+    await updateLevel({
+      id: row.id,
+      levelName: row.levelName,
+      levelCode: row.levelCode,
+      levelSort: row.levelSort,
+      requiredGrowth: row.requiredGrowth,
+      ossId: row.ossId,
+      levelImage: row.levelImage,
+      benefits: row.benefits,
+      remark: row.remark,
+      status: nextStatus
+    })
+    proxy.$modal.msgSuccess(nextStatus === '0' ? '已启用' : '已停用')
+  } catch (error) {
+    row.status = previousStatus
+    throw error
+  } finally {
+    await getList()
+  }
 }
 
 onMounted(() => {
-  getList();
-});
+  getList()
+})
 </script>
 
-<style scoped>
-.level-page { padding: 16px; background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%); min-height: 100%; }
-.level-hero { display: flex; justify-content: space-between; gap: 18px; padding: 24px; border-radius: 24px; background: linear-gradient(135deg, #213657 0%, #416d94 100%); color: #fff; }
-.hero-tag { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 12px; }
-.level-hero h1 { margin: 12px 0 8px; font-size: 30px; }
-.level-hero p { margin: 0; color: rgba(255,255,255,.76); }
-.hero-metrics { display: flex; gap: 12px; }
-.metric-box { min-width: 120px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.1); }
-.metric-box span, .metric-box strong { display: block; }
-.metric-box span { font-size: 12px; color: rgba(255,255,255,.72); }
-.metric-box strong { margin-top: 10px; font-size: 26px; }
-.panel-card { margin-top: 18px; border: none; border-radius: 22px; box-shadow: 0 12px 34px rgba(27,46,67,.08); }
-.panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.panel-header h3 { margin: 0; font-size: 18px; color: #213547; }
-.panel-header p { margin: 6px 0 0; color: #7d8ca0; font-size: 13px; }
-.actions { display: flex; gap: 10px; }
-.level-info { display: flex; flex-direction: column; gap: 4px; }
-.level-info strong { color: #203449; }
-.level-info span { color: #8392a5; font-size: 12px; }
-.form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 14px; }
-@media (max-width: 900px) {
-  .level-hero, .panel-header { flex-direction: column; align-items: flex-start; }
-  .hero-metrics, .form-grid { width: 100%; grid-template-columns: 1fr; display: grid; }
+<style scoped lang="scss">
+.member-level-page {
+  padding: 16px;
+  min-height: calc(100vh - 84px);
+  background: #f6f8fb;
+}
+
+.filter-panel,
+.list-panel {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.filter-panel {
+  margin-bottom: 14px;
+  padding: 16px 18px 2px;
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.filter-actions {
+  margin-left: auto;
+}
+
+.field-sm {
+  width: 180px;
+}
+
+.list-panel {
+  padding: 14px 16px 4px;
+}
+
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-text {
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.title-meta {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.stack-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.stack-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-line {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.sub-line {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.image-box {
+  display: flex;
+  justify-content: center;
+}
+
+.level-image,
+.image-placeholder,
+.preview-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.image-preview {
+  margin-top: 12px;
+}
+
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .member-level-page {
+    padding: 12px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

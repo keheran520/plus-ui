@@ -1,8 +1,14 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { MallCategoryForm, MallCategoryQuery, MallCategoryVO } from '@/api/mall/category/types';
+import { CategoryVO, CategoryForm, CategoryQuery } from '@/api/mall/category/types';
 
-export const listMallCategory = (query?: MallCategoryQuery): AxiosPromise<MallCategoryVO[]> => {
+/**
+ * 查询商品分类列表
+ * @param query
+ * @returns {*}
+ */
+
+export const listCategory = (query?: CategoryQuery): AxiosPromise<CategoryVO[]> => {
   return request({
     url: '/mall/category/list',
     method: 'get',
@@ -10,30 +16,46 @@ export const listMallCategory = (query?: MallCategoryQuery): AxiosPromise<MallCa
   });
 };
 
-export const getMallCategory = (id: string | number): AxiosPromise<MallCategoryVO> => {
+/**
+ * 查询商品分类详细
+ * @param id
+ */
+export const getCategory = (id: string | number): AxiosPromise<CategoryVO> => {
   return request({
     url: '/mall/category/' + id,
     method: 'get'
   });
 };
 
-export const addMallCategory = (data: MallCategoryForm) => {
+/**
+ * 新增商品分类
+ * @param data
+ */
+export const addCategory = (data: CategoryForm) => {
   return request({
     url: '/mall/category',
     method: 'post',
-    data
+    data: data
   });
 };
 
-export const updateMallCategory = (data: MallCategoryForm) => {
+/**
+ * 修改商品分类
+ * @param data
+ */
+export const updateCategory = (data: CategoryForm) => {
   return request({
     url: '/mall/category',
     method: 'put',
-    data
+    data: data
   });
 };
 
-export const delMallCategory = (id: string | number | Array<string | number>) => {
+/**
+ * 删除商品分类
+ * @param id
+ */
+export const delCategory = (id: string | number | Array<string | number>) => {
   return request({
     url: '/mall/category/' + id,
     method: 'delete'

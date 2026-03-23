@@ -1,5 +1,5 @@
 <template>
-  <el-drawer :model-value="visible" :title="drawerTitle" direction="rtl" size="560px" class="user-drawer" @close="emit('update:visible', false)">
+  <el-drawer :model-value="visible" :title="drawerTitle" class="user-drawer" direction="rtl" size="560px" @close="emit('update:visible', false)">
     <div v-loading="loading" class="drawer-shell">
       <section class="profile-hero">
         <div class="hero-main">
@@ -86,21 +86,21 @@
   </el-drawer>
 </template>
 
-<script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
-import { getUserStatistics } from '@/api/social/userAction'
-import { getUser } from '@/api/system/user'
+<script lang="ts" setup>
+import { computed, reactive, watch } from 'vue';
+import { getUserStatistics } from '@/api/social/userAction';
+import { getUser } from '@/api/system/user';
 
 const props = defineProps<{
-  visible: boolean
-  userId?: string | number
-}>()
+  visible: boolean;
+  userId?: string | number;
+}>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-}>()
+  'update:visible': [value: boolean];
+}>();
 
-const loading = ref(false)
+const loading = ref(false);
 const profile = reactive<any>({
   userId: undefined,
   userName: '',
@@ -111,7 +111,7 @@ const profile = reactive<any>({
   phonenumber: '',
   email: '',
   loginDate: ''
-})
+});
 const stats = reactive({
   totalActions: 0,
   likeCount: 0,
@@ -125,67 +125,67 @@ const stats = reactive({
   netComments: 0,
   activityScore: 0,
   todayActions: 0
-})
+});
 
-const drawerTitle = computed(() => `用户信息与行为统计`)
-const profileInitial = computed(() => (profile.nickName || profile.userName || 'U').slice(0, 1).toUpperCase())
+const drawerTitle = computed(() => `用户信息与行为统计`);
+const profileInitial = computed(() => (profile.nickName || profile.userName || 'U').slice(0, 1).toUpperCase());
 
 function resetProfile() {
-  profile.userId = undefined
-  profile.userName = ''
-  profile.nickName = ''
-  profile.avatar = ''
-  profile.status = ''
-  profile.deptName = ''
-  profile.phonenumber = ''
-  profile.email = ''
-  profile.loginDate = ''
+  profile.userId = undefined;
+  profile.userName = '';
+  profile.nickName = '';
+  profile.avatar = '';
+  profile.status = '';
+  profile.deptName = '';
+  profile.phonenumber = '';
+  profile.email = '';
+  profile.loginDate = '';
 }
 
 function resetStats() {
-  stats.totalActions = 0
-  stats.likeCount = 0
-  stats.unlikeCount = 0
-  stats.favoriteCount = 0
-  stats.unfavoriteCount = 0
-  stats.commentCount = 0
-  stats.deleteCommentCount = 0
-  stats.netLikes = 0
-  stats.netFavorites = 0
-  stats.netComments = 0
-  stats.activityScore = 0
-  stats.todayActions = 0
+  stats.totalActions = 0;
+  stats.likeCount = 0;
+  stats.unlikeCount = 0;
+  stats.favoriteCount = 0;
+  stats.unfavoriteCount = 0;
+  stats.commentCount = 0;
+  stats.deleteCommentCount = 0;
+  stats.netLikes = 0;
+  stats.netFavorites = 0;
+  stats.netComments = 0;
+  stats.activityScore = 0;
+  stats.todayActions = 0;
 }
 
 async function loadUserPanel() {
-  if (!props.visible || props.userId === undefined || props.userId === null || props.userId === '') return
-  loading.value = true
-  resetProfile()
-  resetStats()
+  if (!props.visible || props.userId === undefined || props.userId === null || props.userId === '') return;
+  loading.value = true;
+  resetProfile();
+  resetStats();
   try {
-    const [userRes, statRes] = await Promise.allSettled([getUser(props.userId), getUserStatistics(props.userId)])
+    const [userRes, statRes] = await Promise.allSettled([getUser(props.userId), getUserStatistics(props.userId)]);
     if (userRes.status === 'fulfilled') {
-      Object.assign(profile, userRes.value.data?.user || {})
+      Object.assign(profile, userRes.value.data?.user || {});
     }
     if (statRes.status === 'fulfilled') {
-      Object.assign(stats, statRes.value.data || {})
+      Object.assign(stats, statRes.value.data || {});
     }
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 watch(
   () => [props.visible, props.userId],
   () => {
-    if (!props.visible) return
-    loadUserPanel()
+    if (!props.visible) return;
+    loadUserPanel();
   },
   { immediate: true }
-)
+);
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .drawer-shell {
   display: flex;
   flex-direction: column;
@@ -198,9 +198,7 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding: 18px;
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 42%),
-    linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 42%), linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
   border: 1px solid #e1eaf5;
   border-radius: 14px;
 }
@@ -292,9 +290,7 @@ watch(
   height: 148px;
   margin: 0 auto;
   border-radius: 999px;
-  background:
-    radial-gradient(circle, #fff 48%, transparent 49%),
-    conic-gradient(from 220deg, #2563eb, #60a5fa, #93c5fd, #2563eb);
+  background: radial-gradient(circle, #fff 48%, transparent 49%), conic-gradient(from 220deg, #2563eb, #60a5fa, #93c5fd, #2563eb);
   box-shadow: inset 0 0 0 10px rgba(255, 255, 255, 0.92);
 }
 

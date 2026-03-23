@@ -72,7 +72,7 @@ export const refreshStatistics = (targetType: string, targetId: number | string)
 };
 
 // 批量刷新统计数据
-export const batchRefreshStatistics = (targetType: string) => {
+export const batchRefreshStatistics = (targetType?: string) => {
   return request({
     url: '/social/statistics/batchRefresh',
     method: 'post',

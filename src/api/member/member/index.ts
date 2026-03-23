@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { MemberVO, MemberForm, MemberOverviewVO, MemberQuery } from '@/api/member/member/types';
+import { MemberDetailVO, MemberForm, MemberOverviewVO, MemberQuery, MemberVO } from '@/api/member/member/types';
 
 /**
  * 查询会员列表
@@ -74,7 +74,7 @@ export const delMember = (id: string | number | Array<string | number>) => {
  * 查询会员详情(关联用户信息)
  * @param id 会员ID
  */
-export const getMemberDetail = (id: string | number): AxiosPromise<MemberVO> => {
+export const getMemberDetail = (id: string | number): AxiosPromise<MemberDetailVO> => {
   return request({
     url: '/member/member/detail/' + id,
     method: 'get'
@@ -85,7 +85,7 @@ export const getMemberDetail = (id: string | number): AxiosPromise<MemberVO> => 
  * 通过用户ID查询会员详情
  * @param userId 用户ID
  */
-export const getMemberDetailByUserId = (userId: string | number): AxiosPromise<MemberVO> => {
+export const getMemberDetailByUserId = (userId: string | number): AxiosPromise<MemberDetailVO> => {
   return request({
     url: '/member/member/detail/user/' + userId,
     method: 'get'
@@ -96,7 +96,7 @@ export const getMemberDetailByUserId = (userId: string | number): AxiosPromise<M
  * 充值
  * @param data
  */
-export const recharge = (data: { id: number; amount: number; remark?: string }) => {
+export const recharge = (data: { id: number | string; amount: number; remark?: string }) => {
   return request({
     url: '/member/member/recharge',
     method: 'post',
@@ -108,7 +108,7 @@ export const recharge = (data: { id: number; amount: number; remark?: string }) 
  * 扣减余额
  * @param data
  */
-export const deductBalance = (data: { id: number; amount: number; remark?: string }) => {
+export const deductBalance = (data: { id: number | string; amount: number; remark?: string }) => {
   return request({
     url: '/member/member/deduct',
     method: 'post',
@@ -120,7 +120,7 @@ export const deductBalance = (data: { id: number; amount: number; remark?: strin
  * 调整积分
  * @param data
  */
-export const adjustPoints = (data: { id: number; points: number; remark?: string }) => {
+export const adjustPoints = (data: { id: number | string; points: number; remark?: string }) => {
   return request({
     url: '/member/member/adjustPoints',
     method: 'post',
@@ -156,7 +156,7 @@ export const unfreezeMember = (ids: number[]) => {
  * 修改会员等级
  * @param data
  */
-export const changeLevel = (data: { id: number; levelId: number }) => {
+export const changeLevel = (data: { id: number | string; levelId: number }) => {
   return request({
     url: '/member/member/changeLevel',
     method: 'post',

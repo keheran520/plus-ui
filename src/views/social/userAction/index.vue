@@ -4,41 +4,34 @@
       <section v-show="showSearch" class="filter-panel">
         <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
           <el-form-item label="用户ID" prop="userId">
-            <el-input v-model="queryParams.userId" clearable placeholder="请输入用户ID" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.userId" class="field-sm" clearable placeholder="请输入用户ID" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="行为类型" prop="actionType">
-            <el-select v-model="queryParams.actionType" clearable placeholder="请选择行为类型" class="field-sm">
-              <el-option label="点赞" value="like" />
-              <el-option label="收藏" value="favorite" />
-              <el-option label="评论" value="comment" />
-              <el-option label="转发" value="share" />
-              <el-option label="浏览" value="view" />
+            <el-select v-model="queryParams.actionType" class="field-sm" clearable placeholder="请选择行为类型">
+              <el-option v-for="item in social_action_type" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="内容类型" prop="targetType">
-            <el-select v-model="queryParams.targetType" clearable placeholder="请选择内容类型" class="field-sm">
-              <el-option label="图片" value="image" />
-              <el-option label="相册" value="album" />
-              <el-option label="文章" value="article" />
-              <el-option label="视频" value="video" />
+            <el-select v-model="queryParams.targetType" class="field-sm" clearable placeholder="请选择内容类型">
+              <el-option v-for="item in social_target_type" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="内容ID" prop="targetId">
-            <el-input v-model="queryParams.targetId" clearable placeholder="请输入内容ID" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.targetId" class="field-sm" clearable placeholder="请输入内容ID" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="创建时间">
             <el-date-picker
               v-model="dateRange"
-              type="daterange"
-              value-format="YYYY-MM-DD"
+              class="field-date"
+              end-placeholder="结束日期"
               range-separator="-"
               start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              class="field-date"
+              type="daterange"
+              value-format="YYYY-MM-DD"
             />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -52,9 +45,7 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['social:userAction:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">
-            批量删除
-          </el-button>
+          <el-button v-hasPermi="['social:userAction:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">批量删除</el-button>
           <el-button v-hasPermi="['social:userAction:export']" plain icon="Download" @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
@@ -68,14 +59,14 @@
             <el-link type="primary" @click="showUserDetail(row.userId)">{{ row.userId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="行为类型" width="110" align="center">
+        <el-table-column label="行为类型" width="120" align="center">
           <template #default="{ row }">
-            <el-tag :type="getActionTypeType(row.actionType)" effect="light" round>{{ getActionTypeLabel(row.actionType) }}</el-tag>
+            <dict-tag :options="social_action_type" :value="row.actionType" />
           </template>
         </el-table-column>
-        <el-table-column label="内容类型" width="110" align="center">
+        <el-table-column label="内容类型" width="120" align="center">
           <template #default="{ row }">
-            <el-tag effect="plain" round>{{ getTargetTypeLabel(row.targetType) }}</el-tag>
+            <dict-tag :options="social_target_type" :value="row.targetType" />
           </template>
         </el-table-column>
         <el-table-column label="内容ID" prop="targetId" width="120" align="center" />
@@ -107,12 +98,14 @@
 </template>
 
 <script lang="ts" setup>
+import { getCurrentInstance, ref, toRefs } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { delSocialUserAction, listSocialUserAction } from '@/api/social/userAction'
 import type { SocialUserActionQuery, SocialUserActionVO } from '@/api/social/userAction/types'
 import UserStatsDrawer from '../components/UserStatsDrawer.vue'
 
 const { proxy } = getCurrentInstance() as any
+const { social_action_type, social_target_type } = toRefs<any>(proxy?.useDict('social_action_type', 'social_target_type'))
 
 const queryRef = ref<FormInstance>()
 const actionList = ref<SocialUserActionVO[]>([])
@@ -133,31 +126,6 @@ const queryParams = ref<SocialUserActionQuery>({
   targetType: undefined,
   targetId: undefined
 })
-
-function getActionTypeLabel(value?: string) {
-  if (value === 'like') return '点赞'
-  if (value === 'favorite') return '收藏'
-  if (value === 'comment') return '评论'
-  if (value === 'share') return '转发'
-  if (value === 'view') return '浏览'
-  return value || '未知'
-}
-
-function getActionTypeType(value?: string) {
-  if (value === 'like') return 'danger'
-  if (value === 'favorite') return 'warning'
-  if (value === 'comment') return 'primary'
-  if (value === 'share') return 'success'
-  return 'info'
-}
-
-function getTargetTypeLabel(value?: string) {
-  if (value === 'image') return '图片'
-  if (value === 'album') return '相册'
-  if (value === 'article') return '文章'
-  if (value === 'video') return '视频'
-  return value || '未知'
-}
 
 function getList() {
   loading.value = true
@@ -212,7 +180,7 @@ function handleExport() {
 getList()
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .social-manage-page {
   padding: 16px;
   background: #f6f8fb;
@@ -263,31 +231,41 @@ getList()
 
 .toolbar-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
 }
 
 .title-text {
+  color: #0f172a;
   font-size: 16px;
   font-weight: 600;
-  color: #182230;
 }
 
 .title-meta {
-  font-size: 12px;
-  color: #7a8699;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .toolbar-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
 }
 
-:deep(.social-table) {
-  --el-table-border-color: #edf1f7;
-  --el-table-header-bg-color: #f8fafc;
+@media (max-width: 768px) {
+  .social-manage-page {
+    padding: 12px;
+  }
+
+  .panel-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 </style>

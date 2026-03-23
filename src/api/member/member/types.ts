@@ -1,299 +1,112 @@
 export interface MemberVO {
-  /**
-   * 主键
-   */
-  id: string | number;
-
-  /**
-   * 用户ID（关联sys_user.user_id）
-   */
-  userId: string | number;
-
-  /**
-   * 会员编号（唯一）
-   */
-  memberNo: string;
-
-  /**
-   * 会员姓名
-   */
-  name: string;
-
-  /**
-   * 手机号（唯一）
-   */
-  phone: string;
-
-  /**
-   * 性别（0=男 1=女 2=未知）
-   */
-  gender: string;
-
-  /**
-   * 生日
-   */
-  birthday: string;
-
-  /**
-   * 简介
-   */
-  signature: string;
-
-  /**
-   * 地区
-   */
-  region: string;
-
-  /**
-   * 职业
-   */
-  occupation: string;
-
-  /**
-   * 学校
-   */
-  school: string;
-
-  /**
-   * 头像（图片ID）
-   */
-  avatar: number;
-
-  /**
-   * 会员等级ID
-   */
-  levelId: string | number;
-
-  /**
-   * 当前余额
-   */
-  balance: number;
-
-  /**
-   * 当前积分
-   */
-  points: number;
-
-  /**
-   * 累计消费金额
-   */
-  totalConsumeAmount: number;
-
-  /**
-   * 状态（0=正常 1=禁用）
-   */
-  status: string;
-
-  /**
-   * 注册时间
-   */
-  registerTime: string;
-
-  /**
-   * 备注
-   */
-  remark: string;
-
+  id: string | number
+  userId: string | number
+  memberNo: string
+  realName: string
+  idCard: string
+  birthday: string
+  source: string
+  levelId: string | number
+  balance: number
+  points: number
+  growthValue: number
+  totalConsumeAmount: number
+  status: string
+  registerTime: string
+  signature: string
+  region: string
+  occupation: string
+  school: string
+  remark: string
 }
 
 export interface MemberOverviewVO {
-  totalMembers: number;
-  activeMembers: number;
-  frozenMembers: number;
-  todayNewMembers: number;
-  totalBalance: number;
-  totalPoints: number;
-  totalGrowthValue: number;
-  totalConsumeAmount: number;
+  totalMembers: number
+  activeMembers: number
+  frozenMembers: number
+  todayNewMembers: number
+  totalBalance: number
+  totalPoints: number
+  totalGrowthValue: number
+  totalConsumeAmount: number
+}
+
+export interface MemberDetailUserVO {
+  userId: string | number
+  userName: string
+  nickName: string
+  phonenumber: string
+  email: string
+  sex: string
+  avatar: string
+  status: string
+  deptName: string
+}
+
+export interface MemberDetailVO {
+  id: string | number
+  userId: string | number
+  memberNo: string
+  realName: string
+  idCard: string
+  birthday: string
+  source: string
+  levelId: string | number
+  levelName: string
+  levelCode: string
+  levelImage: string
+  balance: number
+  balanceYuan: string
+  points: number
+  growthValue: number
+  totalConsumeAmount: number
+  totalConsumeYuan: string
+  status: string
+  registerTime: string
+  remark: string
+  signature: string
+  region: string
+  occupation: string
+  school: string
+  createTime: string
+  user: MemberDetailUserVO
 }
 
 export interface MemberForm extends BaseEntity {
-  /**
-   * 主键
-   */
-  id?: string | number;
-
-  /**
-   * 用户ID（关联sys_user.user_id）
-   */
-  userId?: string | number;
-
-  /**
-   * 会员编号（唯一）
-   */
-  memberNo?: string;
-
-  /**
-   * 会员姓名
-   */
-  name?: string;
-
-  /**
-   * 手机号（唯一）
-   */
-  phone?: string;
-
-  /**
-   * 性别（0=男 1=女 2=未知）
-   */
-  gender?: string;
-
-  /**
-   * 生日
-   */
-  birthday?: string;
-
-  /**
-   * 简介
-   */
-  signature?: string;
-
-  /**
-   * 地区
-   */
-  region?: string;
-
-  /**
-   * 职业
-   */
-  occupation?: string;
-
-  /**
-   * 学校
-   */
-  school?: string;
-
-  /**
-   * 头像（图片ID）
-   */
-  avatar?: number;
-
-  /**
-   * 会员等级ID
-   */
-  levelId?: string | number;
-
-  /**
-   * 当前余额
-   */
-  balance?: number;
-
-  /**
-   * 当前积分
-   */
-  points?: number;
-
-  /**
-   * 累计消费金额
-   */
-  totalConsumeAmount?: number;
-
-  /**
-   * 状态（0=正常 1=禁用）
-   */
-  status?: string;
-
-  /**
-   * 注册时间
-   */
-  registerTime?: string;
-
-  /**
-   * 备注
-   */
-  remark?: string;
-
+  id?: string | number
+  userId?: string | number
+  memberNo?: string
+  realName?: string
+  idCard?: string
+  birthday?: string
+  source?: string
+  levelId?: string | number
+  balance?: number
+  points?: number
+  growthValue?: number
+  totalConsumeAmount?: number
+  status?: string
+  registerTime?: string
+  signature?: string
+  region?: string
+  occupation?: string
+  school?: string
+  remark?: string
 }
 
 export interface MemberQuery extends PageQuery {
-
-  /**
-   * 用户ID（关联sys_user.user_id）
-   */
-  userId?: string | number;
-
-  /**
-   * 会员编号（唯一）
-   */
-  memberNo?: string;
-
-  /**
-   * 会员姓名
-   */
-  name?: string;
-
-  /**
-   * 手机号（唯一）
-   */
-  phone?: string;
-
-  /**
-   * 性别（0=男 1=女 2=未知）
-   */
-  gender?: string;
-
-  /**
-   * 生日
-   */
-  birthday?: string;
-
-  /**
-   * 简介
-   */
-  signature?: string;
-
-  /**
-   * 地区
-   */
-  region?: string;
-
-  /**
-   * 职业
-   */
-  occupation?: string;
-
-  /**
-   * 学校
-   */
-  school?: string;
-
-  /**
-   * 头像（图片ID）
-   */
-  avatar?: number;
-
-  /**
-   * 会员等级ID
-   */
-  levelId?: string | number;
-
-  /**
-   * 当前余额
-   */
-  balance?: number;
-
-  /**
-   * 当前积分
-   */
-  points?: number;
-
-  /**
-   * 累计消费金额
-   */
-  totalConsumeAmount?: number;
-
-  /**
-   * 状态（0=正常 1=禁用）
-   */
-  status?: string;
-
-  /**
-   * 注册时间
-   */
-  registerTime?: string;
-
-  /**
-   * 日期范围参数
-   */
-  params?: any;
+  userId?: string | number
+  memberNo?: string
+  realName?: string
+  idCard?: string
+  birthday?: string
+  source?: string
+  levelId?: string | number
+  balance?: number
+  points?: number
+  growthValue?: number
+  totalConsumeAmount?: number
+  status?: string
+  registerTime?: string
+  params?: any
 }

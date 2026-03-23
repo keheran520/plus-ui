@@ -4,37 +4,37 @@
       <section v-show="showSearch" class="filter-panel">
         <el-form ref="queryRef" :inline="true" :model="queryParams" class="filter-form">
           <el-form-item :label="TEXT.targetType" prop="targetType">
-            <el-select v-model="queryParams.targetType" clearable :placeholder="TEXT.targetTypePlaceholder" class="field-md">
+            <el-select v-model="queryParams.targetType" :placeholder="TEXT.targetTypePlaceholder" class="field-md" clearable>
               <el-option v-for="item in targetTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item :label="TEXT.targetId" prop="targetId">
-            <el-input v-model="queryParams.targetId" clearable :placeholder="TEXT.targetIdPlaceholder" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.targetId" :placeholder="TEXT.targetIdPlaceholder" class="field-sm" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="TEXT.userId" prop="userId">
-            <el-input v-model="queryParams.userId" clearable :placeholder="TEXT.userIdPlaceholder" class="field-sm" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.userId" :placeholder="TEXT.userIdPlaceholder" class="field-sm" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="TEXT.status" prop="status">
-            <el-select v-model="queryParams.status" clearable :placeholder="TEXT.statusPlaceholder" class="field-sm">
+            <el-select v-model="queryParams.status" :placeholder="TEXT.statusPlaceholder" class="field-sm" clearable>
               <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item :label="TEXT.content" prop="content">
-            <el-input v-model="queryParams.content" clearable :placeholder="TEXT.contentPlaceholder" class="field-lg" @keyup.enter="handleQuery" />
+            <el-input v-model="queryParams.content" :placeholder="TEXT.contentPlaceholder" class="field-lg" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item :label="TEXT.createTime">
             <el-date-picker
               v-model="dateRange"
+              :end-placeholder="TEXT.endDate"
+              :start-placeholder="TEXT.startDate"
+              class="field-date"
+              range-separator="-"
               type="daterange"
               value-format="YYYY-MM-DD"
-              range-separator="-"
-              :start-placeholder="TEXT.startDate"
-              :end-placeholder="TEXT.endDate"
-              class="field-date"
             />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">{{ TEXT.search }}</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">{{ TEXT.search }}</el-button>
             <el-button icon="Refresh" @click="resetQuery">{{ TEXT.reset }}</el-button>
           </el-form-item>
         </el-form>
@@ -48,37 +48,16 @@
           <span class="title-meta">{{ total }} {{ TEXT.records }}</span>
         </div>
         <div class="toolbar-actions">
-          <el-button
-            v-hasPermi="['social:comment:edit']"
-            :disabled="multiple"
-            type="success"
-            plain
-            icon="Check"
-            @click="handleBatchAudit('0')"
-          >
+          <el-button v-hasPermi="['social:comment:edit']" :disabled="multiple" icon="Check" plain type="success" @click="handleBatchAudit('0')">
             {{ TEXT.batchApprove }}
           </el-button>
-          <el-button
-            v-hasPermi="['social:comment:edit']"
-            :disabled="multiple"
-            type="warning"
-            plain
-            icon="Hide"
-            @click="handleBatchAudit('2')"
-          >
+          <el-button v-hasPermi="['social:comment:edit']" :disabled="multiple" icon="Hide" plain type="warning" @click="handleBatchAudit('2')">
             {{ TEXT.batchHide }}
           </el-button>
-          <el-button
-            v-hasPermi="['social:comment:remove']"
-            :disabled="multiple"
-            type="danger"
-            plain
-            icon="Delete"
-            @click="handleDelete()"
-          >
+          <el-button v-hasPermi="['social:comment:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">
             {{ TEXT.batchDelete }}
           </el-button>
-          <el-button v-hasPermi="['social:comment:export']" plain icon="Download" @click="handleExport">
+          <el-button v-hasPermi="['social:comment:export']" icon="Download" plain @click="handleExport">
             {{ TEXT.export }}
           </el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
@@ -86,8 +65,8 @@
       </header>
 
       <el-table v-loading="loading" :data="commentList" class="social-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" />
-        <el-table-column :label="TEXT.userId" min-width="140" align="center">
+        <el-table-column align="center" type="selection" width="48" />
+        <el-table-column :label="TEXT.userId" align="center" min-width="140">
           <template #default="{ row }">
             <el-link type="primary" @click="openUserDrawer(row.userId)">{{ row.userId }}</el-link>
           </template>
@@ -95,7 +74,7 @@
         <el-table-column :label="TEXT.target" min-width="210">
           <template #default="{ row }">
             <div class="stack-cell">
-              <el-tag effect="plain" size="small" round>{{ getTargetTypeLabel(row.targetType) }}</el-tag>
+              <dict-tag :options="social_target_type" :value="row.targetType" />
               <span class="main-line">{{ row.targetTitle || `${TEXT.targetId} #${row.targetId}` }}</span>
               <span class="sub-line">ID: {{ row.targetId }}</span>
             </div>
@@ -112,7 +91,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="TEXT.interaction" width="138" align="center">
+        <el-table-column :label="TEXT.interaction" align="center" width="138">
           <template #default="{ row }">
             <div class="metric-pair">
               <span>{{ TEXT.likes }} {{ row.likeCount ?? 0 }}</span>
@@ -120,33 +99,21 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="TEXT.status" width="110" align="center">
+        <el-table-column :label="TEXT.status" align="center" width="110">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)" effect="light" round>
               {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="TEXT.createTime" prop="createTime" width="176" align="center" />
-        <el-table-column :label="TEXT.action" width="220" fixed="right" align="center">
+        <el-table-column :label="TEXT.createTime" align="center" prop="createTime" width="176" />
+        <el-table-column :label="TEXT.action" align="center" fixed="right" width="220">
           <template #default="{ row }">
             <el-button v-hasPermi="['social:comment:query']" link type="primary" @click="handleView(row)">{{ TEXT.detail }}</el-button>
-            <el-button
-              v-if="row.status !== '0'"
-              v-hasPermi="['social:comment:edit']"
-              link
-              type="success"
-              @click="handleAudit(row, '0')"
-            >
+            <el-button v-if="row.status !== '0'" v-hasPermi="['social:comment:edit']" link type="success" @click="handleAudit(row, '0')">
               {{ TEXT.approve }}
             </el-button>
-            <el-button
-              v-if="row.status !== '2'"
-              v-hasPermi="['social:comment:edit']"
-              link
-              type="warning"
-              @click="handleAudit(row, '2')"
-            >
+            <el-button v-if="row.status !== '2'" v-hasPermi="['social:comment:edit']" link type="warning" @click="handleAudit(row, '2')">
               {{ TEXT.hide }}
             </el-button>
             <el-button v-hasPermi="['social:comment:remove']" link type="danger" @click="handleDelete(row)">{{ TEXT.delete }}</el-button>
@@ -154,7 +121,7 @@
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
     </section>
 
     <el-drawer v-model="viewDialogVisible" :title="TEXT.detailTitle" size="520px">
@@ -222,14 +189,16 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, getCurrentInstance, ref, toRefs } from 'vue'
 import type { FormInstance } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { auditComment, batchAuditComment, delSocialComment, getSocialComment, listSocialComment } from '@/api/social/comment'
-import type { SocialCommentQuery, SocialCommentVO } from '@/api/social/comment/types'
-import UserStatsDrawer from '../components/UserStatsDrawer.vue'
+import { auditComment, batchAuditComment, delSocialComment, getSocialComment, listSocialComment } from '@/api/social/comment';
+import type { SocialCommentQuery, SocialCommentVO } from '@/api/social/comment/types';
+import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
-const { proxy } = getCurrentInstance() as any
-const { t } = useI18n()
+const { proxy } = getCurrentInstance() as any;
+const { t } = useI18n();
+const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'))
 
 const TEXT = computed(() => ({
   tableTitle: t('socialComment.tableTitle'),
@@ -280,20 +249,20 @@ const TEXT = computed(() => ({
   successBatchApprove: t('socialComment.successBatchApprove'),
   successBatchHide: t('socialComment.successBatchHide'),
   successDelete: t('socialComment.successDelete')
-}))
+}));
 
-const queryRef = ref<FormInstance>()
-const commentList = ref<SocialCommentVO[]>([])
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref<Array<string | number>>([])
-const multiple = ref(true)
-const total = ref(0)
-const dateRange = ref<[string, string]>()
-const viewDialogVisible = ref(false)
-const currentComment = ref<SocialCommentVO>()
-const userDrawerVisible = ref(false)
-const selectedUserId = ref<string | number>()
+const queryRef = ref<FormInstance>();
+const commentList = ref<SocialCommentVO[]>([]);
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dateRange = ref<[string, string]>();
+const viewDialogVisible = ref(false);
+const currentComment = ref<SocialCommentVO>();
+const userDrawerVisible = ref(false);
+const selectedUserId = ref<string | number>();
 
 const queryParams = ref<SocialCommentQuery>({
   pageNum: 1,
@@ -303,129 +272,124 @@ const queryParams = ref<SocialCommentQuery>({
   userId: undefined,
   status: undefined,
   content: undefined
-})
+});
 
-const targetTypeOptions = computed(() => [
-  { label: t('socialComment.targetImage'), value: 'image' },
-  { label: t('socialComment.targetAlbum'), value: 'album' },
-  { label: t('socialComment.targetArticle'), value: 'article' },
-  { label: t('socialComment.targetVideo'), value: 'video' }
-])
+const targetTypeOptions = computed(() => social_target_type.value || [])
 
 const statusOptions = computed(() => [
   { label: t('socialComment.statusNormal'), value: '0' },
   { label: t('socialComment.statusDeleted'), value: '1' },
   { label: t('socialComment.statusHidden'), value: '2' }
-])
+]);
 
 function getTargetTypeLabel(value?: string) {
-  return targetTypeOptions.value.find((item) => item.value === value)?.label || value || TEXT.value.noData
+  return targetTypeOptions.value.find((item: DictDataOption) => String(item.value) === String(value))?.label || value || TEXT.value.noData;
 }
 
 function getStatusLabel(value?: string) {
-  return statusOptions.value.find((item) => item.value === value)?.label || value || TEXT.value.noData
+  return statusOptions.value.find((item) => item.value === value)?.label || value || TEXT.value.noData;
 }
 
 function getStatusTagType(value?: string) {
-  if (value === '0') return 'success'
-  if (value === '2') return 'warning'
-  if (value === '1') return 'info'
-  return 'info'
+  if (value === '0') return 'success';
+  if (value === '2') return 'warning';
+  if (value === '1') return 'info';
+  return 'info';
 }
 
 function getDeviceLabel(value?: string) {
-  if (value === 'pc') return 'PC'
-  if (value === 'app') return 'APP'
-  if (value === 'xcx') return '小程序'
-  return value || TEXT.value.noData
+  if (value === 'pc') return 'PC';
+  if (value === 'app') return 'APP';
+  if (value === 'xcx') return '小程序';
+  return value || TEXT.value.noData;
 }
 
 function getList() {
-  loading.value = true
-  const params = proxy.addDateRange(queryParams.value, dateRange.value)
+  loading.value = true;
+  const params = proxy.addDateRange(queryParams.value, dateRange.value);
   listSocialComment(params)
     .then((response: any) => {
-      commentList.value = response.rows
-      total.value = response.total
+      commentList.value = response.rows;
+      total.value = response.total;
     })
     .finally(() => {
-      loading.value = false
-    })
+      loading.value = false;
+    });
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 function resetQuery() {
-  dateRange.value = undefined
-  queryRef.value?.resetFields()
-  handleQuery()
+  dateRange.value = undefined;
+  queryRef.value?.resetFields();
+  handleQuery();
 }
 
 function handleSelectionChange(selection: SocialCommentVO[]) {
-  ids.value = selection.map((item) => item.commentId)
-  multiple.value = !selection.length
+  ids.value = selection.map((item) => item.commentId);
+  multiple.value = !selection.length;
 }
 
 function openUserDrawer(userId: string | number) {
-  selectedUserId.value = userId
-  userDrawerVisible.value = true
+  selectedUserId.value = userId;
+  userDrawerVisible.value = true;
 }
 
 async function handleView(row: SocialCommentVO) {
-  const res = await getSocialComment(row.commentId)
-  currentComment.value = res.data
-  viewDialogVisible.value = true
+  const res = await getSocialComment(row.commentId);
+  currentComment.value = res.data;
+  viewDialogVisible.value = true;
 }
 
 function handleAudit(row: SocialCommentVO, status: string) {
-  const confirmText = status === '0' ? TEXT.value.confirmApprove : TEXT.value.confirmHide
-  const successText = status === '0' ? TEXT.value.successApprove : TEXT.value.successHide
+  const confirmText = status === '0' ? TEXT.value.confirmApprove : TEXT.value.confirmHide;
+  const successText = status === '0' ? TEXT.value.successApprove : TEXT.value.successHide;
   proxy.$modal
     .confirm(confirmText)
     .then(() => auditComment(row.commentId, status))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess(successText)
+      getList();
+      proxy.$modal.msgSuccess(successText);
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleBatchAudit(status: string) {
-  const confirmText = status === '0' ? TEXT.value.confirmBatchApprove : TEXT.value.confirmBatchHide
-  const successText = status === '0' ? TEXT.value.successBatchApprove : TEXT.value.successBatchHide
+  const confirmText = status === '0' ? TEXT.value.confirmBatchApprove : TEXT.value.confirmBatchHide;
+  const successText = status === '0' ? TEXT.value.successBatchApprove : TEXT.value.successBatchHide;
   proxy.$modal
     .confirm(confirmText)
     .then(() => batchAuditComment(ids.value, status))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess(successText)
+      getList();
+      proxy.$modal.msgSuccess(successText);
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleDelete(row?: SocialCommentVO) {
-  const commentIds = row ? [row.commentId] : ids.value
+  const commentIds = row ? [row.commentId] : ids.value;
   proxy.$modal
     .confirm(TEXT.value.confirmDelete)
     .then(() => delSocialComment(commentIds))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess(TEXT.value.successDelete)
+      getList();
+      proxy.$modal.msgSuccess(TEXT.value.successDelete);
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleExport() {
-  proxy.download('social/comment/export', { ...queryParams.value }, `comment_${new Date().getTime()}.xlsx`)
+  proxy.download('social/comment/export', { ...queryParams.value }, `comment_${new Date().getTime()}.xlsx`);
 }
 
-getList()
+getList();
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .social-manage-page {
   padding: 16px;
   background: #f6f8fb;
