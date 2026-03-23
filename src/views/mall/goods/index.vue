@@ -107,15 +107,21 @@
         </button>
       </div>
 
-      <div class="table-summary">
-        <span>&#x5F85;&#x5BA1;&#x6838; {{ formatCount(summary.auditPending) }}</span>
-        <span>&#x5BA1;&#x6838;&#x9A73;&#x56DE; {{ formatCount(summary.auditRejected) }}</span>
-        <span>&#x603B;&#x6D4F;&#x89C8; {{ formatCount(summary.views) }}</span>
-        <span>&#x603B;&#x6536;&#x85CF; {{ formatCount(summary.favorites) }}</span>
-        <span>&#x603B;&#x8BA2;&#x5355; {{ formatCount(summary.orders) }}</span>
+      <div class="view-tabs view-tabs--secondary">
+        <button
+          v-for="item in metricTabs"
+          :key="item.value"
+          type="button"
+          class="view-tab view-tab--metric"
+          :class="{ 'view-tab--active': activeMetricTab === item.value }"
+          @click="handleMetricTabChange(item.value)"
+        >
+          <span class="view-tab__label">{{ item.label }}</span>
+          <span class="view-tab__count">{{ item.count }}</span>
+        </button>
       </div>
 
-      <el-table v-loading="loading" :data="goodsList" class="goods-table" @selection-change="handleSelectionChange">
+      <el-table v-loading="loading" :data="displayGoodsList" class="goods-table" @selection-change="handleSelectionChange">
         <el-table-column align="center" fixed="left" type="selection" width="50" />
         <el-table-column fixed="left" label="&#x5546;&#x54C1;&#x4FE1;&#x606F;" min-width="340">
           <template #default="{ row }">
@@ -205,6 +211,7 @@
             <div class="action-list">
               <el-button v-hasPermi="['mall:goods:edit']" link type="primary" @click="handleUpdate(row)">&#x7F16;&#x8F91;</el-button>
               <el-button v-hasPermi="['mall:goods:add']" link type="primary" @click="handleCopy(row)">&#x590D;&#x5236;</el-button>
+              <el-button v-hasPermi="['mall:order:add']" link type="primary" @click="handlePlaceOrder(row)">下单</el-button>
               <el-button
                 v-hasPermi="['mall:goods:edit']"
                 :type="row.saleStatus === 'Y' ? 'warning' : 'success'"
@@ -382,6 +389,40 @@
         </div>
       </template>
     </el-drawer>
+
+    <el-dialog v-model="orderDialog.visible" title="创建订单" width="640px" append-to-body>
+      <el-form ref="orderFormRef" :model="orderForm" :rules="orderRules" label-position="top" class="goods-form">
+        <div class="form-grid">
+          <el-form-item label="商品名称">
+            <el-input :model-value="orderForm.goodsName" readonly />
+          </el-form-item>
+          <el-form-item label="商品编号">
+            <el-input :model-value="orderDialog.goodsSn" readonly />
+          </el-form-item>
+          <el-form-item label="买家ID" prop="buyerUserId">
+            <el-input v-model="orderForm.buyerUserId" placeholder="请输入买家ID" />
+          </el-form-item>
+          <el-form-item label="实付金额" prop="payAmount">
+            <el-input-number v-model="orderForm.payAmount" :min="0" :precision="2" :step="1" controls-position="right" style="width: 100%" />
+          </el-form-item>
+        </div>
+        <el-form-item label="服务标签">
+          <el-input :model-value="orderForm.serviceTags" readonly type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item label="服务区服">
+          <el-input :model-value="orderForm.serviceRegions" readonly type="textarea" :rows="2" />
+        </el-form-item>
+        <el-form-item label="买家备注" prop="buyerRemark">
+          <el-input v-model="orderForm.buyerRemark" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="请输入买家备注" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="drawer-footer">
+          <el-button @click="closeOrderDialog">取消</el-button>
+          <el-button type="primary" :loading="orderSubmitting" @click="submitOrder">确认下单</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -402,10 +443,12 @@ import {
   updateGoodsRecommendFlag,
   updateGoodsSaleStatus
 } from '@/api/mall/goods';
+import { addOrder } from '@/api/mall/order';
 import { listCategory } from '@/api/mall/category';
 import { listBrand } from '@/api/mall/brand';
 import { listTag } from '@/api/mall/tag';
 import type { GoodsForm, GoodsQuery, GoodsVO } from '@/api/mall/goods/types';
+import type { OrderForm } from '@/api/mall/order/types';
 import type { CategoryVO } from '@/api/mall/category/types';
 import type { BrandVO } from '@/api/mall/brand/types';
 import type { TagVO } from '@/api/mall/tag/types';
@@ -428,6 +471,7 @@ interface SummaryState {
 }
 
 type QuickTabValue = 'all' | 'saleOn' | 'pending' | 'recommended';
+type MetricTabValue = 'all' | 'pending' | 'rejected' | 'views' | 'favorites' | 'orders';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -447,13 +491,21 @@ const multiple = ref(true);
 const selectedServiceTags = ref<string[]>([]);
 const selectedServiceRegions = ref<string[]>([]);
 const activeQuickTab = ref<QuickTabValue>('all');
+const activeMetricTab = ref<MetricTabValue>('all');
+const orderSubmitting = ref(false);
 
 const queryFormRef = ref<ElFormInstance>();
 const goodsFormRef = ref<ElFormInstance>();
+const orderFormRef = ref<ElFormInstance>();
 
 const drawer = reactive({
   visible: false,
   title: ''
+});
+
+const orderDialog = reactive({
+  visible: false,
+  goodsSn: ''
 });
 
 const saleStatusOptions = [
@@ -472,6 +524,33 @@ const serviceTypeOptions = [
   { label: '\u5957\u9910\u670D\u52A1', value: 'package' },
   { label: '\u5B9A\u5236\u670D\u52A1', value: 'custom' }
 ];
+
+const createDefaultOrderForm = (): OrderForm => ({
+  id: undefined,
+  orderSn: '',
+  buyerUserId: undefined,
+  goodsId: undefined,
+  goodsName: '',
+  goodsGalleryUrls: '',
+  price: 0,
+  payAmount: 0,
+  payType: 'balance',
+  serviceRegions: '',
+  serviceTags: '',
+  buyerRemark: '',
+  sellerRemark: '',
+  adminRemark: '',
+  orderStatus: '101',
+  refundAmount: 0,
+  refundRemark: '',
+  payTime: undefined,
+  finishTime: undefined,
+  cancelTime: undefined,
+  refundTime: undefined,
+  status: '0',
+  remark: '',
+  actionPayType: 'balance'
+});
 const initFormData = (): GoodsEditorForm => ({
   id: undefined,
   goodsSn: undefined,
@@ -515,6 +594,8 @@ const data = reactive<{
   form: GoodsEditorForm;
   queryParams: GoodsQuery;
   rules: FormRules<GoodsEditorForm>;
+  orderForm: OrderForm;
+  orderRules: FormRules<OrderForm>;
 }>({
   form: initFormData(),
   queryParams: {
@@ -544,6 +625,11 @@ const data = reactive<{
     serviceTags: [{ validator: validateSelectField, trigger: 'change' }],
     serviceRegions: [{ validator: validateSelectField, trigger: 'change' }],
     brief: [{ required: true, message: '\u5546\u54C1\u7B80\u4ECB\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }]
+  },
+  orderForm: createDefaultOrderForm(),
+  orderRules: {
+    buyerUserId: [{ required: true, message: '请输入买家ID', trigger: 'blur' }],
+    payAmount: [{ required: true, message: '请输入实付金额', trigger: 'blur' }]
   }
 });
 
@@ -559,7 +645,7 @@ const summary = ref<SummaryState>({
   orders: 0
 });
 
-const { queryParams, form, rules } = toRefs(data);
+const { queryParams, form, rules, orderForm, orderRules } = toRefs(data);
 
 const categoryMap = computed(() => new Map(categoryOptions.value.map((item) => [String(item.id), item.name])));
 const brandMap = computed(() => new Map(brandOptions.value.map((item) => [String(item.id), item.name])));
@@ -569,6 +655,33 @@ const quickTabs = computed(() => [
   { label: '待审核', value: 'pending' as QuickTabValue, count: formatCount(summary.value.auditPending) },
   { label: '推荐商品', value: 'recommended' as QuickTabValue, count: formatCount(summary.value.recommend) }
 ]);
+const metricTabs = computed(() => [
+  { label: '全部数据', value: 'all' as MetricTabValue, count: formatCount(summary.value.total) },
+  { label: '待审核', value: 'pending' as MetricTabValue, count: formatCount(summary.value.auditPending) },
+  { label: '审核驳回', value: 'rejected' as MetricTabValue, count: formatCount(summary.value.auditRejected) },
+  { label: '总浏览', value: 'views' as MetricTabValue, count: formatCount(summary.value.views) },
+  { label: '总收藏', value: 'favorites' as MetricTabValue, count: formatCount(summary.value.favorites) },
+  { label: '总订单', value: 'orders' as MetricTabValue, count: formatCount(summary.value.orders) }
+]);
+const displayGoodsList = computed(() => {
+  const list = [...goodsList.value];
+  if (activeMetricTab.value === 'pending') {
+    return list.filter((item) => item.auditStatus === '0');
+  }
+  if (activeMetricTab.value === 'rejected') {
+    return list.filter((item) => item.auditStatus === '2');
+  }
+  if (activeMetricTab.value === 'views') {
+    return list.sort((a, b) => Number(b.viewCount || 0) - Number(a.viewCount || 0));
+  }
+  if (activeMetricTab.value === 'favorites') {
+    return list.sort((a, b) => Number(b.favoriteCount || 0) - Number(a.favoriteCount || 0));
+  }
+  if (activeMetricTab.value === 'orders') {
+    return list.sort((a, b) => Number(b.orderCount || 0) - Number(a.orderCount || 0));
+  }
+  return list;
+});
 
 const splitCommaText = (value?: string) => {
   if (!value) {
@@ -679,6 +792,7 @@ const handleQuery = () => {
 const resetQuery = () => {
   queryFormRef.value?.resetFields();
   activeQuickTab.value = 'all';
+  activeMetricTab.value = 'all';
   queryParams.value.recommendFlag = undefined;
   handleQuery();
 };
@@ -702,6 +816,10 @@ const handleQuickTabChange = (tab: QuickTabValue) => {
   activeQuickTab.value = tab;
   applyQuickTabQuery(tab);
   handleQuery();
+};
+
+const handleMetricTabChange = (tab: MetricTabValue) => {
+  activeMetricTab.value = tab;
 };
 
 const handleSelectionChange = (selection: GoodsVO[]) => {
@@ -788,6 +906,54 @@ const handleCopy = async (row: GoodsVO) => {
   await copyGoods(row.id);
   proxy?.$modal.msgSuccess('\u590D\u5236\u6210\u529F');
   await getList();
+};
+
+const buildOrderSn = () => {
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:TZ.]/g, '')
+    .slice(0, 14);
+  const random = Math.floor(Math.random() * 9000 + 1000);
+  return `MO${stamp}${random}`;
+};
+
+const closeOrderDialog = () => {
+  orderDialog.visible = false;
+  orderDialog.goodsSn = '';
+  Object.assign(orderForm.value, createDefaultOrderForm());
+  orderFormRef.value?.clearValidate();
+};
+
+const handlePlaceOrder = (row: GoodsVO) => {
+  Object.assign(orderForm.value, createDefaultOrderForm(), {
+    orderSn: buildOrderSn(),
+    goodsId: row.id,
+    goodsName: row.name,
+    goodsGalleryUrls: row.galleryUrls,
+    price: row.price || 0,
+    payAmount: row.price || 0,
+    serviceRegions: row.serviceRegions || '',
+    serviceTags: row.serviceTags || ''
+  });
+  orderDialog.goodsSn = row.goodsSn || '';
+  orderDialog.visible = true;
+};
+
+const submitOrder = () => {
+  orderFormRef.value?.validate(async (valid) => {
+    if (!valid) {
+      return;
+    }
+    orderSubmitting.value = true;
+    try {
+      await addOrder(orderForm.value);
+      proxy?.$modal.msgSuccess('下单成功');
+      closeOrderDialog();
+      await getList();
+    } finally {
+      orderSubmitting.value = false;
+    }
+  });
 };
 
 const handleToggleSaleStatus = async (row: GoodsVO) => {
@@ -956,6 +1122,10 @@ onMounted(async () => {
   margin-bottom: 14px;
 }
 
+.view-tabs--secondary {
+  margin-top: -2px;
+}
+
 .view-tab {
   display: inline-flex;
   align-items: center;
@@ -985,6 +1155,12 @@ onMounted(async () => {
   box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.08);
 }
 
+.view-tab--metric.view-tab--active {
+  border-color: #c7d2fe;
+  background: linear-gradient(180deg, #f8fafc 0%, #e0e7ff 100%);
+  color: #4338ca;
+}
+
 .view-tab__label {
   font-size: 13px;
   font-weight: 600;
@@ -1001,22 +1177,6 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.85);
   font-size: 12px;
   font-weight: 600;
-}
-
-.table-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.table-summary span {
-  padding: 6px 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  color: #64748b;
-  font-size: 12px;
 }
 
 .goods-table :deep(.el-table__cell) {
