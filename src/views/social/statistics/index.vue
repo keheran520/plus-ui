@@ -142,9 +142,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue'
-import { ChatDotRound, DataAnalysis, Share, Star, StarFilled } from '@element-plus/icons-vue'
-import * as echarts from 'echarts'
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue';
+import { ChatDotRound, DataAnalysis, Share, Star, StarFilled } from '@element-plus/icons-vue';
+import * as echarts from 'echarts';
 import {
   batchRefreshStatistics,
   delSocialStatistics,
@@ -153,24 +153,24 @@ import {
   getTrendData,
   listSocialStatistics,
   refreshStatistics
-} from '@/api/social/statistics'
-import type { SocialStatisticsQuery, SocialStatisticsVO } from '@/api/social/statistics/types'
+} from '@/api/social/statistics';
+import type { SocialStatisticsQuery, SocialStatisticsVO } from '@/api/social/statistics/types';
 
-const { proxy } = getCurrentInstance() as any
-const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'))
+const { proxy } = getCurrentInstance() as any;
+const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'));
 
-const trendChartRef = ref<HTMLDivElement>()
-const mixChartRef = ref<HTMLDivElement>()
+const trendChartRef = ref<HTMLDivElement>();
+const mixChartRef = ref<HTMLDivElement>();
 
-const statisticsList = ref<SocialStatisticsVO[]>([])
-const hotContent = ref<any[]>([])
-const loading = ref(false)
-const hotLoading = ref(false)
-const showSearch = ref(true)
-const total = ref(0)
-const ids = ref<Array<string | number>>([])
-const trendTargetType = ref('')
-const hotTargetType = ref('')
+const statisticsList = ref<SocialStatisticsVO[]>([]);
+const hotContent = ref<any[]>([]);
+const loading = ref(false);
+const hotLoading = ref(false);
+const showSearch = ref(true);
+const total = ref(0);
+const ids = ref<Array<string | number>>([]);
+const trendTargetType = ref('');
+const hotTargetType = ref('');
 const overview = ref({
   totalLikes: 0,
   totalFavorites: 0,
@@ -182,53 +182,88 @@ const overview = ref({
   todayComments: 0,
   todayShares: 0,
   todayViews: 0
-})
-const trendData = ref<any[]>([])
+});
+const trendData = ref<any[]>([]);
 
 const queryParams = ref<SocialStatisticsQuery>({
   pageNum: 1,
   pageSize: 10,
   targetType: undefined,
   targetId: undefined
-})
+});
 
-const tableHeaderStyle = { background: '#f8fafc', color: '#475569' }
+const tableHeaderStyle = { background: '#f8fafc', color: '#475569' };
 
 const summaryCards = computed(() => [
-  { key: 'likes', label: '总点赞', value: overview.value.totalLikes, hint: `今日 +${formatCount(overview.value.todayLikes)}`, theme: 'blue', icon: StarFilled },
-  { key: 'favorites', label: '总收藏', value: overview.value.totalFavorites, hint: `今日 +${formatCount(overview.value.todayFavorites)}`, theme: 'orange', icon: Star },
-  { key: 'comments', label: '总评论', value: overview.value.totalComments, hint: `今日 +${formatCount(overview.value.todayComments)}`, theme: 'green', icon: ChatDotRound },
-  { key: 'shares', label: '总转发', value: overview.value.totalShares, hint: `今日 +${formatCount(overview.value.todayShares)}`, theme: 'violet', icon: Share },
-  { key: 'views', label: '总浏览', value: overview.value.totalViews, hint: `今日 +${formatCount(overview.value.todayViews)}`, theme: 'slate', icon: DataAnalysis }
-])
+  {
+    key: 'likes',
+    label: '总点赞',
+    value: overview.value.totalLikes,
+    hint: `今日 +${formatCount(overview.value.todayLikes)}`,
+    theme: 'blue',
+    icon: StarFilled
+  },
+  {
+    key: 'favorites',
+    label: '总收藏',
+    value: overview.value.totalFavorites,
+    hint: `今日 +${formatCount(overview.value.todayFavorites)}`,
+    theme: 'orange',
+    icon: Star
+  },
+  {
+    key: 'comments',
+    label: '总评论',
+    value: overview.value.totalComments,
+    hint: `今日 +${formatCount(overview.value.todayComments)}`,
+    theme: 'green',
+    icon: ChatDotRound
+  },
+  {
+    key: 'shares',
+    label: '总转发',
+    value: overview.value.totalShares,
+    hint: `今日 +${formatCount(overview.value.todayShares)}`,
+    theme: 'violet',
+    icon: Share
+  },
+  {
+    key: 'views',
+    label: '总浏览',
+    value: overview.value.totalViews,
+    hint: `今日 +${formatCount(overview.value.todayViews)}`,
+    theme: 'slate',
+    icon: DataAnalysis
+  }
+]);
 
-let trendChart: echarts.ECharts | null = null
-let mixChart: echarts.ECharts | null = null
+let trendChart: echarts.ECharts | null = null;
+let mixChart: echarts.ECharts | null = null;
 
 function formatCount(value?: number | string | null) {
-  const numericValue = Number(value ?? 0)
-  return Number.isFinite(numericValue) ? numericValue.toLocaleString('zh-CN') : '0'
+  const numericValue = Number(value ?? 0);
+  return Number.isFinite(numericValue) ? numericValue.toLocaleString('zh-CN') : '0';
 }
 
 function getDictLabel(options: DictDataOption[] = [], value?: string | number) {
-  return options.find((item) => String(item.value) === String(value))?.label || value || '未知'
+  return options.find((item) => String(item.value) === String(value))?.label || value || '未知';
 }
 
 function ensureTrendChart() {
-  if (!trendChartRef.value) return null
-  trendChart = trendChart ?? echarts.init(trendChartRef.value)
-  return trendChart
+  if (!trendChartRef.value) return null;
+  trendChart = trendChart ?? echarts.init(trendChartRef.value);
+  return trendChart;
 }
 
 function ensureMixChart() {
-  if (!mixChartRef.value) return null
-  mixChart = mixChart ?? echarts.init(mixChartRef.value)
-  return mixChart
+  if (!mixChartRef.value) return null;
+  mixChart = mixChart ?? echarts.init(mixChartRef.value);
+  return mixChart;
 }
 
 function renderTrendChart() {
-  const chart = ensureTrendChart()
-  if (!chart) return
+  const chart = ensureTrendChart();
+  if (!chart) return;
   chart.setOption({
     tooltip: { trigger: 'axis' },
     grid: { left: 52, right: 24, top: 28, bottom: 34, containLabel: true },
@@ -284,12 +319,12 @@ function renderTrendChart() {
         itemStyle: { color: '#7c3aed' }
       }
     ]
-  })
+  });
 }
 
 function renderMixChart() {
-  const chart = ensureMixChart()
-  if (!chart) return
+  const chart = ensureMixChart();
+  if (!chart) return;
   chart.setOption({
     tooltip: { trigger: 'item' },
     legend: {
@@ -312,43 +347,43 @@ function renderMixChart() {
         ]
       }
     ]
-  })
+  });
 }
 
 async function loadOverview() {
-  const response: any = await getStatisticsOverview()
-  overview.value = response?.data || overview.value
+  const response: any = await getStatisticsOverview();
+  overview.value = response?.data || overview.value;
 }
 
 async function loadHotContent() {
-  hotLoading.value = true
+  hotLoading.value = true;
   try {
-    const response: any = await getHotContent(hotTargetType.value || undefined, 8)
-    hotContent.value = response?.data || response || []
+    const response: any = await getHotContent(hotTargetType.value || undefined, 8);
+    hotContent.value = response?.data || response || [];
   } finally {
-    hotLoading.value = false
+    hotLoading.value = false;
   }
 }
 
 async function loadTrendData() {
-  const response: any = await getTrendData(trendTargetType.value || undefined, 7)
-  trendData.value = response?.data || response || []
+  const response: any = await getTrendData(trendTargetType.value || undefined, 7);
+  trendData.value = response?.data || response || [];
 }
 
 async function getList() {
-  loading.value = true
+  loading.value = true;
   try {
-    const response: any = await listSocialStatistics(queryParams.value)
-    statisticsList.value = response?.rows || []
-    total.value = response?.total || 0
+    const response: any = await listSocialStatistics(queryParams.value);
+    statisticsList.value = response?.rows || [];
+    total.value = response?.total || 0;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 function resetQuery() {
@@ -357,20 +392,20 @@ function resetQuery() {
     pageSize: 10,
     targetType: undefined,
     targetId: undefined
-  }
-  getList()
+  };
+  getList();
 }
 
 function handleSelectionChange(selection: SocialStatisticsVO[]) {
-  ids.value = selection.map((item) => item.statId)
+  ids.value = selection.map((item) => item.statId);
 }
 
 async function handleRefresh(row: SocialStatisticsVO) {
   try {
-    await proxy?.$modal?.confirm('确认刷新这条统计数据吗？')
-    await refreshStatistics(row.targetType, row.targetId)
-    proxy?.$modal?.msgSuccess('刷新成功')
-    await Promise.all([getList(), loadOverview(), loadHotContent(), loadTrendData()])
+    await proxy?.$modal?.confirm('确认刷新这条统计数据吗？');
+    await refreshStatistics(row.targetType, row.targetId);
+    proxy?.$modal?.msgSuccess('刷新成功');
+    await Promise.all([getList(), loadOverview(), loadHotContent(), loadTrendData()]);
   } catch {
     //
   }
@@ -378,11 +413,11 @@ async function handleRefresh(row: SocialStatisticsVO) {
 
 async function handleBatchRefresh() {
   try {
-    const targetLabel = queryParams.value.targetType ? getDictLabel(social_target_type.value, queryParams.value.targetType) : '全部类型'
-    await proxy?.$modal?.confirm(`确认批量刷新 ${targetLabel} 的统计吗？`)
-    await batchRefreshStatistics(queryParams.value.targetType as string)
-    proxy?.$modal?.msgSuccess('批量刷新成功')
-    await Promise.all([getList(), loadOverview(), loadHotContent(), loadTrendData()])
+    const targetLabel = queryParams.value.targetType ? getDictLabel(social_target_type.value, queryParams.value.targetType) : '全部类型';
+    await proxy?.$modal?.confirm(`确认批量刷新 ${targetLabel} 的统计吗？`);
+    await batchRefreshStatistics(queryParams.value.targetType as string);
+    proxy?.$modal?.msgSuccess('批量刷新成功');
+    await Promise.all([getList(), loadOverview(), loadHotContent(), loadTrendData()]);
   } catch {
     //
   }
@@ -390,47 +425,47 @@ async function handleBatchRefresh() {
 
 async function handleDelete(row: SocialStatisticsVO) {
   try {
-    await proxy?.$modal?.confirm('确认删除这条统计数据吗？')
-    await delSocialStatistics(row.statId)
-    proxy?.$modal?.msgSuccess('删除成功')
-    await Promise.all([getList(), loadOverview(), loadHotContent(), loadTrendData()])
+    await proxy?.$modal?.confirm('确认删除这条统计数据吗？');
+    await delSocialStatistics(row.statId);
+    proxy?.$modal?.msgSuccess('删除成功');
+    await Promise.all([getList(), loadOverview(), loadHotContent(), loadTrendData()]);
   } catch {
     //
   }
 }
 
 function handleExport() {
-  proxy?.download('social/statistics/export', { ...queryParams.value }, `statistics_${Date.now()}.xlsx`)
+  proxy?.download('social/statistics/export', { ...queryParams.value }, `statistics_${Date.now()}.xlsx`);
 }
 
 function handleResize() {
-  trendChart?.resize()
-  mixChart?.resize()
+  trendChart?.resize();
+  mixChart?.resize();
 }
 
 watch(
   [trendData, overview],
   async () => {
-    await nextTick()
-    renderTrendChart()
-    renderMixChart()
+    await nextTick();
+    renderTrendChart();
+    renderMixChart();
   },
   { deep: true }
-)
+);
 
 onMounted(async () => {
-  await Promise.all([loadOverview(), loadHotContent(), loadTrendData(), getList()])
-  await nextTick()
-  renderTrendChart()
-  renderMixChart()
-  window.addEventListener('resize', handleResize)
-})
+  await Promise.all([loadOverview(), loadHotContent(), loadTrendData(), getList()]);
+  await nextTick();
+  renderTrendChart();
+  renderMixChart();
+  window.addEventListener('resize', handleResize);
+});
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize)
-  trendChart?.dispose()
-  mixChart?.dispose()
-})
+  window.removeEventListener('resize', handleResize);
+  trendChart?.dispose();
+  mixChart?.dispose();
+});
 </script>
 
 <style lang="scss" scoped>

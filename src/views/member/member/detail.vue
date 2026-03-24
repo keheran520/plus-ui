@@ -8,14 +8,14 @@
             返回会员列表
           </el-button>
           <div class="header-actions">
-            <el-button type="primary" @click="openRechargeDialog">充值余额</el-button>
-            <el-button type="warning" @click="openPointsDialog">充值积分</el-button>
+            <el-button v-hasPermi="['member:member:recharge']" type="primary" @click="openRechargeDialog">充值余额</el-button>
+            <el-button v-hasPermi="['member:member:adjustPoints']" type="warning" @click="openPointsDialog">充值积分</el-button>
           </div>
         </div>
 
         <div class="hero-panel">
           <div class="hero-profile">
-            <el-avatar :size="68" :src="avatarUrl" class="member-avatar">
+            <el-avatar :size="68" :src="memberDetail.user?.avatar" class="member-avatar">
               {{ (memberDisplayName || 'M').slice(0, 1) }}
             </el-avatar>
             <div class="hero-body">
@@ -255,12 +255,12 @@ import { getBalanceLogByMemberId } from '@/api/member/balanceLog';
 import { getGrowthLogByMemberId } from '@/api/member/growthLog';
 import { listLevel } from '@/api/member/level';
 import { getPointsLogByMemberId } from '@/api/member/pointsLog';
+import { formatContactDisplay } from '@/utils/contact';
 
 const { proxy } = getCurrentInstance() as any;
 const route = useRoute();
 const router = useRouter();
 
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
 const pageLoading = ref(false);
 const activeTab = ref('balance');
 const memberDetail = reactive<any>({});
@@ -297,10 +297,7 @@ const pointsRules = {
 };
 
 const memberDisplayName = computed(() => memberDetail.realName || memberDetail.user?.nickName || memberDetail.user?.userName || '会员详情');
-const avatarUrl = computed(() => {
-  const avatar = memberDetail.user?.avatar;
-  return avatar && String(avatar).startsWith('http') ? avatar : defaultAvatar;
-});
+
 const statusLabel = computed(() => (memberDetail.status === '1' ? '冻结' : '正常'));
 const statusTagType = computed(() => (memberDetail.status === '1' ? 'danger' : 'success'));
 const orderedLevels = computed(() => [...levels.value].sort((a, b) => Number(a.requiredGrowth || 0) - Number(b.requiredGrowth || 0)));
@@ -345,8 +342,8 @@ const memberItems = computed(() => [
 const userItems = computed(() => [
   { label: '用户名', value: memberDetail.user?.userName || '未填写' },
   { label: '昵称', value: memberDetail.user?.nickName || '未填写' },
-  { label: '手机号', value: memberDetail.user?.phonenumber || '未绑定' },
-  { label: '邮箱', value: memberDetail.user?.email || '未绑定' },
+  { label: '手机号', value: formatContactDisplay(memberDetail.user?.phonenumber) },
+  { label: '邮箱', value: formatContactDisplay(memberDetail.user?.email) },
   { label: '性别', value: getSexLabel(memberDetail.user?.sex) },
   { label: '用户状态', value: memberDetail.user?.status === '0' ? '正常' : memberDetail.user?.status === '1' ? '停用' : '未知' },
   { label: '所属部门', value: memberDetail.user?.deptName || '未分配' },

@@ -38,7 +38,6 @@ export interface BrandVO {
    * 备注
    */
   remark: string;
-
 }
 
 export interface BrandForm extends BaseEntity {
@@ -60,7 +59,7 @@ export interface BrandForm extends BaseEntity {
   /**
    * 品牌图OSSID
    */
-  picOssId?: string | number;
+  picOssId?: string[] | number[];
 
   /**
    * 品牌图地址
@@ -81,11 +80,9 @@ export interface BrandForm extends BaseEntity {
    * 备注
    */
   remark?: string;
-
 }
 
 export interface BrandQuery extends PageQuery {
-
   /**
    * 品牌名称
    */

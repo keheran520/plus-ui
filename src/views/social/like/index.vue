@@ -85,16 +85,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, getCurrentInstance, ref, toRefs } from 'vue'
-import type { FormInstance } from 'element-plus'
-import { useI18n } from 'vue-i18n'
+import { computed, getCurrentInstance, ref, toRefs } from 'vue';
+import type { FormInstance } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { delSocialLike, listSocialLike } from '@/api/social/like';
 import type { SocialLikeQuery, SocialLikeVO } from '@/api/social/like/types';
 import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
 const { proxy } = getCurrentInstance() as any;
 const { t } = useI18n();
-const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'))
+const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'));
 
 const TEXT = computed(() => ({
   tableTitle: t('socialLike.tableTitle'),
@@ -141,10 +141,10 @@ const queryParams = ref<SocialLikeQuery>({
   userId: undefined
 });
 
-const targetTypeOptions = computed(() => social_target_type.value || [])
+const targetTypeOptions = computed(() => social_target_type.value || []);
 
 function getTargetTypeLabel(value?: string) {
-  return targetTypeOptions.value.find((item: DictDataOption) => String(item.value) === String(value))?.label || value || '-'
+  return targetTypeOptions.value.find((item: DictDataOption) => String(item.value) === String(value))?.label || value || '-';
 }
 
 function getList() {

@@ -24,11 +24,11 @@
         </div>
         <div class="profile-card">
           <span class="card-label">手机号</span>
-          <span class="card-value">{{ profile.phonenumber || '暂无' }}</span>
+          <span class="card-value">{{ formatContactDisplay(profile.phonenumber, '未绑定手机号') }}</span>
         </div>
         <div class="profile-card">
           <span class="card-label">邮箱</span>
-          <span class="card-value">{{ profile.email || '暂无' }}</span>
+          <span class="card-value">{{ formatContactDisplay(profile.email, '未绑定邮箱') }}</span>
         </div>
         <div class="profile-card">
           <span class="card-label">最近登录</span>
@@ -90,6 +90,7 @@
 import { computed, reactive, watch } from 'vue';
 import { getUserStatistics } from '@/api/social/userAction';
 import { getUser } from '@/api/system/user';
+import { formatContactDisplay } from '@/utils/contact';
 
 const props = defineProps<{
   visible: boolean;

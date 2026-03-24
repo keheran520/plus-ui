@@ -2,76 +2,64 @@
   <div class="goods-page">
     <section v-loading="summaryLoading" class="summary-grid">
       <article class="summary-card summary-card--blue">
-        <span class="summary-card__label">&#x5546;&#x54C1;&#x603B;&#x6570;</span>
+        <span class="summary-card__label">商品总数</span>
         <strong class="summary-card__value">{{ formatCount(summary.total) }}</strong>
-        <span class="summary-card__hint">&#x5F53;&#x524D;&#x5217;&#x8868;&#x8303;&#x56F4;&#x5185;&#x7684;&#x5546;&#x54C1;&#x6570;&#x91CF;</span>
+        <span class="summary-card__hint">当前列表范围内的商品数量</span>
       </article>
       <article class="summary-card summary-card--green">
-        <span class="summary-card__label">&#x4E0A;&#x67B6;&#x5546;&#x54C1;</span>
+        <span class="summary-card__label">上架商品</span>
         <strong class="summary-card__value">{{ formatCount(summary.saleOn) }}</strong>
-        <span class="summary-card__hint">&#x6B63;&#x5728;&#x5BF9;&#x5916;&#x5C55;&#x793A;&#x7684;&#x5546;&#x54C1;</span>
+        <span class="summary-card__hint">正在对外展示的商品</span>
       </article>
       <article class="summary-card summary-card--amber">
-        <span class="summary-card__label">&#x63A8;&#x8350;&#x5546;&#x54C1;</span>
+        <span class="summary-card__label">推荐商品</span>
         <strong class="summary-card__value">{{ formatCount(summary.recommend) }}</strong>
-        <span class="summary-card__hint">&#x5DF2;&#x6807;&#x8BB0;&#x4E3A;&#x63A8;&#x8350;&#x7684;&#x5546;&#x54C1;</span>
+        <span class="summary-card__hint">已标记为推荐的商品</span>
       </article>
       <article class="summary-card summary-card--violet">
-        <span class="summary-card__label">&#x5E73;&#x5747;&#x552E;&#x4EF7;</span>
+        <span class="summary-card__label">平均售价</span>
         <strong class="summary-card__value">{{ formatCurrency(summary.avgPrice) }}</strong>
-        <span class="summary-card__hint">&#x6309;&#x5F53;&#x524D;&#x7B5B;&#x9009;&#x7ED3;&#x679C;&#x8BA1;&#x7B97;</span>
+        <span class="summary-card__hint">按当前筛选结果计算</span>
       </article>
     </section>
 
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <section v-show="showSearch" class="panel search-panel">
         <el-form ref="queryFormRef" :inline="true" :model="queryParams" class="search-form">
-          <el-form-item label="&#x5546;&#x54C1;&#x7F16;&#x53F7;" prop="goodsSn">
-            <el-input
-              v-model="queryParams.goodsSn"
-              class="field-sm"
-              clearable
-              placeholder="&#x8BF7;&#x8F93;&#x5165;&#x5546;&#x54C1;&#x7F16;&#x53F7;"
-              @keyup.enter="handleQuery"
-            />
+          <el-form-item label="商品编号" prop="goodsSn">
+            <el-input v-model="queryParams.goodsSn" class="field-sm" clearable placeholder="请输入商品编号" @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="&#x5546;&#x54C1;&#x540D;&#x79F0;" prop="name">
-            <el-input
-              v-model="queryParams.name"
-              class="field-md"
-              clearable
-              placeholder="&#x8BF7;&#x8F93;&#x5165;&#x5546;&#x54C1;&#x540D;&#x79F0;"
-              @keyup.enter="handleQuery"
-            />
+          <el-form-item label="商品名称" prop="name">
+            <el-input v-model="queryParams.name" class="field-md" clearable placeholder="请输入商品名称" @keyup.enter="handleQuery" />
           </el-form-item>
-          <el-form-item label="&#x5206;&#x7C7B;" prop="categoryId">
-            <el-select v-model="queryParams.categoryId" class="field-sm" clearable filterable placeholder="&#x5168;&#x90E8;&#x5206;&#x7C7B;">
+          <el-form-item label="分类" prop="categoryId">
+            <el-select v-model="queryParams.categoryId" class="field-sm" clearable filterable placeholder="全部分类">
               <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x54C1;&#x724C;" prop="brandId">
-            <el-select v-model="queryParams.brandId" class="field-sm" clearable filterable placeholder="&#x5168;&#x90E8;&#x54C1;&#x724C;">
+          <el-form-item label="品牌" prop="brandId">
+            <el-select v-model="queryParams.brandId" class="field-sm" clearable filterable placeholder="全部品牌">
               <el-option v-for="item in brandOptions" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x4E0A;&#x67B6;&#x72B6;&#x6001;" prop="saleStatus">
-            <el-select v-model="queryParams.saleStatus" class="field-sm" clearable placeholder="&#x5168;&#x90E8;&#x72B6;&#x6001;">
-              <el-option v-for="item in saleStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+          <el-form-item label="上架状态" prop="saleStatus">
+            <el-select v-model="queryParams.saleStatus" class="field-sm" clearable placeholder="全部状态">
+              <el-option v-for="dict in mall_goods_sale_status" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x5BA1;&#x6838;&#x72B6;&#x6001;" prop="auditStatus">
-            <el-select v-model="queryParams.auditStatus" class="field-sm" clearable placeholder="&#x5168;&#x90E8;&#x5BA1;&#x6838;&#x72B6;&#x6001;">
-              <el-option v-for="item in auditStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+          <el-form-item label="审核状态" prop="auditStatus">
+            <el-select v-model="queryParams.auditStatus" class="field-sm" clearable placeholder="全部审核状态">
+              <el-option v-for="dict in mall_goods_audit_status" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x670D;&#x52A1;&#x7C7B;&#x578B;" prop="serviceType">
-            <el-select v-model="queryParams.serviceType" class="field-sm" clearable placeholder="&#x5168;&#x90E8;&#x670D;&#x52A1;&#x7C7B;&#x578B;">
-              <el-option v-for="item in serviceTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          <el-form-item label="服务类型" prop="serviceType">
+            <el-select v-model="queryParams.serviceType" class="field-sm" clearable placeholder="全部服务类型">
+              <el-option v-for="dict in mall_goods_service_type" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
           <el-form-item class="search-actions">
-            <el-button icon="Search" type="primary" @click="handleQuery">&#x67E5;&#x8BE2;</el-button>
-            <el-button icon="Refresh" @click="resetQuery">&#x91CD;&#x7F6E;</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
+            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
       </section>
@@ -80,15 +68,15 @@
     <section class="panel list-panel">
       <header class="panel-header">
         <div>
-          <div class="panel-title">&#x5546;&#x54C1;&#x5217;&#x8868;</div>
-          <div class="panel-subtitle">&#x5171; {{ total }} &#x6761;&#x8BB0;&#x5F55;</div>
+          <div class="panel-title">商品列表</div>
+          <div class="panel-subtitle">共 {{ total }} 条记录</div>
         </div>
         <div class="panel-actions">
-          <el-button v-hasPermi="['mall:goods:add']" icon="Plus" type="primary" @click="handleAdd">&#x65B0;&#x589E;&#x5546;&#x54C1;</el-button>
+          <el-button v-hasPermi="['mall:goods:create']" icon="Plus" type="primary" @click="handleAdd">新增商品</el-button>
           <el-button v-hasPermi="['mall:goods:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()"
-            >&#x6279;&#x91CF;&#x5220;&#x9664;</el-button
+            >批量删除</el-button
           >
-          <el-button v-hasPermi="['mall:goods:export']" icon="Download" plain @click="handleExport">&#x5BFC;&#x51FA;</el-button>
+          <el-button v-hasPermi="['mall:goods:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
       </header>
@@ -97,9 +85,9 @@
         <button
           v-for="item in quickTabs"
           :key="item.value"
-          type="button"
-          class="view-tab"
           :class="{ 'view-tab--active': activeQuickTab === item.value }"
+          class="view-tab"
+          type="button"
           @click="handleQuickTabChange(item.value)"
         >
           <span class="view-tab__label">{{ item.label }}</span>
@@ -111,9 +99,9 @@
         <button
           v-for="item in metricTabs"
           :key="item.value"
-          type="button"
-          class="view-tab view-tab--metric"
           :class="{ 'view-tab--active': activeMetricTab === item.value }"
+          class="view-tab view-tab--metric"
+          type="button"
           @click="handleMetricTabChange(item.value)"
         >
           <span class="view-tab__label">{{ item.label }}</span>
@@ -123,21 +111,27 @@
 
       <el-table v-loading="loading" :data="displayGoodsList" class="goods-table" @selection-change="handleSelectionChange">
         <el-table-column align="center" fixed="left" type="selection" width="50" />
-        <el-table-column fixed="left" label="&#x5546;&#x54C1;&#x4FE1;&#x606F;" min-width="340">
+        <el-table-column fixed="left" label="商品信息" min-width="340">
           <template #default="{ row }">
             <div class="goods-main">
               <el-image :src="getFirstImage(row.galleryUrls)" class="goods-main__cover" fit="cover">
                 <template #error>
-                  <div class="goods-main__empty">&#x6682;&#x65E0;&#x56FE;&#x7247;</div>
+                  <div class="goods-main__empty">暂无图片</div>
                 </template>
               </el-image>
               <div class="goods-main__content">
                 <div class="goods-main__title-row">
-                  <span class="goods-main__title">{{ row.name || '\u672A\u547D\u540D\u5546\u54C1' }}</span>
-                  <el-tag v-if="row.recommendFlag === '1'" effect="light" type="danger">&#x63A8;&#x8350;</el-tag>
+                  <span class="goods-main__title">{{ row.name || '未命名商品' }}</span>
+                  <dict-tag
+                    v-if="row.recommendFlag === '1'"
+                    :options="mall_goods_recommend_flag"
+                    :round="true"
+                    :value="row.recommendFlag"
+                    theme="light"
+                  />
                 </div>
-                <div class="goods-main__sub">{{ row.subTitle || '\u672A\u8BBE\u7F6E\u526F\u6807\u9898' }}</div>
-                <div class="goods-main__meta">&#x7F16;&#x53F7;&#xFF1A;{{ row.goodsSn || '-' }}</div>
+                <div class="goods-main__sub">{{ row.subTitle || '未设置副标题' }}</div>
+                <div class="goods-main__meta">编号：{{ row.goodsSn || '-' }}</div>
                 <div class="goods-main__tags">
                   <el-tag effect="plain" size="small">{{ getCategoryName(row.categoryId) }}</el-tag>
                   <el-tag effect="plain" size="small" type="success">{{ getBrandName(row.brandId) }}</el-tag>
@@ -146,95 +140,95 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="right" label="&#x4EF7;&#x683C;" width="160">
+        <el-table-column align="right" label="价格" width="160">
           <template #default="{ row }">
             <div class="price-block">
               <span class="price-block__sale">{{ formatCurrency(row.price) }}</span>
-              <span class="price-block__origin">&#x539F;&#x4EF7; {{ formatCurrency(row.originalPrice) }}</span>
+              <span class="price-block__origin">原价 {{ formatCurrency(row.originalPrice) }}</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="&#x5355;&#x4F4D; / &#x7C7B;&#x578B;" width="160">
+        <el-table-column align="center" label="单位 / 类型" width="160">
           <template #default="{ row }">
             <div class="stack-text">
               <span>{{ row.unitName || '-' }}</span>
-              <span class="muted-text">{{ getServiceTypeLabel(row.serviceType) }}</span>
+              <dict-tag :options="mall_goods_service_type" :round="true" :value="row.serviceType" theme="plain" />
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="&#x670D;&#x52A1;&#x6807;&#x7B7E;" min-width="180">
+        <el-table-column label="服务标签" min-width="180">
           <template #default="{ row }">
             <div class="tag-list">
               <el-tag v-for="item in splitCommaText(row.serviceTags)" :key="item" effect="plain" size="small">{{ item }}</el-tag>
-              <span v-if="!splitCommaText(row.serviceTags).length" class="muted-text">&#x6682;&#x65E0;</span>
+              <span v-if="!splitCommaText(row.serviceTags).length" class="muted-text">暂无</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="&#x670D;&#x52A1;&#x533A;&#x670D;" min-width="200">
+        <el-table-column label="服务区服" min-width="200">
           <template #default="{ row }">
             <div class="tag-list">
               <el-tag v-for="item in splitCommaText(row.serviceRegions)" :key="item" effect="plain" size="small" type="warning">{{ item }}</el-tag>
-              <span v-if="!splitCommaText(row.serviceRegions).length" class="muted-text">&#x6682;&#x65E0;</span>
+              <span v-if="!splitCommaText(row.serviceRegions).length" class="muted-text">暂无</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="&#x72B6;&#x6001;" width="170">
+        <el-table-column align="center" label="状态" width="170">
           <template #default="{ row }">
             <div class="tag-list">
-              <el-tag :type="row.saleStatus === 'Y' ? 'success' : 'info'" effect="light">{{ getSaleStatusLabel(row.saleStatus) }}</el-tag>
-              <el-tag :type="getAuditStatusType(row.auditStatus)" effect="plain">{{ getAuditStatusLabel(row.auditStatus) }}</el-tag>
+              <dict-tag :options="mall_goods_sale_status" :round="true" :value="row.saleStatus" theme="light" />
+              <dict-tag :options="mall_goods_audit_status" :round="true" :value="row.auditStatus" theme="plain" />
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="&#x6570;&#x636E;&#x8868;&#x73B0;" width="200">
+        <el-table-column align="center" label="数据表现" width="200">
           <template #default="{ row }">
             <div class="metric-list">
-              <span class="metric-chip">&#x6D4F;&#x89C8; {{ formatCount(row.viewCount) }}</span>
-              <span class="metric-chip">&#x6536;&#x85CF; {{ formatCount(row.favoriteCount) }}</span>
-              <span class="metric-chip">&#x8BA2;&#x5355; {{ formatCount(row.orderCount) }}</span>
+              <span class="metric-chip">浏览 {{ formatCount(row.viewCount) }}</span>
+              <span class="metric-chip">收藏 {{ formatCount(row.favoriteCount) }}</span>
+              <span class="metric-chip">订单 {{ formatCount(row.orderCount) }}</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="&#x8BC4;&#x5206;" width="90">
+        <el-table-column align="center" label="评分" width="90">
           <template #default="{ row }">
             <span class="metric-chip metric-chip--green">{{ formatScore(row.score) }}</span>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="&#x6392;&#x5E8F;" prop="sortOrder" width="90" />
-        <el-table-column label="&#x5546;&#x54C1;&#x7B80;&#x4ECB;" min-width="220" show-overflow-tooltip>
+        <el-table-column align="center" label="排序" prop="sortOrder" width="90" />
+        <el-table-column label="商品简介" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.brief || '-' }}
           </template>
         </el-table-column>
-        <el-table-column align="center" fixed="right" label="&#x64CD;&#x4F5C;" min-width="300">
+        <el-table-column align="center" fixed="right" label="操作" min-width="300">
           <template #default="{ row }">
             <div class="action-list">
-              <el-button v-hasPermi="['mall:goods:edit']" link type="primary" @click="handleUpdate(row)">&#x7F16;&#x8F91;</el-button>
-              <el-button v-hasPermi="['mall:goods:add']" link type="primary" @click="handleCopy(row)">&#x590D;&#x5236;</el-button>
-              <el-button v-hasPermi="['mall:order:add']" link type="primary" @click="handlePlaceOrder(row)">下单</el-button>
+              <el-button v-hasPermi="['mall:goods:update']" link type="primary" @click="handleUpdate(row)">编辑</el-button>
+              <el-button v-hasPermi="['mall:goods:copy']" link type="primary" @click="handleCopy(row)">复制</el-button>
+              <el-button v-hasPermi="['mall:order:create']" link type="primary" @click="handlePlaceOrder(row)">下单</el-button>
               <el-button
-                v-hasPermi="['mall:goods:edit']"
+                v-hasPermi="['mall:goods:sale']"
                 :type="row.saleStatus === 'Y' ? 'warning' : 'success'"
                 link
                 @click="handleToggleSaleStatus(row)"
               >
-                {{ row.saleStatus === 'Y' ? '\u4E0B\u67B6' : '\u4E0A\u67B6' }}
+                {{ row.saleStatus === 'Y' ? '下架' : '上架' }}
               </el-button>
-              <el-button v-if="row.auditStatus !== '1'" v-hasPermi="['mall:goods:edit']" link type="success" @click="handleAudit(row, '1')"
-                >&#x5BA1;&#x6838;&#x901A;&#x8FC7;</el-button
+              <el-button v-if="row.auditStatus !== '1'" v-hasPermi="['mall:goods:audit']" link type="success" @click="handleAudit(row, '1')"
+                >审核通过</el-button
               >
-              <el-button v-if="row.auditStatus !== '2'" v-hasPermi="['mall:goods:edit']" link type="warning" @click="handleAudit(row, '2')"
-                >&#x5BA1;&#x6838;&#x9A73;&#x56DE;</el-button
+              <el-button v-if="row.auditStatus !== '2'" v-hasPermi="['mall:goods:audit']" link type="warning" @click="handleAudit(row, '2')"
+                >审核驳回</el-button
               >
               <el-button
-                v-hasPermi="['mall:goods:edit']"
+                v-hasPermi="['mall:goods:recommend']"
                 :type="row.recommendFlag === '1' ? 'warning' : 'success'"
                 link
                 @click="handleToggleRecommend(row)"
               >
-                {{ row.recommendFlag === '1' ? '\u53D6\u6D88\u63A8\u8350' : '\u63A8\u8350' }}
+                {{ row.recommendFlag === '1' ? '取消推荐' : '推荐' }}
               </el-button>
-              <el-button v-hasPermi="['mall:goods:remove']" link type="danger" @click="handleDelete(row)">&#x5220;&#x9664;</el-button>
+              <el-button v-hasPermi="['mall:goods:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
             </div>
           </template>
         </el-table-column>
@@ -246,107 +240,82 @@
     <el-drawer v-model="drawer.visible" :close-on-click-modal="false" :title="drawer.title" size="920px">
       <el-form ref="goodsFormRef" :model="form" :rules="rules" class="goods-form" label-position="top">
         <div class="form-grid">
-          <el-form-item label="&#x5546;&#x54C1;&#x7F16;&#x53F7;" prop="goodsSn">
+          <el-form-item label="商品编号" prop="goodsSn">
             <div class="sn-input">
-              <el-input
-                v-model="form.goodsSn"
-                placeholder="&#x65B0;&#x589E;&#x65F6;&#x81EA;&#x52A8;&#x751F;&#x6210;&#x5546;&#x54C1;&#x7F16;&#x53F7;"
-                readonly
-              />
-              <el-button v-if="!form.id" :loading="generating" icon="Refresh" @click="handleGenerateGoodsSn"
-                >&#x91CD;&#x65B0;&#x751F;&#x6210;</el-button
+              <el-input v-model="form.goodsSn" placeholder="新增时自动生成商品编号" readonly />
+              <el-button v-if="!form.id" v-hasPermi="['mall:goods:generateSn']" :loading="generating" icon="Refresh" @click="handleGenerateGoodsSn"
+                >重新生成</el-button
               >
             </div>
           </el-form-item>
-          <el-form-item label="&#x5546;&#x54C1;&#x540D;&#x79F0;" prop="name">
-            <el-input v-model="form.name" maxlength="100" placeholder="&#x8BF7;&#x8F93;&#x5165;&#x5546;&#x54C1;&#x540D;&#x79F0;" />
+          <el-form-item label="商品名称" prop="name">
+            <el-input v-model="form.name" maxlength="100" placeholder="请输入商品名称" />
           </el-form-item>
-          <el-form-item label="&#x526F;&#x6807;&#x9898;" prop="subTitle">
-            <el-input
-              v-model="form.subTitle"
-              maxlength="120"
-              placeholder="&#x8BF7;&#x8F93;&#x5165;&#x526F;&#x6807;&#x9898;&#x6216;&#x5356;&#x70B9;"
-            />
+          <el-form-item label="副标题" prop="subTitle">
+            <el-input v-model="form.subTitle" maxlength="120" placeholder="请输入副标题或卖点" />
           </el-form-item>
-          <el-form-item label="&#x5173;&#x952E;&#x5B57;" prop="keywords">
-            <el-input
-              v-model="form.keywords"
-              maxlength="120"
-              placeholder="&#x591A;&#x4E2A;&#x5173;&#x952E;&#x5B57;&#x8BF7;&#x7528;&#x82F1;&#x6587;&#x9017;&#x53F7;&#x5206;&#x9694;"
-            />
+          <el-form-item label="关键字" prop="keywords">
+            <el-input v-model="form.keywords" maxlength="120" placeholder="多个关键字请用英文逗号分隔" />
           </el-form-item>
-          <el-form-item label="&#x5546;&#x54C1;&#x5206;&#x7C7B;" prop="categoryId">
-            <el-select
-              v-model="form.categoryId"
-              filterable
-              placeholder="&#x8BF7;&#x9009;&#x62E9;&#x5546;&#x54C1;&#x5206;&#x7C7B;"
-              style="width: 100%"
-            >
+          <el-form-item label="商品分类" prop="categoryId">
+            <el-select v-model="form.categoryId" filterable placeholder="请选择商品分类" style="width: 100%">
               <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x5546;&#x54C1;&#x54C1;&#x724C;" prop="brandId">
-            <el-select
-              v-model="form.brandId"
-              clearable
-              filterable
-              placeholder="&#x8BF7;&#x9009;&#x62E9;&#x5546;&#x54C1;&#x54C1;&#x724C;"
-              style="width: 100%"
-            >
+          <el-form-item label="商品品牌" prop="brandId">
+            <el-select v-model="form.brandId" clearable filterable placeholder="请选择商品品牌" style="width: 100%">
               <el-option v-for="item in brandOptions" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x552E;&#x4EF7;" prop="price">
+          <el-form-item label="售价" prop="price">
             <el-input-number v-model="form.price" :min="0" :precision="2" :step="1" controls-position="right" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="&#x539F;&#x4EF7;" prop="originalPrice">
+          <el-form-item label="原价" prop="originalPrice">
             <el-input-number v-model="form.originalPrice" :min="0" :precision="2" :step="1" controls-position="right" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="&#x5355;&#x4F4D;" prop="unitName">
-            <el-input v-model="form.unitName" maxlength="20" placeholder="&#x4F8B;&#x5982;&#xFF1A;&#x6B21; / &#x5C40; / &#x5C0F;&#x65F6;" />
+          <el-form-item label="单位" prop="unitName">
+            <el-input v-model="form.unitName" maxlength="20" placeholder="例如：次 / 局 / 小时" />
           </el-form-item>
-          <el-form-item label="&#x670D;&#x52A1;&#x7C7B;&#x578B;" prop="serviceType">
-            <el-select v-model="form.serviceType" placeholder="&#x8BF7;&#x9009;&#x62E9;&#x670D;&#x52A1;&#x7C7B;&#x578B;" style="width: 100%">
-              <el-option v-for="item in serviceTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          <el-form-item label="服务类型" prop="serviceType">
+            <el-select v-model="form.serviceType" placeholder="请选择服务类型" style="width: 100%">
+              <el-option v-for="dict in mall_goods_service_type" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x6392;&#x5E8F;" prop="sortOrder">
+          <el-form-item label="排序" prop="sortOrder">
             <el-input-number v-model="form.sortOrder" :min="0" :precision="0" controls-position="right" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="&#x8BC4;&#x5206;" prop="score">
+          <el-form-item label="评分" prop="score">
             <el-input-number v-model="form.score" :max="5" :min="0" :precision="1" :step="0.1" controls-position="right" style="width: 100%" />
           </el-form-item>
         </div>
-        <el-form-item label="&#x8F6E;&#x64AD;&#x56FE;" prop="galleryOssIds">
+        <el-form-item label="轮播图" prop="galleryOssIds">
           <image-upload v-model="form.galleryOssIds" :limit="6" />
-          <div class="field-tip">
-            &#x8BF7;&#x4E0A;&#x4F20;&#x8F6E;&#x64AD;&#x56FE;&#xFF0C;&#x7B2C;&#x4E00;&#x5F20;&#x56FE;&#x7247;&#x5C06;&#x4F5C;&#x4E3A;&#x4E3B;&#x56FE;&#x5C55;&#x793A;&#x3002;
-          </div>
+          <div class="field-tip">请上传轮播图，第一张图片将作为主图展示。</div>
         </el-form-item>
 
         <div class="form-grid">
-          <el-form-item label="&#x670D;&#x52A1;&#x6807;&#x7B7E;" prop="serviceTags">
+          <el-form-item label="服务标签" prop="serviceTags">
             <el-select
               v-model="selectedServiceTags"
               collapse-tags
               collapse-tags-tooltip
               filterable
               multiple
-              placeholder="&#x8BF7;&#x9009;&#x62E9;&#x670D;&#x52A1;&#x6807;&#x7B7E;"
+              placeholder="请选择服务标签"
               style="width: 100%"
               @change="syncServiceTags"
             >
               <el-option v-for="item in serviceTagOptions" :key="item.id" :label="item.tagName" :value="item.tagName" />
             </el-select>
           </el-form-item>
-          <el-form-item label="&#x670D;&#x52A1;&#x533A;&#x670D;" prop="serviceRegions">
+          <el-form-item label="服务区服" prop="serviceRegions">
             <el-select
               v-model="selectedServiceRegions"
               collapse-tags
               collapse-tags-tooltip
               filterable
               multiple
-              placeholder="&#x8BF7;&#x9009;&#x62E9;&#x670D;&#x52A1;&#x533A;&#x670D;"
+              placeholder="请选择服务区服"
               style="width: 100%"
               @change="syncServiceRegions"
             >
@@ -355,43 +324,29 @@
           </el-form-item>
         </div>
 
-        <el-form-item label="&#x5546;&#x54C1;&#x7B80;&#x4ECB;" prop="brief">
-          <el-input
-            v-model="form.brief"
-            :rows="4"
-            maxlength="300"
-            placeholder="&#x8BF7;&#x8F93;&#x5165;&#x5546;&#x54C1;&#x7B80;&#x4ECB;"
-            show-word-limit
-            type="textarea"
-          />
+        <el-form-item label="商品简介" prop="brief">
+          <el-input v-model="form.brief" :rows="4" maxlength="300" placeholder="请输入商品简介" show-word-limit type="textarea" />
         </el-form-item>
 
-        <el-form-item label="&#x5546;&#x54C1;&#x8BE6;&#x60C5;" prop="detail">
+        <el-form-item label="商品详情" prop="detail">
           <wang-editor v-model="form.messageContent" :height="600" />
         </el-form-item>
 
-        <el-form-item label="&#x5907;&#x6CE8;" prop="remark">
-          <el-input
-            v-model="form.remark"
-            :rows="4"
-            maxlength="300"
-            placeholder="&#x8BF7;&#x8F93;&#x5165;&#x7EF4;&#x62A4;&#x5907;&#x6CE8;"
-            show-word-limit
-            type="textarea"
-          />
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" :rows="4" maxlength="300" placeholder="请输入维护备注" show-word-limit type="textarea" />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="drawer-footer">
-          <el-button @click="cancel">&#x53D6;&#x6D88;</el-button>
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">&#x4FDD;&#x5B58;&#x5546;&#x54C1;</el-button>
+          <el-button @click="cancel">取消</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">保存商品</el-button>
         </div>
       </template>
     </el-drawer>
 
-    <el-dialog v-model="orderDialog.visible" title="创建订单" width="640px" append-to-body>
-      <el-form ref="orderFormRef" :model="orderForm" :rules="orderRules" label-position="top" class="goods-form">
+    <el-dialog v-model="orderDialog.visible" append-to-body title="创建订单" width="640px">
+      <el-form ref="orderFormRef" :model="orderForm" :rules="orderRules" class="goods-form" label-position="top">
         <div class="form-grid">
           <el-form-item label="商品名称">
             <el-input :model-value="orderForm.goodsName" readonly />
@@ -407,19 +362,19 @@
           </el-form-item>
         </div>
         <el-form-item label="服务标签">
-          <el-input :model-value="orderForm.serviceTags" readonly type="textarea" :rows="2" />
+          <el-input :model-value="orderForm.serviceTags" :rows="2" readonly type="textarea" />
         </el-form-item>
         <el-form-item label="服务区服">
-          <el-input :model-value="orderForm.serviceRegions" readonly type="textarea" :rows="2" />
+          <el-input :model-value="orderForm.serviceRegions" :rows="2" readonly type="textarea" />
         </el-form-item>
         <el-form-item label="买家备注" prop="buyerRemark">
-          <el-input v-model="orderForm.buyerRemark" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="请输入买家备注" />
+          <el-input v-model="orderForm.buyerRemark" :rows="3" maxlength="200" placeholder="请输入买家备注" show-word-limit type="textarea" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="drawer-footer">
           <el-button @click="closeOrderDialog">取消</el-button>
-          <el-button type="primary" :loading="orderSubmitting" @click="submitOrder">确认下单</el-button>
+          <el-button :loading="orderSubmitting" type="primary" @click="submitOrder">确认下单</el-button>
         </div>
       </template>
     </el-dialog>
@@ -427,9 +382,7 @@
 </template>
 
 <script lang="ts" name="Goods" setup>
-import type { ComponentInternalInstance } from 'vue';
 import { computed, getCurrentInstance, onMounted, reactive, ref, toRefs } from 'vue';
-import type { ElFormInstance, FormRules } from 'element-plus';
 import { listByIds } from '@/api/system/oss';
 import {
   addGoods,
@@ -453,6 +406,7 @@ import type { CategoryVO } from '@/api/mall/category/types';
 import type { BrandVO } from '@/api/mall/brand/types';
 import type { TagVO } from '@/api/mall/tag/types';
 import ImageUpload from '@/components/ImageUpload/index.vue';
+import { FormRules } from 'element-plus';
 
 interface GoodsEditorForm extends GoodsForm {
   messageContent?: string;
@@ -474,6 +428,9 @@ type QuickTabValue = 'all' | 'saleOn' | 'pending' | 'recommended';
 type MetricTabValue = 'all' | 'pending' | 'rejected' | 'views' | 'favorites' | 'orders';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+const { mall_goods_sale_status, mall_goods_audit_status, mall_goods_service_type, mall_goods_recommend_flag } = toRefs<any>(
+  proxy?.useDict('mall_goods_sale_status', 'mall_goods_audit_status', 'mall_goods_service_type', 'mall_goods_recommend_flag')
+);
 
 const goodsList = ref<GoodsVO[]>([]);
 const categoryOptions = ref<CategoryVO[]>([]);
@@ -507,23 +464,6 @@ const orderDialog = reactive({
   visible: false,
   goodsSn: ''
 });
-
-const saleStatusOptions = [
-  { label: '\u4E0A\u67B6', value: 'Y' },
-  { label: '\u4E0B\u67B6', value: 'N' }
-];
-
-const auditStatusOptions = [
-  { label: '\u5F85\u5BA1\u6838', value: '0' },
-  { label: '\u5BA1\u6838\u901A\u8FC7', value: '1' },
-  { label: '\u5BA1\u6838\u9A73\u56DE', value: '2' }
-];
-
-const serviceTypeOptions = [
-  { label: '\u6807\u51C6\u670D\u52A1', value: 'standard' },
-  { label: '\u5957\u9910\u670D\u52A1', value: 'package' },
-  { label: '\u5B9A\u5236\u670D\u52A1', value: 'custom' }
-];
 
 const createDefaultOrderForm = (): OrderForm => ({
   id: undefined,
@@ -566,7 +506,7 @@ const initFormData = (): GoodsEditorForm => ({
   messageContent: '',
   price: 0,
   originalPrice: 0,
-  unitName: '\u6B21',
+  unitName: '次',
   serviceTags: '',
   serviceRegions: '',
   saleStatus: 'Y',
@@ -584,7 +524,7 @@ const initFormData = (): GoodsEditorForm => ({
 
 const validateSelectField = (_rule: any, value: string, callback: (error?: Error) => void) => {
   if (!value || !value.trim()) {
-    callback(new Error('\u8BE5\u9879\u4E0D\u80FD\u4E3A\u7A7A'));
+    callback(new Error('该项不能为空'));
     return;
   }
   callback();
@@ -612,19 +552,19 @@ const data = reactive<{
     params: {}
   },
   rules: {
-    goodsSn: [{ required: true, message: '\u8BF7\u5148\u751F\u6210\u5546\u54C1\u7F16\u53F7', trigger: 'blur' }],
-    name: [{ required: true, message: '\u5546\u54C1\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }],
-    categoryId: [{ required: true, message: '\u5546\u54C1\u5206\u7C7B\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'change' }],
-    price: [{ required: true, message: '\u552E\u4EF7\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }],
-    originalPrice: [{ required: true, message: '\u539F\u4EF7\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }],
-    unitName: [{ required: true, message: '\u5355\u4F4D\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }],
-    serviceType: [{ required: true, message: '\u670D\u52A1\u7C7B\u578B\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'change' }],
-    sortOrder: [{ required: true, message: '\u6392\u5E8F\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }],
-    score: [{ required: true, message: '\u8BC4\u5206\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }],
-    galleryOssIds: [{ required: true, message: '\u8BF7\u4E0A\u4F20\u8F6E\u64AD\u56FE', trigger: 'change' }],
+    goodsSn: [{ required: true, message: '请先生成商品编号', trigger: 'blur' }],
+    name: [{ required: true, message: '商品名称不能为空', trigger: 'blur' }],
+    categoryId: [{ required: true, message: '商品分类不能为空', trigger: 'change' }],
+    price: [{ required: true, message: '售价不能为空', trigger: 'blur' }],
+    originalPrice: [{ required: true, message: '原价不能为空', trigger: 'blur' }],
+    unitName: [{ required: true, message: '单位不能为空', trigger: 'blur' }],
+    serviceType: [{ required: true, message: '服务类型不能为空', trigger: 'change' }],
+    sortOrder: [{ required: true, message: '排序不能为空', trigger: 'blur' }],
+    score: [{ required: true, message: '评分不能为空', trigger: 'blur' }],
+    galleryOssIds: [{ required: true, message: '请上传轮播图', trigger: 'change' }],
     serviceTags: [{ validator: validateSelectField, trigger: 'change' }],
     serviceRegions: [{ validator: validateSelectField, trigger: 'change' }],
-    brief: [{ required: true, message: '\u5546\u54C1\u7B80\u4ECB\u4E0D\u80FD\u4E3A\u7A7A', trigger: 'blur' }]
+    brief: [{ required: true, message: '商品简介不能为空', trigger: 'blur' }]
   },
   orderForm: createDefaultOrderForm(),
   orderRules: {
@@ -694,19 +634,23 @@ const splitCommaText = (value?: string) => {
 };
 
 const getFirstImage = (value?: string) => splitCommaText(value)[0] || '';
-const getCategoryName = (id?: string | number) => categoryMap.value.get(String(id ?? '')) || `\u5206\u7C7B#${id ?? '-'}`;
+const getCategoryName = (id?: string | number) => categoryMap.value.get(String(id ?? '')) || `分类#${id ?? '-'}`;
 
 const getBrandName = (id?: string | number) => {
   if (id === undefined || id === null || id === '') {
-    return '\u672A\u8BBE\u7F6E\u54C1\u724C';
+    return '未设置品牌';
   }
-  return brandMap.value.get(String(id)) || `\u54C1\u724C#${id}`;
+  return brandMap.value.get(String(id)) || `品牌#${id}`;
 };
 
-const getSaleStatusLabel = (value?: string) => saleStatusOptions.find((item) => item.value === value)?.label || '\u672A\u8BBE\u7F6E';
-const getAuditStatusLabel = (value?: string) => auditStatusOptions.find((item) => item.value === value)?.label || '\u672A\u8BBE\u7F6E';
-const getAuditStatusType = (value?: string) => (value === '1' ? 'success' : value === '2' ? 'danger' : 'warning');
-const getServiceTypeLabel = (value?: string) => serviceTypeOptions.find((item) => item.value === value)?.label || '-';
+const getDictLabel = (options: DictDataOption[], value?: string | number, defaultLabel = '-') => {
+  const match = options?.find((item) => String(item.value) === String(value ?? ''));
+  return match?.label || defaultLabel;
+};
+
+const getSaleStatusLabel = (value?: string) => getDictLabel(mall_goods_sale_status.value || [], value, '未设置');
+const getAuditStatusLabel = (value?: string) => getDictLabel(mall_goods_audit_status.value || [], value, '未设置');
+const getServiceTypeLabel = (value?: string) => getDictLabel(mall_goods_service_type.value || [], value, '-');
 const formatCount = (value?: number | string) => Number(value || 0).toLocaleString('zh-CN');
 const formatCurrency = (value?: number | string) => `¥${Number(value || 0).toFixed(2)}`;
 const formatScore = (value?: number | string) => Number(value || 0).toFixed(1);
@@ -831,7 +775,7 @@ const handleAdd = async () => {
   reset();
   await handleGenerateGoodsSn();
   drawer.visible = true;
-  drawer.title = '\u65B0\u589E\u5546\u54C1';
+  drawer.title = '新增商品';
 };
 
 const handleUpdate = async (row?: GoodsVO) => {
@@ -849,7 +793,7 @@ const handleUpdate = async (row?: GoodsVO) => {
   syncServiceTags();
   syncServiceRegions();
   drawer.visible = true;
-  drawer.title = '\u7F16\u8F91\u5546\u54C1';
+  drawer.title = '编辑商品';
 };
 
 const buildGalleryUrls = async () => {
@@ -879,7 +823,7 @@ const submitForm = () => {
       } else {
         await addGoods(form.value);
       }
-      proxy?.$modal.msgSuccess('\u4FDD\u5B58\u6210\u529F');
+      proxy?.$modal.msgSuccess('保存成功');
       drawer.visible = false;
       await getList();
     } finally {
@@ -893,18 +837,16 @@ const handleDelete = async (row?: GoodsVO) => {
   if (!currentIds || (Array.isArray(currentIds) && !currentIds.length)) {
     return;
   }
-  await proxy?.$modal.confirm(
-    `\u662F\u5426\u786E\u8BA4\u5220\u9664\u5546\u54C1\u6570\u636E\uFF1A${Array.isArray(currentIds) ? currentIds.join(',') : currentIds}\uFF1F`
-  );
+  await proxy?.$modal.confirm(`是否确认删除商品数据：${Array.isArray(currentIds) ? currentIds.join(',') : currentIds}？`);
   await delGoods(currentIds);
-  proxy?.$modal.msgSuccess('\u5220\u9664\u6210\u529F');
+  proxy?.$modal.msgSuccess('删除成功');
   await getList();
 };
 
 const handleCopy = async (row: GoodsVO) => {
-  await proxy?.$modal.confirm(`\u662F\u5426\u786E\u8BA4\u590D\u5236\u5546\u54C1\u201C${row.name}\u201D\uFF1F`);
+  await proxy?.$modal.confirm(`是否确认复制商品“${row.name}”？`);
   await copyGoods(row.id);
-  proxy?.$modal.msgSuccess('\u590D\u5236\u6210\u529F');
+  proxy?.$modal.msgSuccess('复制成功');
   await getList();
 };
 
@@ -958,27 +900,27 @@ const submitOrder = () => {
 
 const handleToggleSaleStatus = async (row: GoodsVO) => {
   const nextStatus = row.saleStatus === 'Y' ? 'N' : 'Y';
-  const actionText = nextStatus === 'Y' ? '\u4E0A\u67B6' : '\u4E0B\u67B6';
-  await proxy?.$modal.confirm(`\u662F\u5426\u786E\u8BA4${actionText}\u5546\u54C1\u201C${row.name}\u201D\uFF1F`);
+  const actionText = nextStatus === 'Y' ? '上架' : '下架';
+  await proxy?.$modal.confirm(`是否确认${actionText}商品“${row.name}”？`);
   await updateGoodsSaleStatus(row.id, nextStatus);
-  proxy?.$modal.msgSuccess(`${actionText}\u6210\u529F`);
+  proxy?.$modal.msgSuccess(`${actionText}成功`);
   await getList();
 };
 
 const handleAudit = async (row: GoodsVO, auditStatus: '1' | '2') => {
-  const actionText = auditStatus === '1' ? '\u5BA1\u6838\u901A\u8FC7' : '\u5BA1\u6838\u9A73\u56DE';
-  await proxy?.$modal.confirm(`\u662F\u5426\u786E\u8BA4${actionText}\u5546\u54C1\u201C${row.name}\u201D\uFF1F`);
+  const actionText = auditStatus === '1' ? '审核通过' : '审核驳回';
+  await proxy?.$modal.confirm(`是否确认${actionText}商品“${row.name}”？`);
   await updateGoodsAuditStatus(row.id, auditStatus);
-  proxy?.$modal.msgSuccess(`${actionText}\u6210\u529F`);
+  proxy?.$modal.msgSuccess(`${actionText}成功`);
   await getList();
 };
 
 const handleToggleRecommend = async (row: GoodsVO) => {
   const nextFlag = row.recommendFlag === '1' ? '0' : '1';
-  const actionText = nextFlag === '1' ? '\u63A8\u8350' : '\u53D6\u6D88\u63A8\u8350';
-  await proxy?.$modal.confirm(`\u662F\u5426\u786E\u8BA4${actionText}\u5546\u54C1\u201C${row.name}\u201D\uFF1F`);
+  const actionText = nextFlag === '1' ? '推荐' : '取消推荐';
+  await proxy?.$modal.confirm(`是否确认${actionText}商品“${row.name}”？`);
   await updateGoodsRecommendFlag(row.id, nextFlag);
-  proxy?.$modal.msgSuccess(`${actionText}\u6210\u529F`);
+  proxy?.$modal.msgSuccess(`${actionText}成功`);
   await getList();
 };
 

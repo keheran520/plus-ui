@@ -189,16 +189,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, getCurrentInstance, ref, toRefs } from 'vue'
-import type { FormInstance } from 'element-plus'
-import { useI18n } from 'vue-i18n'
+import { computed, getCurrentInstance, ref, toRefs } from 'vue';
+import type { FormInstance } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { auditComment, batchAuditComment, delSocialComment, getSocialComment, listSocialComment } from '@/api/social/comment';
 import type { SocialCommentQuery, SocialCommentVO } from '@/api/social/comment/types';
 import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
 const { proxy } = getCurrentInstance() as any;
 const { t } = useI18n();
-const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'))
+const { social_target_type } = toRefs<any>(proxy?.useDict('social_target_type'));
 
 const TEXT = computed(() => ({
   tableTitle: t('socialComment.tableTitle'),
@@ -274,7 +274,7 @@ const queryParams = ref<SocialCommentQuery>({
   content: undefined
 });
 
-const targetTypeOptions = computed(() => social_target_type.value || [])
+const targetTypeOptions = computed(() => social_target_type.value || []);
 
 const statusOptions = computed(() => [
   { label: t('socialComment.statusNormal'), value: '0' },

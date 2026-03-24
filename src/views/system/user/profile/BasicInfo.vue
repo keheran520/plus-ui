@@ -51,7 +51,7 @@
               手机号
             </div>
           </template>
-          {{ user.phonenumber || '暂无' }}
+          {{ formatContactDisplay(user.phonenumber, '未绑定手机号') }}
         </el-descriptions-item>
         <el-descriptions-item class-name="my-content" label-class-name="my-label">
           <template #label>
@@ -63,7 +63,7 @@
             </div>
           </template>
 
-          {{ user.email || '暂无' }}
+          {{ formatContactDisplay(user.email, '未绑定邮箱') }}
         </el-descriptions-item>
         <el-descriptions-item class-name="my-content" label-class-name="my-label">
           <template #label>
@@ -155,6 +155,7 @@ import { useClipboard } from '@vueuse/core';
 import BasicInfoEditDialog from './BasicInfoEditDialog.vue';
 import UserAvatar from './userAvatar.vue';
 import { UserVO } from '@/api/system/user/types';
+import { formatContactDisplay } from '@/utils/contact';
 
 interface Props {
   user: Partial<UserVO>;

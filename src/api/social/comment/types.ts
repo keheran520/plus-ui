@@ -20,6 +20,31 @@ export interface SocialCommentVO {
   userId: string | number;
 
   /**
+   * avatar
+   */
+  avatar: string;
+
+  /**
+   * nickName
+   */
+  nickName: string;
+
+  /**
+   * userName
+   */
+  userName: string;
+
+  /**
+   * replyToUserName
+   */
+  replyToUserName: string;
+
+  /**
+   * targetTitle
+   */
+  targetTitle: string;
+
+  /**
    * 评论内容
    */
   content: string;

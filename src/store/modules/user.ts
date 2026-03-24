@@ -2,6 +2,7 @@ import { to } from 'await-to-js';
 import { getToken, removeToken, setToken } from '@/utils/auth';
 import { getInfo as getUserInfo, login as loginApi, logout as logoutApi } from '@/api/login';
 import { LoginData } from '@/api/types';
+import { sanitizeContactValue } from '@/utils/contact';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
@@ -53,8 +54,8 @@ export const useUserStore = defineStore('user', () => {
       avatar.value = profile;
       userId.value = user.userId;
       tenantId.value = user.tenantId;
-      email.value = user.email || '';
-      phonenumber.value = user.phonenumber || '';
+      email.value = sanitizeContactValue(user.email);
+      phonenumber.value = sanitizeContactValue(user.phonenumber);
       return Promise.resolve();
     }
     return Promise.reject(err);

@@ -146,9 +146,7 @@
 </template>
 
 <script lang="ts" name="Brand" setup>
-import type { ComponentInternalInstance } from 'vue';
 import { computed, getCurrentInstance, onMounted, reactive, ref, toRefs } from 'vue';
-import type { ElFormInstance } from 'element-plus';
 import { addBrand, delBrand, getBrand, listBrand, updateBrand } from '@/api/mall/brand';
 import type { BrandForm, BrandQuery, BrandVO } from '@/api/mall/brand/types';
 import ImageUpload from '@/components/ImageUpload/index.vue';
@@ -356,10 +354,18 @@ onMounted(() => {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
-.summary-card--blue { background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%); }
-.summary-card--green { background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); }
-.summary-card--amber { background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%); }
-.summary-card--violet { background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%); }
+.summary-card--blue {
+  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+}
+.summary-card--green {
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+.summary-card--amber {
+  background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+}
+.summary-card--violet {
+  background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%);
+}
 
 .summary-card__label {
   color: #64748b;

@@ -54,7 +54,9 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['social:follow:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">批量删除</el-button>
+          <el-button v-hasPermi="['social:follow:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()"
+            >批量删除</el-button
+          >
           <el-button v-hasPermi="['social:follow:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
@@ -109,25 +111,25 @@
 </template>
 
 <script lang="ts" setup>
-import { getCurrentInstance, ref, toRefs } from 'vue'
-import type { FormInstance } from 'element-plus'
-import { delSocialFollow, listSocialFollow } from '@/api/social/follow'
-import type { SocialFollowQuery, SocialFollowVO } from '@/api/social/follow/types'
-import UserStatsDrawer from '../components/UserStatsDrawer.vue'
+import { getCurrentInstance, ref, toRefs } from 'vue';
+import type { FormInstance } from 'element-plus';
+import { delSocialFollow, listSocialFollow } from '@/api/social/follow';
+import type { SocialFollowQuery, SocialFollowVO } from '@/api/social/follow/types';
+import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
-const { proxy } = getCurrentInstance() as any
-const { social_follow_type } = toRefs<any>(proxy?.useDict('social_follow_type'))
+const { proxy } = getCurrentInstance() as any;
+const { social_follow_type } = toRefs<any>(proxy?.useDict('social_follow_type'));
 
-const queryRef = ref<FormInstance>()
-const followList = ref<SocialFollowVO[]>([])
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref<Array<string | number>>([])
-const multiple = ref(true)
-const total = ref(0)
-const dateRange = ref<[string, string]>()
-const userDrawerVisible = ref(false)
-const selectedUserId = ref<string | number>()
+const queryRef = ref<FormInstance>();
+const followList = ref<SocialFollowVO[]>([]);
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dateRange = ref<[string, string]>();
+const userDrawerVisible = ref(false);
+const selectedUserId = ref<string | number>();
 
 const queryParams = ref<SocialFollowQuery>({
   pageNum: 1,
@@ -137,67 +139,67 @@ const queryParams = ref<SocialFollowQuery>({
   followType: undefined,
   isMutual: undefined,
   followSource: undefined
-})
+});
 
 function getSourceLabel(value?: string) {
-  if (value === 'search') return '搜索'
-  if (value === 'recommend') return '推荐'
-  if (value === 'profile') return '主页'
-  if (value === 'content') return '内容页'
-  return value || '未知'
+  if (value === 'search') return '搜索';
+  if (value === 'recommend') return '推荐';
+  if (value === 'profile') return '主页';
+  if (value === 'content') return '内容页';
+  return value || '未知';
 }
 
 function getList() {
-  loading.value = true
-  const params = proxy.addDateRange(queryParams.value, dateRange.value)
+  loading.value = true;
+  const params = proxy.addDateRange(queryParams.value, dateRange.value);
   listSocialFollow(params)
     .then((response: any) => {
-      followList.value = response.rows
-      total.value = response.total
+      followList.value = response.rows;
+      total.value = response.total;
     })
     .finally(() => {
-      loading.value = false
-    })
+      loading.value = false;
+    });
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 function resetQuery() {
-  dateRange.value = undefined
-  queryRef.value?.resetFields()
-  handleQuery()
+  dateRange.value = undefined;
+  queryRef.value?.resetFields();
+  handleQuery();
 }
 
 function handleSelectionChange(selection: SocialFollowVO[]) {
-  ids.value = selection.map((item) => item.followId)
-  multiple.value = !selection.length
+  ids.value = selection.map((item) => item.followId);
+  multiple.value = !selection.length;
 }
 
 function openUserDrawer(userId: string | number) {
-  selectedUserId.value = userId
-  userDrawerVisible.value = true
+  selectedUserId.value = userId;
+  userDrawerVisible.value = true;
 }
 
 function handleDelete(row?: SocialFollowVO) {
-  const followIds = row ? [row.followId] : ids.value
+  const followIds = row ? [row.followId] : ids.value;
   proxy.$modal
     .confirm('确认删除选中的关注记录吗？')
     .then(() => delSocialFollow(followIds))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess('删除成功')
+      getList();
+      proxy.$modal.msgSuccess('删除成功');
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleExport() {
-  proxy.download('social/follow/export', { ...queryParams.value }, `follow_${new Date().getTime()}.xlsx`)
+  proxy.download('social/follow/export', { ...queryParams.value }, `follow_${new Date().getTime()}.xlsx`);
 }
 
-getList()
+getList();
 </script>
 
 <style lang="scss" scoped>

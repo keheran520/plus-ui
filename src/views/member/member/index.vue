@@ -1,6 +1,6 @@
 <template>
   <div class="member-manage-page">
-    <section class="summary-grid" v-loading="overviewLoading">
+    <section v-loading="overviewLoading" class="summary-grid">
       <article class="summary-card summary-card--blue">
         <span class="summary-card__label">会员总数</span>
         <strong class="summary-card__value">{{ formatCount(overview.totalMembers) }}</strong>
@@ -58,15 +58,15 @@
             <el-date-picker
               v-model="dateRange"
               class="field-date"
-              type="daterange"
-              value-format="YYYY-MM-DD"
+              end-placeholder="结束日期"
               range-separator="-"
               start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              type="daterange"
+              value-format="YYYY-MM-DD"
             />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -80,11 +80,29 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['member:member:add']" type="primary" icon="Plus" @click="handleAdd">新增会员</el-button>
-          <el-button v-hasPermi="['member:member:remove']" plain type="danger" icon="Delete" :disabled="multiple || hasSuperAdminSelected" @click="handleDelete()">批量删除</el-button>
-          <el-button v-hasPermi="['member:member:freeze']" plain type="warning" icon="Lock" :disabled="multiple || hasSuperAdminSelected" @click="handleFreeze">批量冻结</el-button>
-          <el-button v-hasPermi="['member:member:unfreeze']" plain type="success" icon="Unlock" :disabled="multiple" @click="handleUnfreeze">批量解冻</el-button>
-          <el-button v-hasPermi="['member:member:export']" plain icon="Download" @click="handleExport">导出</el-button>
+          <el-button v-hasPermi="['member:member:create']" icon="Plus" type="primary" @click="handleAdd">新增会员</el-button>
+          <el-button
+            v-hasPermi="['member:member:remove']"
+            :disabled="multiple || hasSuperAdminSelected"
+            icon="Delete"
+            plain
+            type="danger"
+            @click="handleDelete()"
+            >批量删除</el-button
+          >
+          <el-button
+            v-hasPermi="['member:member:freeze']"
+            :disabled="multiple || hasSuperAdminSelected"
+            icon="Lock"
+            plain
+            type="warning"
+            @click="handleFreeze"
+            >批量冻结</el-button
+          >
+          <el-button v-hasPermi="['member:member:unfreeze']" :disabled="multiple" icon="Unlock" plain type="success" @click="handleUnfreeze"
+            >批量解冻</el-button
+          >
+          <el-button v-hasPermi="['member:member:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="loadPageData" />
         </div>
       </header>
@@ -98,8 +116,8 @@
       </div>
 
       <el-table v-loading="loading" :data="memberList" class="member-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" fixed="left" />
-        <el-table-column label="会员信息" min-width="250" fixed="left">
+        <el-table-column align="center" fixed="left" type="selection" width="48" />
+        <el-table-column fixed="left" label="会员信息" min-width="250">
           <template #default="{ row }">
             <div class="member-cell">
               <el-avatar class="member-avatar">{{ (row.realName || row.memberNo || 'M').slice(0, 1) }}</el-avatar>
@@ -114,32 +132,32 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="等级" width="120" align="center">
+        <el-table-column align="center" label="等级" width="120">
           <template #default="{ row }">
             <el-tag :type="getLevelType(row.levelId)" effect="light" round>{{ getLevelName(row.levelId) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="来源" width="110" align="center">
+        <el-table-column align="center" label="来源" width="110">
           <template #default="{ row }">
             <el-tag effect="plain" round>{{ getSourceLabel(row.source) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="余额" width="130" align="right">
+        <el-table-column align="right" label="余额" width="130">
           <template #default="{ row }">
             <span class="amount-text amount-text--success">{{ formatCurrency(row.balance) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="积分" width="100" align="center">
+        <el-table-column align="center" label="积分" width="100">
           <template #default="{ row }">
             <span class="metric-chip metric-chip--amber">{{ formatCount(row.points) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="成长值" width="110" align="center">
+        <el-table-column align="center" label="成长值" width="110">
           <template #default="{ row }">
             <span class="metric-chip metric-chip--violet">{{ formatCount(row.growthValue) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="累计消费" width="140" align="right">
+        <el-table-column align="right" label="累计消费" width="140">
           <template #default="{ row }">
             <span class="amount-text">{{ formatCurrency(row.totalConsumeAmount) }}</span>
           </template>
@@ -152,18 +170,18 @@
         <el-table-column label="标签" min-width="180">
           <template #default="{ row }">
             <div class="tag-group">
-              <el-tag v-if="row.region" size="small" effect="plain">{{ row.region }}</el-tag>
-              <el-tag v-if="row.occupation" size="small" effect="plain" type="success">{{ row.occupation }}</el-tag>
-              <el-tag v-if="row.school" size="small" effect="plain" type="warning">{{ row.school }}</el-tag>
+              <el-tag v-if="row.region" effect="plain" size="small">{{ row.region }}</el-tag>
+              <el-tag v-if="row.occupation" effect="plain" size="small" type="success">{{ row.occupation }}</el-tag>
+              <el-tag v-if="row.school" effect="plain" size="small" type="warning">{{ row.school }}</el-tag>
               <span v-if="!row.region && !row.occupation && !row.school" class="empty-text">暂无</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="注册时间" prop="registerTime" width="170" align="center" />
-        <el-table-column label="操作" width="280" fixed="right" align="center">
+        <el-table-column align="center" label="注册时间" prop="registerTime" width="170" />
+        <el-table-column align="center" fixed="right" label="操作" width="280">
           <template #default="{ row }">
             <el-button v-hasPermi="['member:member:query']" link type="primary" @click="handleDetail(row)">详情</el-button>
-            <el-button v-hasPermi="['member:member:edit']" link type="primary" @click="handleEdit(row)">编辑</el-button>
+            <el-button v-hasPermi="['member:member:update']" link type="primary" @click="handleEdit(row)">编辑</el-button>
             <el-button
               v-if="row.status === '0' && !isSuperAdminMember(row)"
               v-hasPermi="['member:member:freeze']"
@@ -173,36 +191,38 @@
             >
               冻结
             </el-button>
-            <el-button
-              v-if="row.status === '1'"
-              v-hasPermi="['member:member:unfreeze']"
-              link
-              type="success"
-              @click="handleUnfreezeSingle(row)"
-            >
+            <el-button v-if="row.status === '1'" v-hasPermi="['member:member:unfreeze']" link type="success" @click="handleUnfreezeSingle(row)">
               解冻
             </el-button>
-            <el-button v-if="!isSuperAdminMember(row)" v-hasPermi="['member:member:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="!isSuperAdminMember(row)" v-hasPermi="['member:member:remove']" link type="danger" @click="handleDelete(row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="loadPageData" />
+      <pagination
+        v-show="total > 0"
+        v-model:limit="queryParams.pageSize"
+        v-model:page="queryParams.pageNum"
+        :total="total"
+        @pagination="loadPageData"
+      />
     </section>
 
-    <el-drawer v-model="memberDrawer" :title="memberTitle" size="720px" :close-on-click-modal="false">
-      <el-form ref="memberRef" :model="memberForm" :rules="memberRules" label-position="top" class="member-form">
+    <el-drawer v-model="memberDrawer" :close-on-click-modal="false" :title="memberTitle" size="720px">
+      <el-form ref="memberRef" :model="memberForm" :rules="memberRules" class="member-form" label-position="top">
         <div class="form-grid form-grid--link">
           <el-form-item label="关联用户" prop="userId">
             <div class="linked-user-box">
-              <el-input v-model="memberForm.userName" readonly placeholder="请选择关联用户" />
+              <el-input v-model="memberForm.userName" placeholder="请选择关联用户" readonly />
               <el-button :disabled="Boolean(memberForm.id)" icon="User" @click="handleSelectUser">选择用户</el-button>
             </div>
           </el-form-item>
           <el-form-item label="会员编号" prop="memberNo">
             <div class="linked-user-box">
-              <el-input v-model="memberForm.memberNo" readonly placeholder="点击生成会员编号" />
-              <el-button icon="Refresh" :loading="generating" @click="handleGenerateMemberNo">生成编号</el-button>
+              <el-input v-model="memberForm.memberNo" placeholder="点击生成会员编号" readonly />
+              <el-button v-hasPermi="['member:member:generateNo']" :loading="generating" icon="Refresh" @click="handleGenerateMemberNo">生成编号</el-button>
             </div>
           </el-form-item>
         </div>
@@ -215,7 +235,7 @@
             <el-input v-model="memberForm.idCard" maxlength="18" placeholder="请输入身份证号" />
           </el-form-item>
           <el-form-item label="生日" prop="birthday">
-            <el-date-picker v-model="memberForm.birthday" type="date" value-format="YYYY-MM-DD" placeholder="请选择生日" style="width: 100%" />
+            <el-date-picker v-model="memberForm.birthday" placeholder="请选择生日" style="width: 100%" type="date" value-format="YYYY-MM-DD" />
           </el-form-item>
           <el-form-item label="注册来源" prop="source">
             <el-select v-model="memberForm.source" placeholder="请选择注册来源" style="width: 100%">
@@ -234,17 +254,24 @@
         </div>
 
         <el-form-item label="个人简介" prop="signature">
-          <el-input v-model="memberForm.signature" type="textarea" :rows="3" maxlength="120" show-word-limit placeholder="补充会员画像或偏好信息" />
+          <el-input v-model="memberForm.signature" :rows="3" maxlength="120" placeholder="补充会员画像或偏好信息" show-word-limit type="textarea" />
         </el-form-item>
         <el-form-item label="运营备注" prop="remark">
-          <el-input v-model="memberForm.remark" type="textarea" :rows="4" maxlength="200" show-word-limit placeholder="记录重要背景、沟通事项或标签说明" />
+          <el-input
+            v-model="memberForm.remark"
+            :rows="4"
+            maxlength="200"
+            placeholder="记录重要背景、沟通事项或标签说明"
+            show-word-limit
+            type="textarea"
+          />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="drawer-footer">
           <el-button @click="cancelMember">取消</el-button>
-          <el-button type="primary" :loading="memberLoading" @click="submitMember">保存会员</el-button>
+          <el-button :loading="memberLoading" type="primary" @click="submitMember">保存会员</el-button>
         </div>
       </template>
     </el-drawer>
@@ -254,33 +281,44 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue'
-import { addMember, delMember, freezeMember, generateMemberNo, getLinkedUserIds, getMember, getMemberOverview, listMember, unfreezeMember, updateMember } from '@/api/member/member'
-import { listLevel } from '@/api/member/level'
-import UserSelect from '@/components/UserSelect/index.vue'
+import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue';
+import {
+  addMember,
+  delMember,
+  freezeMember,
+  generateMemberNo,
+  getLinkedUserIds,
+  getMember,
+  getMemberOverview,
+  listMember,
+  unfreezeMember,
+  updateMember
+} from '@/api/member/member';
+import { listLevel } from '@/api/member/level';
+import UserSelect from '@/components/UserSelect/index.vue';
 
-const { proxy } = getCurrentInstance() as any
+const { proxy } = getCurrentInstance() as any;
 
-const queryRef = ref()
-const memberRef = ref()
-const userSelectRef = ref()
+const queryRef = ref();
+const memberRef = ref();
+const userSelectRef = ref();
 
-const loading = ref(false)
-const overviewLoading = ref(false)
-const showSearch = ref(true)
-const memberDrawer = ref(false)
-const memberLoading = ref(false)
-const generating = ref(false)
-const total = ref(0)
-const ids = ref<number[]>([])
-const multiple = ref(true)
-const dateRange = ref<string[]>([])
+const loading = ref(false);
+const overviewLoading = ref(false);
+const showSearch = ref(true);
+const memberDrawer = ref(false);
+const memberLoading = ref(false);
+const generating = ref(false);
+const total = ref(0);
+const ids = ref<number[]>([]);
+const multiple = ref(true);
+const dateRange = ref<string[]>([]);
 
-const memberTitle = ref('新增会员')
-const selectedUsers = ref<any[]>([])
-const linkedUserIds = ref<number[]>([])
-const memberList = ref<any[]>([])
-const levelList = ref<any[]>([])
+const memberTitle = ref('新增会员');
+const selectedUsers = ref<any[]>([]);
+const linkedUserIds = ref<number[]>([]);
+const memberList = ref<any[]>([]);
+const levelList = ref<any[]>([]);
 
 const sourceOptions = [
   { label: 'APP', value: 'app' },
@@ -288,7 +326,7 @@ const sourceOptions = [
   { label: '小程序', value: 'mini' },
   { label: 'PC', value: 'pc' },
   { label: '后台添加', value: 'admin' }
-]
+];
 
 const createDefaultQuery = () => ({
   pageNum: 1,
@@ -300,7 +338,7 @@ const createDefaultQuery = () => ({
   levelId: undefined,
   status: undefined,
   source: undefined
-})
+});
 
 const createDefaultForm = () => ({
   id: undefined,
@@ -316,10 +354,10 @@ const createDefaultForm = () => ({
   school: '',
   source: 'admin',
   remark: ''
-})
+});
 
-const queryParams = ref<any>(createDefaultQuery())
-const memberForm = ref<any>(createDefaultForm())
+const queryParams = ref<any>(createDefaultQuery());
+const memberForm = ref<any>(createDefaultForm());
 const overview = reactive({
   totalMembers: 0,
   activeMembers: 0,
@@ -329,7 +367,7 @@ const overview = reactive({
   totalPoints: 0,
   totalGrowthValue: 0,
   totalConsumeAmount: 0
-})
+});
 
 const memberRules = {
   userId: [{ required: true, message: '请选择关联用户', trigger: 'change' }],
@@ -342,134 +380,134 @@ const memberRules = {
       trigger: 'blur'
     }
   ]
-}
+};
 
 const activeRate = computed(() => {
-  if (!overview.totalMembers) return '0%'
-  return `${((overview.activeMembers / overview.totalMembers) * 100).toFixed(1)}%`
-})
+  if (!overview.totalMembers) return '0%';
+  return `${((overview.activeMembers / overview.totalMembers) * 100).toFixed(1)}%`;
+});
 
-const hasSuperAdminSelected = computed(() => memberList.value.some((item: any) => ids.value.includes(item.id) && isSuperAdminMember(item)))
+const hasSuperAdminSelected = computed(() => memberList.value.some((item: any) => ids.value.includes(item.id) && isSuperAdminMember(item)));
 
 function buildRequestParams() {
-  return proxy.addDateRange({ ...queryParams.value }, dateRange.value, 'RegisterTime')
+  return proxy.addDateRange({ ...queryParams.value }, dateRange.value, 'RegisterTime');
 }
 
 async function loadLevelList() {
-  const res = await listLevel({ pageNum: 1, pageSize: 100 })
-  levelList.value = (res.rows || []).sort((a: any, b: any) => Number(a.levelSort || 0) - Number(b.levelSort || 0))
+  const res = await listLevel({ pageNum: 1, pageSize: 100 });
+  levelList.value = (res.rows || []).sort((a: any, b: any) => Number(a.levelSort || 0) - Number(b.levelSort || 0));
 }
 
 async function loadLinkedUserIds() {
-  const res = await getLinkedUserIds()
-  linkedUserIds.value = res.data || []
+  const res = await getLinkedUserIds();
+  linkedUserIds.value = res.data || [];
 }
 
 async function loadOverview() {
-  overviewLoading.value = true
+  overviewLoading.value = true;
   try {
-    const res = await getMemberOverview(buildRequestParams())
-    Object.assign(overview, res.data || {})
+    const res = await getMemberOverview(buildRequestParams());
+    Object.assign(overview, res.data || {});
   } finally {
-    overviewLoading.value = false
+    overviewLoading.value = false;
   }
 }
 
 async function loadPageData() {
-  loading.value = true
+  loading.value = true;
   try {
-    const res = await listMember(buildRequestParams())
-    memberList.value = res.rows || []
-    total.value = res.total || 0
+    const res = await listMember(buildRequestParams());
+    memberList.value = res.rows || [];
+    total.value = res.total || 0;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 async function refreshData() {
-  await Promise.all([loadPageData(), loadOverview()])
+  await Promise.all([loadPageData(), loadOverview()]);
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  refreshData()
+  queryParams.value.pageNum = 1;
+  refreshData();
 }
 
 function resetQuery() {
-  queryParams.value = createDefaultQuery()
-  dateRange.value = []
-  queryRef.value?.resetFields?.()
-  refreshData()
+  queryParams.value = createDefaultQuery();
+  dateRange.value = [];
+  queryRef.value?.resetFields?.();
+  refreshData();
 }
 
 function handleSelectionChange(selection: any[]) {
-  ids.value = selection.map((item) => item.id)
-  multiple.value = selection.length === 0
+  ids.value = selection.map((item) => item.id);
+  multiple.value = selection.length === 0;
 }
 
 function isSuperAdminMember(row: any) {
-  return Number(row?.userId) === 1
+  return Number(row?.userId) === 1;
 }
 
 async function handleGenerateMemberNo() {
-  generating.value = true
+  generating.value = true;
   try {
-    const res = await generateMemberNo()
-    memberForm.value.memberNo = res.data
-    proxy.$modal.msgSuccess('会员编号生成成功')
+    const res = await generateMemberNo();
+    memberForm.value.memberNo = res.data;
+    proxy.$modal.msgSuccess('会员编号生成成功');
   } finally {
-    generating.value = false
+    generating.value = false;
   }
 }
 
 async function handleSelectUser() {
   if (memberForm.value.id) {
-    proxy.$modal.msgWarning('编辑会员时不允许更换关联用户')
-    return
+    proxy.$modal.msgWarning('编辑会员时不允许更换关联用户');
+    return;
   }
-  await loadLinkedUserIds()
-  userSelectRef.value?.open()
+  await loadLinkedUserIds();
+  userSelectRef.value?.open();
 }
 
 function handleUserSelected(users: any[]) {
-  const user = users?.[0]
-  if (!user) return
-  memberForm.value.userId = user.userId
-  memberForm.value.userName = user.nickName || user.userName || `用户ID ${user.userId}`
+  const user = users?.[0];
+  if (!user) return;
+  memberForm.value.userId = user.userId;
+  memberForm.value.userName = user.nickName || user.userName || `用户ID ${user.userId}`;
 }
 
 function resetMemberForm() {
-  memberForm.value = createDefaultForm()
-  memberRef.value?.resetFields?.()
+  memberForm.value = createDefaultForm();
+  memberRef.value?.resetFields?.();
 }
 
 async function handleAdd() {
-  resetMemberForm()
-  memberDrawer.value = true
-  memberTitle.value = '新增会员'
-  await handleGenerateMemberNo()
+  resetMemberForm();
+  memberDrawer.value = true;
+  memberTitle.value = '新增会员';
+  await handleGenerateMemberNo();
 }
 
 async function handleEdit(row: any) {
-  const res = await getMember(row.id)
+  const res = await getMember(row.id);
   memberForm.value = {
     ...createDefaultForm(),
     ...res.data,
     userName: row.userId ? `用户ID ${row.userId}` : row.memberNo || ''
-  }
-  memberDrawer.value = true
-  memberTitle.value = '编辑会员'
+  };
+  memberDrawer.value = true;
+  memberTitle.value = '编辑会员';
 }
 
 function cancelMember() {
-  memberDrawer.value = false
-  resetMemberForm()
+  memberDrawer.value = false;
+  resetMemberForm();
 }
 
 function submitMember() {
   memberRef.value?.validate(async (valid: boolean) => {
-    if (!valid) return
-    memberLoading.value = true
+    if (!valid) return;
+    memberLoading.value = true;
     try {
       if (memberForm.value.id) {
         await updateMember({
@@ -485,8 +523,8 @@ function submitMember() {
           occupation: memberForm.value.occupation,
           school: memberForm.value.school,
           remark: memberForm.value.remark
-        })
-        proxy.$modal.msgSuccess('会员信息已更新')
+        });
+        proxy.$modal.msgSuccess('会员信息已更新');
       } else {
         await addMember({
           userId: memberForm.value.userId,
@@ -500,89 +538,89 @@ function submitMember() {
           occupation: memberForm.value.occupation,
           school: memberForm.value.school,
           remark: memberForm.value.remark
-        })
-        proxy.$modal.msgSuccess('会员创建成功')
+        });
+        proxy.$modal.msgSuccess('会员创建成功');
       }
-      memberDrawer.value = false
-      await refreshData()
+      memberDrawer.value = false;
+      await refreshData();
     } finally {
-      memberLoading.value = false
+      memberLoading.value = false;
     }
-  })
+  });
 }
 
 function handleDetail(row: any) {
-  proxy.$router.push({ path: '/member/member/detail/' + row.userId })
+  proxy.$router.push({ path: '/member/member/detail/' + row.userId });
 }
 
 function handleDelete(row?: any) {
-  const memberIds = row?.id || ids.value
+  const memberIds = row?.id || ids.value;
   if (!memberIds || (Array.isArray(memberIds) && memberIds.length === 0)) {
-    proxy.$modal.msgWarning('请先选择要删除的会员')
-    return
+    proxy.$modal.msgWarning('请先选择要删除的会员');
+    return;
   }
   if ((row && isSuperAdminMember(row)) || (!row && hasSuperAdminSelected.value)) {
-    proxy.$modal.msgWarning('超级管理员关联会员不允许删除')
-    return
+    proxy.$modal.msgWarning('超级管理员关联会员不允许删除');
+    return;
   }
-  const label = row?.memberNo || `${ids.value.length} 位会员`
+  const label = row?.memberNo || `${ids.value.length} 位会员`;
   proxy.$modal
     .confirm(`确认删除 ${label} 吗？删除后会同步清理该会员的余额日志、积分日志、成长日志，但不会删除关联的用户记录。`)
     .then(() => delMember(memberIds))
     .then(async () => {
-      proxy.$modal.msgSuccess('删除成功')
-      await refreshData()
+      proxy.$modal.msgSuccess('删除成功');
+      await refreshData();
     })
-    .catch(() => undefined)
+    .catch(() => undefined);
 }
 
 function handleFreeze() {
   if (!ids.value.length) {
-    proxy.$modal.msgWarning('请先选择要冻结的会员')
-    return
+    proxy.$modal.msgWarning('请先选择要冻结的会员');
+    return;
   }
   if (hasSuperAdminSelected.value) {
-    proxy.$modal.msgWarning('超级管理员关联会员不允许冻结')
-    return
+    proxy.$modal.msgWarning('超级管理员关联会员不允许冻结');
+    return;
   }
   proxy.$modal
     .confirm(`确认冻结已选择的 ${ids.value.length} 位会员吗？`)
     .then(() => freezeMember(ids.value))
     .then(async () => {
-      proxy.$modal.msgSuccess('冻结成功')
-      await refreshData()
+      proxy.$modal.msgSuccess('冻结成功');
+      await refreshData();
     })
-    .catch(() => undefined)
+    .catch(() => undefined);
 }
 
 function handleUnfreeze() {
   if (!ids.value.length) {
-    proxy.$modal.msgWarning('请先选择要解冻的会员')
-    return
+    proxy.$modal.msgWarning('请先选择要解冻的会员');
+    return;
   }
   proxy.$modal
     .confirm(`确认解冻已选择的 ${ids.value.length} 位会员吗？`)
     .then(() => unfreezeMember(ids.value))
     .then(async () => {
-      proxy.$modal.msgSuccess('解冻成功')
-      await refreshData()
+      proxy.$modal.msgSuccess('解冻成功');
+      await refreshData();
     })
-    .catch(() => undefined)
+    .catch(() => undefined);
 }
 
 function handleFreezeSingle(row: any) {
   if (isSuperAdminMember(row)) {
-    proxy.$modal.msgWarning('超级管理员关联会员不允许冻结')
-    return
+    proxy.$modal.msgWarning('超级管理员关联会员不允许冻结');
+    return;
   }
   proxy.$modal
     .confirm(`确认冻结会员 ${row.memberNo} 吗？`)
     .then(() => freezeMember([row.id]))
     .then(async () => {
-      proxy.$modal.msgSuccess('冻结成功')
-      await refreshData()
+      proxy.$modal.msgSuccess('冻结成功');
+      await refreshData();
     })
-    .catch(() => undefined)
+    .catch(() => undefined);
 }
 
 function handleUnfreezeSingle(row: any) {
@@ -590,63 +628,63 @@ function handleUnfreezeSingle(row: any) {
     .confirm(`确认解冻会员 ${row.memberNo} 吗？`)
     .then(() => unfreezeMember([row.id]))
     .then(async () => {
-      proxy.$modal.msgSuccess('解冻成功')
-      await refreshData()
+      proxy.$modal.msgSuccess('解冻成功');
+      await refreshData();
     })
-    .catch(() => undefined)
+    .catch(() => undefined);
 }
 
 function handleExport() {
-  proxy.download('member/member/export', buildRequestParams(), `member_${Date.now()}.xlsx`)
+  proxy.download('member/member/export', buildRequestParams(), `member_${Date.now()}.xlsx`);
 }
 
 function getLevelName(levelId?: number | string) {
-  const target = levelList.value.find((item) => String(item.id) === String(levelId))
-  return target?.levelName || '未分层'
+  const target = levelList.value.find((item) => String(item.id) === String(levelId));
+  return target?.levelName || '未分层';
 }
 
 function getLevelType(levelId?: number | string) {
-  const target = levelList.value.find((item) => String(item.id) === String(levelId))
-  const code = String(target?.levelCode || '').toUpperCase()
-  if (['V6', 'V7'].includes(code)) return 'danger'
-  if (['V4', 'V5'].includes(code)) return 'warning'
-  if (['V2', 'V3'].includes(code)) return 'success'
-  return 'info'
+  const target = levelList.value.find((item) => String(item.id) === String(levelId));
+  const code = String(target?.levelCode || '').toUpperCase();
+  if (['V6', 'V7'].includes(code)) return 'danger';
+  if (['V4', 'V5'].includes(code)) return 'warning';
+  if (['V2', 'V3'].includes(code)) return 'success';
+  return 'info';
 }
 
 function getStatusLabel(status?: string) {
-  return status === '1' ? '冻结' : '正常'
+  return status === '1' ? '冻结' : '正常';
 }
 
 function getStatusType(status?: string) {
-  return status === '1' ? 'danger' : 'success'
+  return status === '1' ? 'danger' : 'success';
 }
 
 function getSourceLabel(source?: string) {
-  return sourceOptions.find((item) => item.value === source)?.label || '未知来源'
+  return sourceOptions.find((item) => item.value === source)?.label || '未知来源';
 }
 
 function formatCurrency(value?: number) {
-  return `¥${((value || 0) / 100).toFixed(2)}`
+  return `¥${((value || 0) / 100).toFixed(2)}`;
 }
 
 function formatCount(value?: number) {
-  return `${value || 0}`
+  return `${value || 0}`;
 }
 
 function desensitizeIdCard(idCard?: string) {
-  if (!idCard) return ''
-  if (idCard.length < 8) return idCard
-  return idCard.replace(/^(.{6})(.*)(.{4})$/, '$1********$3')
+  if (!idCard) return '';
+  if (idCard.length < 8) return idCard;
+  return idCard.replace(/^(.{6})(.*)(.{4})$/, '$1********$3');
 }
 
 onMounted(async () => {
-  await loadLevelList()
-  await refreshData()
-})
+  await loadLevelList();
+  await refreshData();
+});
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .member-manage-page {
   padding: 16px;
   min-height: calc(100vh - 84px);

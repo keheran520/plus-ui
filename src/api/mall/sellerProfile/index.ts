@@ -1,13 +1,10 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { SellerProfileVO, SellerProfileForm, SellerProfileQuery } from '@/api/mall/sellerProfile/types';
+import { SellerProfileForm, SellerProfileQuery, SellerProfileVO } from '@/api/mall/sellerProfile/types';
 
 /**
- * 查询服务商资料列表
- * @param query
- * @returns {*}
+ * 查询服务商档案列表
  */
-
 export const listSellerProfile = (query?: SellerProfileQuery): AxiosPromise<SellerProfileVO[]> => {
   return request({
     url: '/mall/sellerProfile/list',
@@ -17,8 +14,7 @@ export const listSellerProfile = (query?: SellerProfileQuery): AxiosPromise<Sell
 };
 
 /**
- * 查询服务商资料详细
- * @param id
+ * 查询服务商档案详情
  */
 export const getSellerProfile = (id: string | number): AxiosPromise<SellerProfileVO> => {
   return request({
@@ -28,32 +24,79 @@ export const getSellerProfile = (id: string | number): AxiosPromise<SellerProfil
 };
 
 /**
- * 新增服务商资料
- * @param data
+ * 查询已绑定服务商档案的会员 ID 列表
+ */
+export const getSellerLinkedMemberIds = (): AxiosPromise<number[]> => {
+  return request({
+    url: '/mall/sellerProfile/linkedMemberIds',
+    method: 'get'
+  });
+};
+
+/**
+ * 新增服务商档案
  */
 export const addSellerProfile = (data: SellerProfileForm) => {
   return request({
     url: '/mall/sellerProfile',
     method: 'post',
-    data: data
+    data
   });
 };
 
 /**
- * 修改服务商资料
- * @param data
+ * 修改服务商档案
  */
 export const updateSellerProfile = (data: SellerProfileForm) => {
   return request({
     url: '/mall/sellerProfile',
     method: 'put',
-    data: data
+    data
   });
 };
 
 /**
- * 删除服务商资料
- * @param id
+ * 更新服务状态
+ */
+export const updateSellerServiceStatus = (id: string | number, serviceStatus: string) => {
+  return request({
+    url: `/mall/sellerProfile/${id}/serviceStatus/${serviceStatus}`,
+    method: 'put'
+  });
+};
+
+/**
+ * 更新审核状态
+ */
+export const updateSellerVerifyStatus = (id: string | number, verifyStatus: string) => {
+  return request({
+    url: `/mall/sellerProfile/${id}/verifyStatus/${verifyStatus}`,
+    method: 'put'
+  });
+};
+
+/**
+ * 更新推荐状态
+ */
+export const updateSellerFeaturedFlag = (id: string | number, featuredFlag: string) => {
+  return request({
+    url: `/mall/sellerProfile/${id}/featuredFlag/${featuredFlag}`,
+    method: 'put'
+  });
+};
+
+/**
+ * 更新系统状态
+ */
+export const updateSellerSystemStatus = (id: string | number, status: string) => {
+  return request({
+    url: `/mall/sellerProfile/${id}/status/${status}`,
+    method: 'put'
+  });
+};
+
+/**
+ * 删除服务商档案
  */
 export const delSellerProfile = (id: string | number | Array<string | number>) => {
   return request({

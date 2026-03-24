@@ -10,10 +10,10 @@
           <div class="font-medium text-gray-900 text-base">{{ userStore.nickname || 'Admin' }}</div>
           <div class="text-xs text-gray-400 mt-1">ID: {{ userStore.userId || '10001' }}</div>
           <div class="flex items-center mt-2 gap-2">
-            <span v-if="userStore.email && userStore.email !== '-1'" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+            <span v-if="isContactBound(userStore.email)" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
               <el-icon class="mr-1 w-3 h-3"><CircleCheck /></el-icon> {{ maskEmail(userStore.email) }}
             </span>
-            <span v-if="userStore.phonenumber && userStore.phonenumber !== '-1'" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+            <span v-if="isContactBound(userStore.phonenumber)" class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
               <el-icon class="mr-1 w-3 h-3"><CircleCheck /></el-icon> {{ maskPhone(userStore.phonenumber) }}
             </span>
           </div>
@@ -81,6 +81,7 @@
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
 import { ArrowRight, CircleCheck, CopyDocument, InfoFilled } from '@element-plus/icons-vue';
+import { isContactBound, maskEmail, maskPhone } from '@/utils/contact';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -90,24 +91,6 @@ const goToProfile = () => {
   router.push('/user/profile');
 };
 
-// 手机号脱敏处理
-const maskPhone = (phone: string) => {
-  if (!phone || phone.length < 11) return phone;
-  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-};
-
-// 邮箱脱敏处理
-const maskEmail = (email: string) => {
-  if (!email) return email;
-  const [username, domain] = email.split('@');
-  if (!username || !domain) return email;
-  
-  if (username.length <= 2) {
-    return `${username[0]}***@${domain}`;
-  }
-  
-  return `${username.slice(0, 2)}***@${domain}`;
-};
 </script>
 
 <style scoped>

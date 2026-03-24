@@ -25,10 +25,10 @@
               {{ userData.nickName || '-' }}
             </el-descriptions-item>
             <el-descriptions-item label="邮箱">
-              {{ userData.email || '-' }}
+              {{ formatContactDisplay(userData.email) }}
             </el-descriptions-item>
             <el-descriptions-item label="手机号">
-              {{ userData.phonenumber || '-' }}
+              {{ formatContactDisplay(userData.phonenumber) }}
             </el-descriptions-item>
             <el-descriptions-item label="性别">
               <el-tag v-if="userData.sex === '0'" size="small" type="info">男</el-tag>
@@ -71,6 +71,7 @@
 import { ref, watch } from 'vue';
 import { User } from '@element-plus/icons-vue';
 import { getUser } from '@/api/system/user';
+import { formatContactDisplay } from '@/utils/contact';
 
 interface Props {
   modelValue: boolean;

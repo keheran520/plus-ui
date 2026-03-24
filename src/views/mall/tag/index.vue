@@ -1,6 +1,6 @@
 <template>
   <div class="tag-manage-page">
-    <section class="summary-grid" v-loading="loading">
+    <section v-loading="loading" class="summary-grid">
       <article class="summary-card summary-card--blue">
         <span class="summary-card__label">标签总数</span>
         <strong class="summary-card__value">{{ total }}</strong>
@@ -40,10 +40,10 @@
             </el-select>
           </el-form-item>
           <el-form-item label="排序" prop="sortOrder">
-            <el-input-number v-model="queryParams.sortOrder" class="field-sm" :min="0" controls-position="right" />
+            <el-input-number v-model="queryParams.sortOrder" :min="0" class="field-sm" controls-position="right" />
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -57,10 +57,10 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['mall:tag:add']" type="primary" icon="Plus" @click="handleAdd">新增标签</el-button>
-          <el-button v-hasPermi="['mall:tag:edit']" plain type="success" icon="Edit" :disabled="single" @click="handleUpdate()">编辑</el-button>
-          <el-button v-hasPermi="['mall:tag:remove']" plain type="danger" icon="Delete" :disabled="multiple" @click="handleDelete()">删除</el-button>
-          <el-button v-hasPermi="['mall:tag:export']" plain icon="Download" @click="handleExport">导出</el-button>
+          <el-button v-hasPermi="['mall:tag:add']" icon="Plus" type="primary" @click="handleAdd">新增标签</el-button>
+          <el-button v-hasPermi="['mall:tag:edit']" :disabled="single" icon="Edit" plain type="success" @click="handleUpdate()">编辑</el-button>
+          <el-button v-hasPermi="['mall:tag:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()">删除</el-button>
+          <el-button v-hasPermi="['mall:tag:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
       </header>
@@ -72,11 +72,11 @@
       </div>
 
       <el-table v-loading="loading" :data="tagList" class="tag-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" fixed="left" />
-        <el-table-column label="标签信息" min-width="260" fixed="left">
+        <el-table-column align="center" fixed="left" type="selection" width="48" />
+        <el-table-column fixed="left" label="标签信息" min-width="260">
           <template #default="{ row }">
             <div class="tag-info">
-              <div class="tag-badge" :class="row.tagType === 'service_region' ? 'tag-badge--region' : 'tag-badge--service'">
+              <div :class="row.tagType === 'service_region' ? 'tag-badge--region' : 'tag-badge--service'" class="tag-badge">
                 {{ row.tagType === 'service_region' ? '区服' : '标签' }}
               </div>
               <div class="tag-meta">
@@ -92,21 +92,21 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="标签类型" width="140" align="center">
+        <el-table-column align="center" label="标签类型" width="140">
           <template #default="{ row }">
-            <el-tag effect="plain" round :type="row.tagType === 'service_region' ? 'warning' : 'primary'">
+            <el-tag :type="row.tagType === 'service_region' ? 'warning' : 'primary'" effect="plain" round>
               {{ getTagTypeLabel(row.tagType) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="排序" prop="sortOrder" width="100" align="center" />
-        <el-table-column label="备注" prop="remark" min-width="220" show-overflow-tooltip>
+        <el-table-column align="center" label="排序" prop="sortOrder" width="100" />
+        <el-table-column label="备注" min-width="220" prop="remark" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.remark || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" width="170" align="center" />
-        <el-table-column label="操作" width="160" fixed="right" align="center">
+        <el-table-column align="center" label="创建时间" prop="createTime" width="170" />
+        <el-table-column align="center" fixed="right" label="操作" width="160">
           <template #default="{ row }">
             <el-button v-hasPermi="['mall:tag:edit']" link type="primary" @click="handleUpdate(row)">编辑</el-button>
             <el-button v-hasPermi="['mall:tag:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
@@ -114,11 +114,11 @@
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:limit="queryParams.pageSize" v-model:page="queryParams.pageNum" :total="total" @pagination="getList" />
     </section>
 
-    <el-drawer v-model="drawer.visible" :title="drawer.title" size="560px" :close-on-click-modal="false">
-      <el-form ref="tagFormRef" :model="form" :rules="rules" label-position="top" class="tag-form">
+    <el-drawer v-model="drawer.visible" :close-on-click-modal="false" :title="drawer.title" size="560px">
+      <el-form ref="tagFormRef" :model="form" :rules="rules" class="tag-form" label-position="top">
         <div class="form-grid">
           <el-form-item label="标签名称" prop="tagName">
             <el-input v-model="form.tagName" maxlength="50" placeholder="请输入标签名称" />
@@ -138,24 +138,22 @@
           </el-form-item>
         </div>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="4" maxlength="200" show-word-limit placeholder="请输入备注说明" />
+          <el-input v-model="form.remark" :rows="4" maxlength="200" placeholder="请输入备注说明" show-word-limit type="textarea" />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="drawer-footer">
           <el-button @click="cancel">取消</el-button>
-          <el-button type="primary" :loading="buttonLoading" @click="submitForm">保存</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">保存</el-button>
         </div>
       </template>
     </el-drawer>
   </div>
 </template>
 
-<script setup name="Tag" lang="ts">
+<script lang="ts" name="Tag" setup>
 import { computed, getCurrentInstance, onMounted, reactive, ref, toRefs } from 'vue';
-import type { ComponentInternalInstance } from 'vue';
-import type { ElFormInstance } from 'element-plus';
 import { addTag, delTag, getTag, listTag, updateTag } from '@/api/mall/tag';
 import type { TagForm, TagQuery, TagVO } from '@/api/mall/tag/types';
 
@@ -216,14 +214,14 @@ const { queryParams, form, rules } = toRefs(data);
 const summary = computed(() => {
   const list = tagList.value;
   return {
-    enabledCount: list.filter(item => item.status === '0').length,
-    disabledCount: list.filter(item => item.status === '1').length,
-    serviceTagCurrentPage: list.filter(item => item.tagType === 'service_tag').length,
-    serviceRegionCurrentPage: list.filter(item => item.tagType === 'service_region').length
+    enabledCount: list.filter((item) => item.status === '0').length,
+    disabledCount: list.filter((item) => item.status === '1').length,
+    serviceTagCurrentPage: list.filter((item) => item.tagType === 'service_tag').length,
+    serviceRegionCurrentPage: list.filter((item) => item.tagType === 'service_region').length
   };
 });
 
-const getTagTypeLabel = (value?: string) => tagTypeOptions.find(item => item.value === value)?.label || '未知类型';
+const getTagTypeLabel = (value?: string) => tagTypeOptions.find((item) => item.value === value)?.label || '未知类型';
 const getStatusLabel = (value?: string) => sys_normal_disable.value?.find((item: any) => item.value === value)?.label || '未知状态';
 
 const getList = async () => {
@@ -259,7 +257,7 @@ const resetQuery = () => {
 };
 
 const handleSelectionChange = (selection: TagVO[]) => {
-  ids.value = selection.map(item => item.id);
+  ids.value = selection.map((item) => item.id);
   single.value = selection.length !== 1;
   multiple.value = selection.length === 0;
 };
@@ -280,7 +278,7 @@ const handleUpdate = async (row?: TagVO) => {
 };
 
 const submitForm = () => {
-  tagFormRef.value?.validate(async valid => {
+  tagFormRef.value?.validate(async (valid) => {
     if (!valid) {
       return;
     }
@@ -323,7 +321,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .tag-manage-page {
   padding: 16px;
   min-height: calc(100vh - 84px);

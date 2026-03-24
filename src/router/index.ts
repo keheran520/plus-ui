@@ -178,6 +178,20 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/mall',
+    component: Layout,
+    hidden: true,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: 'sellerProfile/detail/:id',
+        component: () => import('@/views/mall/sellerProfile/detail.vue'),
+        name: 'SellerProfileDetail',
+        meta: { title: '服务商详情', icon: 'user', activeMenu: '/mall/sellerProfile' }
+      }
+    ]
+  },
+  {
     path: '/pve',
     component: Layout,
     hidden: true,

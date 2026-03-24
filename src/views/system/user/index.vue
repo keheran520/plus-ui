@@ -101,7 +101,11 @@
             <el-table-column v-if="columns[1].visible" key="userName" :show-overflow-tooltip="true" align="center" label="用户名称" prop="userName" />
             <el-table-column v-if="columns[2].visible" key="nickName" :show-overflow-tooltip="true" align="center" label="用户昵称" prop="nickName" />
             <el-table-column v-if="columns[3].visible" key="deptName" :show-overflow-tooltip="true" align="center" label="部门" prop="deptName" />
-            <el-table-column v-if="columns[4].visible" key="phonenumber" align="center" label="手机号码" prop="phonenumber" width="120" />
+            <el-table-column v-if="columns[4].visible" key="phonenumber" align="center" label="手机号码" width="120">
+              <template #default="scope">
+                {{ formatContactDisplay(scope.row.phonenumber) }}
+              </template>
+            </el-table-column>
             <el-table-column v-if="columns[5].visible" key="status" align="center" label="状态">
               <template #default="scope">
                 <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="handleStatusChange(scope.row)"></el-switch>
@@ -299,6 +303,7 @@ import { to } from 'await-to-js';
 import { optionselect } from '@/api/system/post';
 import { checkPermi } from '@/utils/permission';
 import { useUserStore } from '@/store/modules/user';
+import { formatContactDisplay } from '@/utils/contact';
 
 const router = useRouter();
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;

@@ -44,10 +44,10 @@ export interface CategoryVO {
    */
   remark: string;
 
-    /**
-     * 子对象
-     */
-    children: CategoryVO[];
+  /**
+   * 子对象
+   */
+  children: CategoryVO[];
 }
 
 export interface CategoryForm extends BaseEntity {
@@ -74,7 +74,7 @@ export interface CategoryForm extends BaseEntity {
   /**
    * 分类图片OSSID
    */
-  picOssId?: string | number;
+  picOssId?: string[] | number[];
 
   /**
    * 分类图片地址
@@ -95,11 +95,9 @@ export interface CategoryForm extends BaseEntity {
    * 备注
    */
   remark?: string;
-
 }
 
 export interface CategoryQuery {
-
   /**
    * 父分类ID
    */

@@ -1,6 +1,6 @@
 <template>
   <div class="mall-category-page">
-    <section class="summary-grid" v-loading="summaryLoading">
+    <section v-loading="summaryLoading" class="summary-grid">
       <article class="summary-card summary-card--blue">
         <span class="summary-card__label">分类总数</span>
         <strong class="summary-card__value">{{ formatCount(summary.total) }}</strong>
@@ -35,7 +35,7 @@
             </el-select>
           </el-form-item>
           <el-form-item class="filter-actions">
-            <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
+            <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -49,8 +49,8 @@
           <span class="title-meta">{{ formatCount(summary.total) }} 条分类记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['mall:category:add']" type="primary" icon="Plus" @click="handleAdd()">新增分类</el-button>
-          <el-button plain type="info" icon="Sort" @click="handleToggleExpandAll">{{ isExpandAll ? '折叠全部' : '展开全部' }}</el-button>
+          <el-button v-hasPermi="['mall:category:add']" icon="Plus" type="primary" @click="handleAdd()">新增分类</el-button>
+          <el-button icon="Sort" plain type="info" @click="handleToggleExpandAll">{{ isExpandAll ? '折叠全部' : '展开全部' }}</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
       </header>
@@ -67,14 +67,14 @@
         :data="categoryList"
         :default-expand-all="isExpandAll"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        row-key="id"
         class="category-table"
+        row-key="id"
       >
         <el-table-column label="分类信息" min-width="360">
           <template #default="{ row }">
             <div class="category-cell">
               <div class="category-cover-box">
-                <el-image v-if="row.picUrl" class="category-cover" :src="row.picUrl" fit="cover" preview-teleported />
+                <el-image v-if="row.picUrl" :src="row.picUrl" class="category-cover" fit="cover" preview-teleported />
                 <div v-else class="category-cover__placeholder">分类图</div>
               </div>
               <div class="category-meta">
@@ -90,18 +90,18 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="层级" width="120" align="center">
+        <el-table-column align="center" label="层级" width="120">
           <template #default="{ row }">
             <el-tag effect="plain" round>{{ Number(row.parentId || 0) === 0 ? '一级分类' : '二级分类' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="排序" prop="sortOrder" width="100" align="center" />
+        <el-table-column align="center" label="排序" prop="sortOrder" width="100" />
         <el-table-column label="备注" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.remark || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="190" fixed="right" align="center">
+        <el-table-column align="center" fixed="right" label="操作" width="190">
           <template #default="{ row }">
             <el-button v-hasPermi="['mall:category:edit']" link type="primary" @click="handleUpdate(row)">编辑</el-button>
             <el-button v-hasPermi="['mall:category:add']" link type="primary" @click="handleAdd(row)">新增下级</el-button>
@@ -111,17 +111,17 @@
       </el-table>
     </section>
 
-    <el-drawer v-model="drawer.visible" :title="drawer.title" size="680px" :close-on-click-modal="false">
-      <el-form ref="categoryFormRef" :model="form" :rules="rules" label-position="top" class="drawer-form">
+    <el-drawer v-model="drawer.visible" :close-on-click-modal="false" :title="drawer.title" size="680px">
+      <el-form ref="categoryFormRef" :model="form" :rules="rules" class="drawer-form" label-position="top">
         <div class="form-grid">
           <el-form-item label="父级分类" prop="parentId">
             <el-tree-select
               v-model="form.parentId"
               :data="categoryOptions"
               :props="{ value: 'id', label: 'name', children: 'children' }"
-              value-key="id"
               check-strictly
               placeholder="请选择父级分类"
+              value-key="id"
             />
           </el-form-item>
           <el-form-item label="分类名称" prop="name">
@@ -140,29 +140,27 @@
         <el-form-item label="分类图片">
           <image-upload v-model="form.picOssId" :limit="1" @upload-success="handleUploadSuccess" />
           <div v-if="form.picUrl" class="image-preview">
-            <el-image class="preview-image" :src="form.picUrl" fit="cover" preview-teleported />
+            <el-image :src="form.picUrl" class="preview-image" fit="cover" preview-teleported />
           </div>
         </el-form-item>
 
         <el-form-item label="分类备注">
-          <el-input v-model="form.remark" type="textarea" :rows="4" maxlength="300" show-word-limit placeholder="请输入分类备注" />
+          <el-input v-model="form.remark" :rows="4" maxlength="300" placeholder="请输入分类备注" show-word-limit type="textarea" />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="drawer-footer">
           <el-button @click="cancel">取消</el-button>
-          <el-button type="primary" :loading="buttonLoading" @click="submitForm">保存分类</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">保存分类</el-button>
         </div>
       </template>
     </el-drawer>
   </div>
 </template>
 
-<script setup name="Category" lang="ts">
+<script lang="ts" name="Category" setup>
 import { computed, getCurrentInstance, onMounted, reactive, ref, toRefs } from 'vue';
-import type { ComponentInternalInstance } from 'vue';
-import type { ElFormInstance, ElTableInstance } from 'element-plus';
 import { addCategory, delCategory, getCategory, listCategory, updateCategory } from '@/api/mall/category';
 import type { CategoryForm, CategoryQuery, CategoryVO } from '@/api/mall/category/types';
 import ImageUpload from '@/components/ImageUpload/index.vue';
@@ -238,7 +236,7 @@ const summary = ref<SummaryState>({
 const flatList = computed(() => {
   const result: CategoryVO[] = [];
   const travel = (list: CategoryVO[]) => {
-    list.forEach(item => {
+    list.forEach((item) => {
       result.push(item);
       if (item.children?.length) {
         travel(item.children);
@@ -253,10 +251,10 @@ const buildSummary = () => {
   const list = flatList.value;
   summary.value = {
     total: list.length,
-    enabled: list.filter(item => item.status === '0').length,
-    disabled: list.filter(item => item.status === '1').length,
-    levelOne: list.filter(item => Number(item.parentId || 0) === 0).length,
-    levelTwo: list.filter(item => Number(item.parentId || 0) !== 0).length
+    enabled: list.filter((item) => item.status === '0').length,
+    disabled: list.filter((item) => item.status === '1').length,
+    levelOne: list.filter((item) => Number(item.parentId || 0) === 0).length,
+    levelTwo: list.filter((item) => Number(item.parentId || 0) !== 0).length
   };
 };
 
@@ -317,7 +315,7 @@ const handleUpdate = async (row: CategoryVO) => {
 };
 
 const submitForm = () => {
-  categoryFormRef.value?.validate(async valid => {
+  categoryFormRef.value?.validate(async (valid) => {
     if (!valid) {
       return;
     }
@@ -350,7 +348,7 @@ const handleToggleExpandAll = () => {
 };
 
 const toggleExpandAll = (list: CategoryVO[], status: boolean) => {
-  list.forEach(item => {
+  list.forEach((item) => {
     categoryTableRef.value?.toggleRowExpansion(item, status);
     if (item.children?.length) {
       toggleExpandAll(item.children, status);
@@ -379,7 +377,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .mall-category-page {
   display: flex;
   flex-direction: column;
@@ -404,10 +402,18 @@ onMounted(() => {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
-.summary-card--blue { background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%); }
-.summary-card--green { background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); }
-.summary-card--amber { background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%); }
-.summary-card--violet { background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%); }
+.summary-card--blue {
+  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+}
+.summary-card--green {
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+.summary-card--amber {
+  background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+}
+.summary-card--violet {
+  background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%);
+}
 
 .summary-card__label {
   color: #64748b;
@@ -439,12 +445,24 @@ onMounted(() => {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
-.filter-panel { padding: 16px 18px 2px; }
-.list-panel { padding: 14px 16px 4px; }
-.filter-form :deep(.el-form-item) { margin-bottom: 14px; }
-.field-sm { width: 180px; }
-.field-md { width: 240px; }
-.filter-actions { margin-left: auto; }
+.filter-panel {
+  padding: 16px 18px 2px;
+}
+.list-panel {
+  padding: 14px 16px 4px;
+}
+.filter-form :deep(.el-form-item) {
+  margin-bottom: 14px;
+}
+.field-sm {
+  width: 180px;
+}
+.field-md {
+  width: 240px;
+}
+.filter-actions {
+  margin-left: auto;
+}
 
 .panel-toolbar {
   display: flex;
@@ -581,12 +599,24 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .mall-category-page { padding: 12px; }
+  .mall-category-page {
+    padding: 12px;
+  }
   .summary-grid,
-  .form-grid { grid-template-columns: 1fr; }
-  .panel-toolbar { flex-direction: column; align-items: flex-start; }
-  .toolbar-actions { width: 100%; justify-content: flex-start; }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .panel-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
   .field-sm,
-  .field-md { width: 100%; }
+  .field-md {
+    width: 100%;
+  }
 }
 </style>

@@ -45,45 +45,47 @@
           <span class="title-meta">{{ total }} 条记录</span>
         </div>
         <div class="toolbar-actions">
-          <el-button v-hasPermi="['social:userAction:remove']" :disabled="multiple" type="danger" plain icon="Delete" @click="handleDelete()">批量删除</el-button>
-          <el-button v-hasPermi="['social:userAction:export']" plain icon="Download" @click="handleExport">导出</el-button>
+          <el-button v-hasPermi="['social:userAction:remove']" :disabled="multiple" icon="Delete" plain type="danger" @click="handleDelete()"
+            >批量删除</el-button
+          >
+          <el-button v-hasPermi="['social:userAction:export']" icon="Download" plain @click="handleExport">导出</el-button>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
         </div>
       </header>
 
       <el-table v-loading="loading" :data="actionList" class="social-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="48" align="center" />
-        <el-table-column label="行为ID" prop="actionId" width="110" align="center" />
-        <el-table-column label="用户ID" width="120" align="center">
+        <el-table-column align="center" type="selection" width="48" />
+        <el-table-column align="center" label="行为ID" prop="actionId" width="110" />
+        <el-table-column align="center" label="用户ID" width="120">
           <template #default="{ row }">
             <el-link type="primary" @click="showUserDetail(row.userId)">{{ row.userId }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="行为类型" width="120" align="center">
+        <el-table-column align="center" label="行为类型" width="120">
           <template #default="{ row }">
             <dict-tag :options="social_action_type" :value="row.actionType" />
           </template>
         </el-table-column>
-        <el-table-column label="内容类型" width="120" align="center">
+        <el-table-column align="center" label="内容类型" width="120">
           <template #default="{ row }">
             <dict-tag :options="social_target_type" :value="row.targetType" />
           </template>
         </el-table-column>
-        <el-table-column label="内容ID" prop="targetId" width="120" align="center" />
-        <el-table-column label="内容标题" prop="targetTitle" min-width="220" show-overflow-tooltip>
+        <el-table-column align="center" label="内容ID" prop="targetId" width="120" />
+        <el-table-column label="内容标题" min-width="220" prop="targetTitle" show-overflow-tooltip>
           <template #default="{ row }">
             <span>{{ row.targetTitle || '暂无标题' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="行为值" width="90" align="center">
+        <el-table-column align="center" label="行为值" width="90">
           <template #default="{ row }">
             <el-tag :type="row.actionValue > 0 ? 'success' : row.actionValue < 0 ? 'danger' : 'info'" effect="light" round>
               {{ row.actionValue > 0 ? `+${row.actionValue}` : row.actionValue }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" width="180" align="center" />
-        <el-table-column label="操作" width="110" fixed="right" align="center">
+        <el-table-column align="center" label="创建时间" prop="createTime" width="180" />
+        <el-table-column align="center" fixed="right" label="操作" width="110">
           <template #default="{ row }">
             <el-button v-hasPermi="['social:userAction:remove']" link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
@@ -98,25 +100,25 @@
 </template>
 
 <script lang="ts" setup>
-import { getCurrentInstance, ref, toRefs } from 'vue'
-import type { FormInstance } from 'element-plus'
-import { delSocialUserAction, listSocialUserAction } from '@/api/social/userAction'
-import type { SocialUserActionQuery, SocialUserActionVO } from '@/api/social/userAction/types'
-import UserStatsDrawer from '../components/UserStatsDrawer.vue'
+import { getCurrentInstance, ref, toRefs } from 'vue';
+import type { FormInstance } from 'element-plus';
+import { delSocialUserAction, listSocialUserAction } from '@/api/social/userAction';
+import type { SocialUserActionQuery, SocialUserActionVO } from '@/api/social/userAction/types';
+import UserStatsDrawer from '../components/UserStatsDrawer.vue';
 
-const { proxy } = getCurrentInstance() as any
-const { social_action_type, social_target_type } = toRefs<any>(proxy?.useDict('social_action_type', 'social_target_type'))
+const { proxy } = getCurrentInstance() as any;
+const { social_action_type, social_target_type } = toRefs<any>(proxy?.useDict('social_action_type', 'social_target_type'));
 
-const queryRef = ref<FormInstance>()
-const actionList = ref<SocialUserActionVO[]>([])
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref<Array<string | number>>([])
-const multiple = ref(true)
-const total = ref(0)
-const dateRange = ref<[string, string]>()
-const userDrawerVisible = ref(false)
-const selectedUserId = ref<string | number>(0)
+const queryRef = ref<FormInstance>();
+const actionList = ref<SocialUserActionVO[]>([]);
+const loading = ref(true);
+const showSearch = ref(true);
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const total = ref(0);
+const dateRange = ref<[string, string]>();
+const userDrawerVisible = ref(false);
+const selectedUserId = ref<string | number>(0);
 
 const queryParams = ref<SocialUserActionQuery>({
   pageNum: 1,
@@ -125,59 +127,59 @@ const queryParams = ref<SocialUserActionQuery>({
   actionType: undefined,
   targetType: undefined,
   targetId: undefined
-})
+});
 
 function getList() {
-  loading.value = true
-  const params = proxy.addDateRange(queryParams.value, dateRange.value)
+  loading.value = true;
+  const params = proxy.addDateRange(queryParams.value, dateRange.value);
   listSocialUserAction(params)
     .then((response: any) => {
-      actionList.value = response.rows
-      total.value = response.total
+      actionList.value = response.rows;
+      total.value = response.total;
     })
     .finally(() => {
-      loading.value = false
-    })
+      loading.value = false;
+    });
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
+  queryParams.value.pageNum = 1;
+  getList();
 }
 
 function resetQuery() {
-  dateRange.value = undefined
-  queryRef.value?.resetFields()
-  handleQuery()
+  dateRange.value = undefined;
+  queryRef.value?.resetFields();
+  handleQuery();
 }
 
 function handleSelectionChange(selection: SocialUserActionVO[]) {
-  ids.value = selection.map((item) => item.actionId)
-  multiple.value = !selection.length
+  ids.value = selection.map((item) => item.actionId);
+  multiple.value = !selection.length;
 }
 
 function showUserDetail(userId: string | number) {
-  selectedUserId.value = userId
-  userDrawerVisible.value = true
+  selectedUserId.value = userId;
+  userDrawerVisible.value = true;
 }
 
 function handleDelete(row?: SocialUserActionVO) {
-  const actionIds = row ? [row.actionId] : ids.value
+  const actionIds = row ? [row.actionId] : ids.value;
   proxy.$modal
     .confirm('确认删除选中的用户行为记录吗？')
     .then(() => delSocialUserAction(actionIds))
     .then(() => {
-      getList()
-      proxy.$modal.msgSuccess('删除成功')
+      getList();
+      proxy.$modal.msgSuccess('删除成功');
     })
-    .catch(() => {})
+    .catch(() => {});
 }
 
 function handleExport() {
-  proxy.download('social/userAction/export', { ...queryParams.value }, `userAction_${new Date().getTime()}.xlsx`)
+  proxy.download('social/userAction/export', { ...queryParams.value }, `userAction_${new Date().getTime()}.xlsx`);
 }
 
-getList()
+getList();
 </script>
 
 <style lang="scss" scoped>

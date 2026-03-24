@@ -1,94 +1,230 @@
 <template>
-  <div>
-    <template v-for="(item, index) in options">
-      <template v-if="values.includes(item.value)">
-        <span
-          v-if="(item.elTagType === 'default' || item.elTagType === '') && (item.elTagClass === '' || item.elTagClass == null)"
-          :key="item.value"
-          :index="index"
-          :class="item.elTagClass"
-        >
-          {{ item.label + ' ' }}
-        </span>
-        <el-tag
-          v-else
-          :key="item.value + ''"
-          :disable-transitions="true"
-          :index="index"
-          :type="
-            item.elTagType === 'primary' ||
-            item.elTagType === 'success' ||
-            item.elTagType === 'info' ||
-            item.elTagType === 'warning' ||
-            item.elTagType === 'danger'
-              ? item.elTagType
-              : 'primary'
-          "
-          :class="item.elTagClass"
-        >
-          {{ item.label + ' ' }}
-        </el-tag>
-      </template>
+  <span class="dict-tag" :class="{ 'dict-tag--wrap': wrap }" :style="wrapperStyle">
+    <template v-for="item in matchedOptions" :key="`${item.value}-${item.label}`">
+      <span v-if="displayMode === 'text'" :class="['dict-tag__text', item.elTagClass || item.cssClass]">
+        {{ item.label }}
+      </span>
+      <el-tag
+        v-else
+        :class="['dict-tag__item', `dict-tag__item--${theme}`, item.elTagClass || item.cssClass]"
+        :disable-transitions="true"
+        :effect="resolvedEffect"
+        :round="round"
+        :size="size"
+        :type="resolveTagType(item)"
+      >
+        {{ item.label }}
+      </el-tag>
     </template>
-    <template v-if="unmatch && showValue">
-      {{ unmatchArray }}
+    <template v-if="unmatchedValues.length && showValue">
+      <span v-if="displayMode === 'text'" class="dict-tag__text">{{ unmatchedText }}</span>
+      <el-tag
+        v-else
+        class="dict-tag__item dict-tag__item--fallback"
+        :disable-transitions="true"
+        :effect="resolvedEffect"
+        :round="round"
+        :size="size"
+        :type="fallbackType"
+      >
+        {{ unmatchedText }}
+      </el-tag>
     </template>
-  </div>
+  </span>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
+type DictTagTheme = 'light' | 'dark' | 'plain' | 'text';
+
 interface Props {
   options: Array<DictDataOption>;
   value: number | string | Array<number | string>;
   showValue?: boolean;
   separator?: string;
+  round?: boolean;
+  wrap?: boolean;
+  gap?: number | string;
+  size?: '' | 'large' | 'default' | 'small';
+  theme?: DictTagTheme;
+  fallbackType?: ElTagType;
 }
+
 const props = withDefaults(defineProps<Props>(), {
   showValue: true,
-  separator: ','
+  separator: ',',
+  round: true,
+  wrap: true,
+  gap: 8,
+  size: 'small',
+  theme: 'light',
+  fallbackType: 'info'
 });
 
-const values = computed(() => {
-  if (props.value === '' || props.value === null || typeof props.value === 'undefined') return [];
-  return Array.isArray(props.value) ? props.value.map((item) => '' + item) : String(props.value).split(props.separator);
-});
-
-const unmatch = computed(() => {
-  if (props.options?.length == 0 || props.value === '' || props.value === null || typeof props.value === 'undefined') return false;
-  // 传入值为非数组
-  let unmatch = false; // 添加一个标志来判断是否有未匹配项
-  values.value.forEach((item) => {
-    if (!props.options.some((v) => v.value === item)) {
-      unmatch = true; // 如果有未匹配项，将标志设置为true
-    }
-  });
-  return unmatch; // 返回标志的值
-});
-
-const unmatchArray = computed(() => {
-  // 记录未匹配的项
-  const itemUnmatchArray: Array<string | number> = [];
-  if (props.value !== '' && props.value !== null && typeof props.value !== 'undefined') {
-    values.value.forEach((item) => {
-      if (!props.options.some((v) => v.value === item)) {
-        itemUnmatchArray.push(item);
-      }
-    });
+const normalizedValues = computed(() => {
+  if (props.value === '' || props.value === null || typeof props.value === 'undefined') {
+    return [];
   }
-  // 没有value不显示
-  return handleArray(itemUnmatchArray);
+  if (Array.isArray(props.value)) {
+    return props.value.map((item) => String(item)).filter(Boolean);
+  }
+  return String(props.value)
+    .split(props.separator)
+    .map((item) => item.trim())
+    .filter(Boolean);
 });
 
-const handleArray = (array: Array<string | number>) => {
-  if (array.length === 0) return '';
-  return array.reduce((pre, cur) => {
-    return pre + ' ' + cur;
-  });
+const matchedOptions = computed(() =>
+  normalizedValues.value
+    .map((value) => props.options?.find((item) => String(item.value) === value))
+    .filter((item): item is DictDataOption => !!item)
+);
+
+const unmatchedValues = computed(() =>
+  normalizedValues.value.filter((value) => !props.options?.some((item) => String(item.value) === value))
+);
+
+const unmatchedText = computed(() => unmatchedValues.value.join('、'));
+
+const wrapperStyle = computed(() => ({
+  gap: typeof props.gap === 'number' ? `${props.gap}px` : props.gap
+}));
+
+const displayMode = computed(() => props.theme);
+
+const resolvedEffect = computed(() => {
+  if (props.theme === 'dark') {
+    return 'dark';
+  }
+  if (props.theme === 'plain') {
+    return 'plain';
+  }
+  return 'light';
+});
+
+const resolveTagType = (item: DictDataOption): ElTagType => {
+  const tagType = item.elTagType;
+  if (tagType === 'primary' || tagType === 'success' || tagType === 'info' || tagType === 'warning' || tagType === 'danger') {
+    return tagType;
+  }
+  return 'info';
 };
 </script>
 
 <style lang="scss" scoped>
-.el-tag + .el-tag {
-  margin-left: 10px;
+.dict-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dict-tag--wrap {
+  flex-wrap: wrap;
+}
+
+.dict-tag__text {
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.dict-tag__item {
+  margin: 0;
+  font-weight: 500;
+  border-radius: 999px;
+  border-width: 1px;
+}
+
+.dict-tag__item--light {
+  box-shadow: none;
+}
+
+.dict-tag__item :deep(.el-tag__content) {
+  line-height: 1;
+}
+
+.dict-tag__item.el-tag--primary {
+  color: #2563eb;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.dict-tag__item.el-tag--success {
+  color: #15803d;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.dict-tag__item.el-tag--info {
+  color: #475569;
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.dict-tag__item.el-tag--warning {
+  color: #b45309;
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.dict-tag__item.el-tag--danger {
+  color: #dc2626;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.dict-tag__item--dark.el-tag--primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.dict-tag__item--dark.el-tag--success {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.dict-tag__item--dark.el-tag--info {
+  background: #64748b;
+  border-color: #64748b;
+  color: #fff;
+}
+
+.dict-tag__item--dark.el-tag--warning {
+  background: #d97706;
+  border-color: #d97706;
+  color: #fff;
+}
+
+.dict-tag__item--dark.el-tag--danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+.dict-tag__item--plain.el-tag--primary {
+  background: #fff;
+}
+
+.dict-tag__item--plain.el-tag--success {
+  background: #fff;
+}
+
+.dict-tag__item--plain.el-tag--info {
+  background: #fff;
+}
+
+.dict-tag__item--plain.el-tag--warning {
+  background: #fff;
+}
+
+.dict-tag__item--plain.el-tag--danger {
+  background: #fff;
+}
+
+.dict-tag__item--fallback {
+  background: #f8fafc;
 }
 </style>

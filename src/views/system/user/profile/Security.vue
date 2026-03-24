@@ -23,7 +23,7 @@
           </div>
 
           <div class="info-desc">
-            <span v-if="item.value && item.value !== '-1'" class="desc-value">{{ item.value }}</span>
+            <span v-if="item.displayValue" class="desc-value">{{ item.displayValue }}</span>
             {{ item.subtitle }}
           </div>
         </div>
@@ -64,7 +64,7 @@
     <el-alert :closable="false" style="margin-bottom: 20px" title="解绑后将无法使用手机号登录" type="warning" />
     <el-form ref="unbindPhoneFormRef" :model="unbindPhoneForm" :rules="unbindPhoneRules" label-width="80px">
       <el-form-item label="手机号">
-        <el-input :value="user.phonenumber" disabled />
+        <el-input :value="formatContactDisplay(user.phonenumber, '未绑定手机号')" disabled />
       </el-form-item>
       <el-form-item label="验证码" prop="code">
         <el-input v-model="unbindPhoneForm.code" class="flex-1" maxlength="6" placeholder="请输入验证码" />
@@ -103,7 +103,7 @@
     <el-alert :closable="false" style="margin-bottom: 20px" title="解绑后将无法接收重要通知" type="warning" />
     <el-form ref="unbindEmailFormRef" :model="unbindEmailForm" :rules="unbindEmailRules" label-width="80px">
       <el-form-item label="邮箱">
-        <el-input :value="user.email" disabled />
+        <el-input :value="formatContactDisplay(user.email, '未绑定邮箱')" disabled />
       </el-form-item>
       <el-form-item label="验证码" prop="code">
         <div class="code-input-wrapper">
@@ -128,6 +128,7 @@ import ResetPwd from './resetPwd.vue';
 import { UserVO } from '@/api/system/user/types';
 import { bindEmail, bindPhone, sendEmailCode, sendPhoneVerifyCode, unbindEmail, unbindPhone } from '@/api/system/user/security';
 import { showBehaviorCaptcha } from '@/utils/behaviorCaptcha';
+import { formatContactDisplay, isContactBound } from '@/utils/contact';
 
 interface Props {
   user: Partial<UserVO>;
@@ -141,6 +142,7 @@ interface SecurityItem {
   title: string;
   icon: string;
   value?: string;
+  displayValue?: string;
   subtitle: string;
   status: boolean;
   statusText: string;
@@ -239,21 +241,23 @@ const securityItems = computed<SecurityItem[]>(() => [
     title: '安全手机',
     icon: 'phone',
     value: props.user.phonenumber,
+    displayValue: isContactBound(props.user.phonenumber) ? formatContactDisplay(props.user.phonenumber) : '',
     subtitle:
-      props.user.phonenumber !== '-1' ? '手机号，可通过登录、身份验证、密码找回、通知接收' : '绑定后，可通过登录、身份验证、密码找回、通知接收',
-    status: props.user.phonenumber !== '-1',
-    statusText: props.user.phonenumber !== '-1' ? '已绑定' : '未绑定',
-    buttonText: props.user.phonenumber !== '-1' ? '解绑' : '绑定'
+      isContactBound(props.user.phonenumber) ? '手机号，可通过登录、身份验证、密码找回、通知接收' : '绑定后，可通过登录、身份验证、密码找回、通知接收',
+    status: isContactBound(props.user.phonenumber),
+    statusText: isContactBound(props.user.phonenumber) ? '已绑定' : '未绑定',
+    buttonText: isContactBound(props.user.phonenumber) ? '解绑' : '绑定'
   },
   {
     type: 'email',
     title: '安全邮箱',
     icon: 'email',
     value: props.user.email,
-    subtitle: props.user.email !== '-1' ? '邮箱，可通过登录、身份验证、密码找回、通知接收' : '绑定后，可通过登录、身份验证、密码找回、通知接收',
-    status: props.user.email !== '-1',
-    statusText: props.user.email !== '-1' ? '已绑定' : '未绑定',
-    buttonText: props.user.email !== '-1' ? '解绑' : '绑定'
+    displayValue: isContactBound(props.user.email) ? formatContactDisplay(props.user.email) : '',
+    subtitle: isContactBound(props.user.email) ? '邮箱，可通过登录、身份验证、密码找回、通知接收' : '绑定后，可通过登录、身份验证、密码找回、通知接收',
+    status: isContactBound(props.user.email),
+    statusText: isContactBound(props.user.email) ? '已绑定' : '未绑定',
+    buttonText: isContactBound(props.user.email) ? '解绑' : '绑定'
   },
   {
     type: 'password',
@@ -273,7 +277,7 @@ const handleAction = (type: string) => {
   }
   // 手机号操作
   if (type === 'phone') {
-    if (props.user.phonenumber && props.user.phonenumber !== '-1') {
+    if (isContactBound(props.user.phonenumber)) {
       unbindPhoneDialogVisible.value = true;
     } else {
       phoneDialogVisible.value = true;
@@ -281,7 +285,7 @@ const handleAction = (type: string) => {
   }
   // 邮箱操作
   if (type === 'email') {
-    if (props.user.email && props.user.email !== '-1') {
+    if (isContactBound(props.user.email)) {
       unbindEmailDialogVisible.value = true;
     } else {
       emailDialogVisible.value = true;
@@ -337,7 +341,7 @@ const sendBindPhoneCode = async () => {
 
 // 发送解绑手机号码认证验证码（集成行为验证码）
 const sendUnbindPhoneVerifyCode = async () => {
-  if (!props.user.phonenumber) return;
+  if (!isContactBound(props.user.phonenumber)) return;
 
   try {
     // 显示行为验证码
@@ -348,7 +352,7 @@ const sendUnbindPhoneVerifyCode = async () => {
         // 验证成功后发送手机验证码，传递captchaId
         unbindPhoneCodeLoading.value = true;
         try {
-          await sendPhoneVerifyCode(props.user.phonenumber, 'unbind', captchaId);
+          await sendPhoneVerifyCode(formatContactDisplay(props.user.phonenumber, ''), 'unbind', captchaId);
           unbindPhoneForm.verifyType = 'phoneverify'; // 设置验证类型
           ElMessage.success('验证码已发送，请完成号码认证');
           unbindPhoneCooldown.value = 60;
@@ -485,7 +489,7 @@ const sendEmailVerifyCode = async () => {
 
 // 发送解绑邮箱验证码（集成行为验证码）
 const sendUnbindEmailCode = async () => {
-  if (!props.user.email) return;
+  if (!isContactBound(props.user.email)) return;
 
   try {
     // 显示行为验证码
@@ -496,7 +500,7 @@ const sendUnbindEmailCode = async () => {
         // 验证成功后发送邮箱验证码，传递captchaId
         unbindEmailCodeLoading.value = true;
         try {
-          await sendEmailCode(props.user.email, 'unbind', captchaId);
+          await sendEmailCode(formatContactDisplay(props.user.email, ''), 'unbind', captchaId);
           ElMessage.success('验证码已发送至邮箱');
           unbindEmailCooldown.value = 60;
           unbindEmailTimer = setInterval(() => {

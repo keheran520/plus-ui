@@ -61,6 +61,8 @@ declare global {
     value: string;
     elTagType?: ElTagType;
     elTagClass?: string;
+    cssClass?: string;
+    listClass?: string;
   }
 
   declare interface BaseEntity {

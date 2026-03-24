@@ -1,108 +1,51 @@
+import type { MemberDetailUserVO, MemberDetailVO } from '@/api/member/member/types';
+
 export interface SellerProfileVO {
-  /**
-   * 主键
-   */
   id: string | number;
-
-  /**
-   * 用户ID
-   */
+  memberId: string | number;
   userId: string | number;
-
-  /**
-   * 完成单量
-   */
-  orderFinishCount: number;
-
-  /**
-   * 被收藏量
-   */
-  favoriteCount: number;
-
-  /**
-   * 评分
-   */
-  score: number;
-
-  /**
-   * 状态 0正常 1停用
-   */
-  status: string;
-
-  /**
-   * 备注
-   */
-  remark: string;
-
+  serviceStatus?: string;
+  verifyStatus?: string;
+  featuredFlag?: string;
+  status?: string;
+  sortOrder?: number;
+  serviceNotice?: string;
+  adminRemark?: string;
+  remark?: string;
+  goodsCount?: number;
+  onSaleGoodsCount?: number;
+  pendingOrderCount?: number;
+  finishOrderCount?: number;
+  refundOrderCount?: number;
+  totalSalesAmount?: number;
+  lastOrderTime?: string;
+  createTime?: string;
+  member?: MemberDetailVO;
+  user?: MemberDetailUserVO;
 }
 
 export interface SellerProfileForm extends BaseEntity {
-  /**
-   * 主键
-   */
   id?: string | number;
-
-  /**
-   * 用户ID
-   */
+  memberId?: string | number;
   userId?: string | number;
-
-  /**
-   * 完成单量
-   */
-  orderFinishCount?: number;
-
-  /**
-   * 被收藏量
-   */
-  favoriteCount?: number;
-
-  /**
-   * 评分
-   */
-  score?: number;
-
-  /**
-   * 状态 0正常 1停用
-   */
-  status?: string;
-
-  /**
-   * 备注
-   */
+  memberDisplayName?: string;
+  sortOrder?: number;
+  serviceNotice?: string;
+  adminRemark?: string;
   remark?: string;
-
 }
 
 export interface SellerProfileQuery extends PageQuery {
-
-  /**
-   * 用户ID
-   */
+  memberId?: string | number;
   userId?: string | number;
-
-  /**
-   * 完成单量
-   */
-  orderFinishCount?: number;
-
-  /**
-   * 被收藏量
-   */
-  favoriteCount?: number;
-
-  /**
-   * 评分
-   */
-  score?: number;
-
-  /**
-   * 状态 0正常 1停用
-   */
+  memberNo?: string;
+  realName?: string;
+  userName?: string;
+  nickName?: string;
+  phonenumber?: string;
+  serviceStatus?: string;
+  verifyStatus?: string;
+  featuredFlag?: string;
   status?: string;
-
-  /**
-   * 日期范围参数
-   */
   params?: any;
 }
