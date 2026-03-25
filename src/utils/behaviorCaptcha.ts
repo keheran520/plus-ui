@@ -1,6 +1,6 @@
 /**
  * 行为验证码工具类
- * 基于Tianai-Captcha官方SDK封装
+ * 基于 Tianai-Captcha 官方 SDK 封装
  */
 
 declare global {
@@ -10,14 +10,14 @@ declare global {
 }
 
 /**
- * TAC配置接口
+ * TAC 配置接口
  */
 export interface TACConfig {
   /** 生成验证码接口 */
   requestCaptchaDataUrl: string;
-  /** 验证接口 */
+  /** 校验接口 */
   validCaptchaUrl: string;
-  /** 验证码绑定的div块 */
+  /** 验证码绑定的 div */
   bindEl: string;
   /** 验证成功回调 */
   validSuccess: (res: any, c: any, tac: TACInstance) => void;
@@ -30,23 +30,23 @@ export interface TACConfig {
 }
 
 /**
- * TAC样式配置
+ * TAC 样式配置
  */
 export interface TACStyle {
   /** Logo URL */
   logoUrl?: string | null;
-  /** 按钮样式URL */
+  /** 按钮样式 URL */
   btnUrl?: string;
-  /** 背景样式URL */
+  /** 背景样式 URL */
   bgUrl?: string;
   /** 滑动边框颜色 */
   moveTrackMaskBgColor?: string;
-  /** 滑动边框边框颜色 */
+  /** 滑动边框描边颜色 */
   moveTrackMaskBorderColor?: string;
 }
 
 /**
- * TAC实例接口
+ * TAC 实例接口
  */
 export interface TACInstance {
   /** 初始化并显示验证码 */
@@ -57,12 +57,21 @@ export interface TACInstance {
   destroyWindow: () => void;
 }
 
+function normalizeApiBaseUrl() {
+  return (import.meta.env.VITE_APP_BASE_API || '').trim().replace(/\/+$/, '');
+}
+
+function buildCaptchaApiUrl(path: string) {
+  const baseUrl = normalizeApiBaseUrl();
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
+}
+
 /**
- * 加载TAC SDK脚本
+ * 加载 TAC SDK 脚本
  */
 function loadTACScript(): Promise<void> {
   return new Promise((resolve, reject) => {
-    // 检查是否已加载
     if (window.initTAC) {
       resolve();
       return;
@@ -71,15 +80,13 @@ function loadTACScript(): Promise<void> {
     const script = document.createElement('script');
     script.src = '/load.min.js';
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('加载TAC初始化脚本失败'));
+    script.onerror = () => reject(new Error('加载 TAC 初始化脚本失败'));
     document.head.appendChild(script);
   });
 }
 
 /**
  * 显示行为验证码
- * @param options 配置选项
- * @returns Promise<TACInstance>
  */
 export async function showBehaviorCaptcha(options: {
   /** 验证成功回调 */
@@ -90,18 +97,15 @@ export async function showBehaviorCaptcha(options: {
   onClose?: () => void;
 }): Promise<TACInstance> {
   try {
-    // 加载TAC SDK
     await loadTACScript();
 
-    // 创建验证码容器
     let captchaBox = document.getElementById('tac-captcha-box');
     if (!captchaBox) {
       captchaBox = document.createElement('div');
       captchaBox.id = 'tac-captcha-box';
       document.body.appendChild(captchaBox);
     }
-    
-    // 设置父容器的遮罩样式
+
     captchaBox.style.position = 'fixed';
     captchaBox.style.top = '0';
     captchaBox.style.left = '0';
@@ -113,71 +117,39 @@ export async function showBehaviorCaptcha(options: {
     captchaBox.style.alignItems = 'center';
     captchaBox.style.justifyContent = 'center';
 
-    // TAC配置
     const config: TACConfig = {
-      // 生成接口（需要加上代理前缀）
-      requestCaptchaDataUrl: '/dev-api/captcha/gen',
-      // 验证接口（需要加上代理前缀）
-      validCaptchaUrl: '/dev-api/captcha/check',
-      // 验证码绑定的div块
+      requestCaptchaDataUrl: buildCaptchaApiUrl('/captcha/gen'),
+      validCaptchaUrl: buildCaptchaApiUrl('/captcha/check'),
       bindEl: '#tac-captcha-box',
-      // 验证成功回调
       validSuccess: (res, c, tac) => {
-        console.log('验证成功，后端返回的数据为', res);
-        console.log('验证成功，c 参数为', c);
-        // 销毁验证码服务
         tac.destroyWindow();
-        // 清理验证码容器
         cleanupBehaviorCaptcha();
-        // 调用成功回调，传递验证码ID
-        // 从后端返回的 data 中获取验证码ID（后端已修改为返回ID）
         const captchaId = res?.data || c?.id || c?.currentCaptchaData?.id || '';
-        console.log('获取到的captchaId:', captchaId);
-        
-        if (!captchaId) {
-          console.error('❌ 验证码ID为空！');
-          console.error('res 对象:', res);
-          console.error('c 对象:', c);
-        }
-        
         options.onSuccess(captchaId);
       },
-      // 验证失败回调
-      validFail: (res, c, tac) => {
-        console.log('验证码验证失败', res);
-        // 验证失败后重新拉取验证码
+      validFail: (_res, _c, tac) => {
         tac.reloadCaptcha();
         options.onFail?.();
       },
-      // 刷新按钮回调
-      btnRefreshFun: (el, tac) => {
-        console.log('刷新按钮触发');
+      btnRefreshFun: (_el, tac) => {
         tac.reloadCaptcha();
       },
-      // 关闭按钮回调
-      btnCloseFun: (el, tac) => {
-        console.log('关闭按钮触发');
+      btnCloseFun: (_el, tac) => {
         tac.destroyWindow();
-        // 清理验证码容器
         cleanupBehaviorCaptcha();
         options.onClose?.();
       }
     };
 
-    // 样式配置
     const style: TACStyle = {
-      logoUrl: null // 去除logo
+      logoUrl: null
     };
 
-    // 初始化TAC
     const tac = await window.initTAC('/tac', config, style);
-    
-    // 显示验证码
     tac.init();
-
     return tac;
   } catch (error) {
-    console.error('初始化TAC失败', error);
+    console.error('初始化 TAC 失败', error);
     throw error;
   }
 }

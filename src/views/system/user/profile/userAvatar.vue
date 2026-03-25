@@ -88,7 +88,7 @@ const visible = ref(false);
 const title = ref('修改头像');
 
 const cropper = ref<any>({});
-//图片裁剪数据
+// 图片裁剪数据
 const options = reactive<Options>({
   img: userStore.avatar,
   autoCrop: true,
