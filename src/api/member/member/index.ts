@@ -203,3 +203,19 @@ export const adjustGrowth = (data: { id: number; growthValue: number; changeType
     params: data
   });
 };
+
+export const getMemberCheckinStatus = (memberId: string | number): AxiosPromise<boolean> => {
+  return request({
+    url: '/member/member/checkin/status',
+    method: 'get',
+    params: { memberId }
+  });
+};
+
+export const memberCheckin = (memberId: string | number) => {
+  return request({
+    url: '/member/member/checkin',
+    method: 'post',
+    params: { memberId }
+  });
+};

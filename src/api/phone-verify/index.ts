@@ -1,19 +1,19 @@
-import request from '@/utils/request'
+import request from '@/utils/request';
 
 /**
  * 验证码发送请求
  */
 export interface VerifyCodeRequest {
   /** 手机号码 */
-  phoneNumber: string
+  phoneNumber: string;
   /** 验证码长度 (默认6位) */
-  codeLength?: number
+  codeLength?: number;
   /** 有效期(分钟) (默认5分钟) */
-  validMinutes?: number
+  validMinutes?: number;
   /** 业务类型 (用于区分不同场景) */
-  businessType: string
+  businessType: string;
   /** 模板ID (可选,不同云厂商可能需要) */
-  templateId?: string
+  templateId?: string;
 }
 
 /**
@@ -21,15 +21,15 @@ export interface VerifyCodeRequest {
  */
 export interface VerifyCodeResponse {
   /** 是否成功 */
-  success: boolean
+  success: boolean;
   /** 响应消息 */
-  message: string
+  message: string;
   /** 请求ID */
-  requestId?: string
+  requestId?: string;
   /** 业务ID */
-  bizId?: string
+  bizId?: string;
   /** 验证码 (仅测试环境返回) */
-  code?: string
+  code?: string;
 }
 
 /**
@@ -40,7 +40,7 @@ export function sendVerifyCode(data: VerifyCodeRequest) {
     url: '/phone/verify/send',
     method: 'post',
     data
-  })
+  });
 }
 
 /**
@@ -54,7 +54,7 @@ export function sendVerifyCodeQuick(phoneNumber: string, businessType: string) {
       phoneNumber,
       businessType
     }
-  })
+  });
 }
 
 /**
@@ -69,7 +69,7 @@ export function verifyCode(phoneNumber: string, code: string, businessType: stri
       code,
       businessType
     }
-  })
+  });
 }
 
 /**
@@ -79,5 +79,5 @@ export function getProvider() {
   return request<string>({
     url: '/phone/verify/provider',
     method: 'get'
-  })
+  });
 }

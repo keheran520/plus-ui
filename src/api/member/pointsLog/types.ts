@@ -44,6 +44,7 @@ export interface PointsLogVO {
    */
   remark: string;
 
+  createTime?: string;
 }
 
 export interface PointsLogForm extends BaseEntity {

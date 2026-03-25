@@ -469,8 +469,8 @@ function submitPoints() {
 async function refreshPage() {
   pageLoading.value = true;
   try {
-    const userId = Number(route.params.id);
-    const [levelRes, detailRes] = await Promise.all([listLevel({ pageNum: 1, pageSize: 100 }), getMemberDetailByUserId(userId)]);
+    const userId = route.params.id;
+    const [levelRes, detailRes] = await Promise.all([listLevel({ pageNum: 1, pageSize: 100 }), getMemberDetailByUserId(userId as string)]);
     levels.value = levelRes.rows || [];
     Object.keys(memberDetail).forEach((key) => delete memberDetail[key]);
     Object.assign(memberDetail, detailRes.data || {});
