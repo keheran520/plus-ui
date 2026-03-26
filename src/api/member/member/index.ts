@@ -1,6 +1,6 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { MemberDetailVO, MemberForm, MemberOverviewVO, MemberQuery, MemberVO } from '@/api/member/member/types';
+import { MemberCheckinSummaryVO, MemberDetailVO, MemberForm, MemberOverviewVO, MemberQuery, MemberVO } from '@/api/member/member/types';
 
 /**
  * 查询会员列表
@@ -164,6 +164,14 @@ export const changeLevel = (data: { id: number | string; levelId: number }) => {
   });
 };
 
+export const grantMemberBadge = (data: { memberId: number | string; badgeId: number | string; remark?: string }) => {
+  return request({
+    url: '/member/member/grantBadge',
+    method: 'post',
+    params: data
+  });
+};
+
 /**
  * 导出会员
  * @param query
@@ -207,6 +215,14 @@ export const adjustGrowth = (data: { id: number; growthValue: number; changeType
 export const getMemberCheckinStatus = (memberId: string | number): AxiosPromise<boolean> => {
   return request({
     url: '/member/member/checkin/status',
+    method: 'get',
+    params: { memberId }
+  });
+};
+
+export const getMemberCheckinSummary = (memberId: string | number): AxiosPromise<MemberCheckinSummaryVO> => {
+  return request({
+    url: '/member/member/checkin/summary',
     method: 'get',
     params: { memberId }
   });

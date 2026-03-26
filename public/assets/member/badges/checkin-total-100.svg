@@ -1,0 +1,13 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="b100-bg" x1="18" y1="18" x2="142" y2="142" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE6E0"/>
+      <stop offset="1" stop-color="#EA6D57"/>
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="70" fill="url(#b100-bg)"/>
+  <circle cx="80" cy="80" r="62" stroke="white" stroke-opacity="0.4" stroke-width="4"/>
+  <path d="M80 35L94.107 63.584L125.654 68.168L102.827 90.416L108.214 121.832L80 107L51.786 121.832L57.173 90.416L34.346 68.168L65.893 63.584L80 35Z" fill="#FFF5F3"/>
+  <text x="80" y="92" text-anchor="middle" fill="#A8301B" font-size="26" font-family="Segoe UI, Arial" font-weight="800">100</text>
+  <text x="80" y="116" text-anchor="middle" fill="#A8301B" font-size="13" font-family="Segoe UI, Arial" font-weight="700">TOTAL CHECKINS</text>
+</svg>

@@ -1,0 +1,15 @@
+<svg width="240" height="128" viewBox="0 0 240 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="v1-bg" x1="16" y1="16" x2="224" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E6EEF8"/>
+      <stop offset="1" stop-color="#C9D9EE"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="232" height="120" rx="28" fill="url(#v1-bg)"/>
+  <rect x="4" y="4" width="232" height="120" rx="28" stroke="#9AB3D1" stroke-width="2"/>
+  <circle cx="42" cy="38" r="18" fill="#F9FBFE" opacity="0.72"/>
+  <circle cx="190" cy="90" r="24" fill="#A9C2E0" opacity="0.28"/>
+  <path d="M28 88L52 54L74 88H28Z" fill="#7A96B8" opacity="0.34"/>
+  <text x="28" y="42" fill="#5B7393" font-size="18" font-family="Segoe UI, Arial" font-weight="700">MEMBER LEVEL</text>
+  <text x="28" y="94" fill="#2F435A" font-size="54" font-family="Segoe UI, Arial" font-weight="800">V1</text>
+</svg>

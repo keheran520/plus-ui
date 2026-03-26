@@ -1,0 +1,16 @@
+<svg width="240" height="128" viewBox="0 0 240 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="v7-bg" x1="12" y1="12" x2="228" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0CC"/>
+      <stop offset="0.55" stop-color="#F5C15D"/>
+      <stop offset="1" stop-color="#D89117"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="232" height="120" rx="28" fill="url(#v7-bg)"/>
+  <rect x="4" y="4" width="232" height="120" rx="28" stroke="#B87809" stroke-width="2"/>
+  <circle cx="48" cy="36" r="18" fill="#FFF9EA" opacity="0.76"/>
+  <circle cx="194" cy="86" r="24" fill="#8F5B07" opacity="0.18"/>
+  <path d="M166 28L174 44H192L178 54L184 72L166 60L148 72L154 54L140 44H158L166 28Z" fill="#9E6508" opacity="0.28"/>
+  <text x="28" y="42" fill="#9E6508" font-size="18" font-family="Segoe UI, Arial" font-weight="700">MEMBER LEVEL</text>
+  <text x="28" y="94" fill="#6B4304" font-size="54" font-family="Segoe UI, Arial" font-weight="800">V7</text>
+</svg>

@@ -18,6 +18,7 @@ export interface MemberVO {
   occupation: string;
   school: string;
   remark: string;
+  badgeList?: MemberBadgeSimpleVO[];
 }
 
 export interface MemberOverviewVO {
@@ -70,6 +71,28 @@ export interface MemberDetailVO {
   school: string;
   createTime: string;
   user: MemberDetailUserVO;
+  badgeList?: MemberBadgeSimpleVO[];
+}
+
+export interface MemberBadgeSimpleVO {
+  badgeId: string | number;
+  badgeCode: string;
+  badgeName: string;
+  ossId?: string | number;
+  badgeIcon?: string;
+  badgeDesc?: string;
+  conditionType?: string;
+  conditionValue?: number;
+}
+
+export interface MemberCheckinSummaryVO {
+  signedToday: boolean;
+  continuousDays: number;
+  totalCheckinDays: number;
+  rewardPoints: number;
+  rewardGrowth: number;
+  checkedDates: string[];
+  unlockedBadgeNames: string[];
 }
 
 export interface MemberForm extends BaseEntity {

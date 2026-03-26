@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="member-manage-page">
     <section v-loading="overviewLoading" class="summary-grid">
       <article class="summary-card summary-card--blue">
@@ -132,9 +132,43 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="等级" width="120">
+        <el-table-column align="center" label="等级" width="180">
           <template #default="{ row }">
-            <el-tag :type="getLevelType(row.levelId)" effect="light" round>{{ getLevelName(row.levelId) }}</el-tag>
+            <div class="level-cell">
+              <div class="visual-card">
+                <img
+                  v-if="getLevelImage(row.levelId)"
+                  :src="getLevelImage(row.levelId)"
+                  alt=""
+                  class="visual-card__image visual-card__image--level"
+                />
+                <div v-else class="visual-card__placeholder">
+                  {{ (getLevelName(row.levelId) || row.levelCode || 'LV').slice(0, 4) }}
+                </div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="徽章" min-width="280">
+          <template #default="{ row }">
+            <div v-if="row.badgeList?.length" class="badge-group">
+              <el-tooltip
+                v-for="badge in row.badgeList"
+                :key="badge.badgeId"
+                :content="getBadgeTooltipContent(badge)"
+                effect="dark"
+                placement="top"
+                popper-class="member-badge-tooltip"
+              >
+                <div class="visual-card--badge">
+                  <img v-if="getBadgeImage(badge)" :src="getBadgeImage(badge)" alt="" class="visual-card__image visual-card__image--badge" />
+                  <div v-else class="visual-card__placeholder visual-card__placeholder--badge">
+                    {{ (badge.badgeName || badge.badgeCode || '徽章').slice(0, 4) }}
+                  </div>
+                </div>
+              </el-tooltip>
+            </div>
+            <span v-else class="empty-text">暂无徽章</span>
           </template>
         </el-table-column>
         <el-table-column align="center" label="来源" width="110">
@@ -222,7 +256,9 @@
           <el-form-item label="会员编号" prop="memberNo">
             <div class="linked-user-box">
               <el-input v-model="memberForm.memberNo" placeholder="点击生成会员编号" readonly />
-              <el-button v-hasPermi="['member:member:generateNo']" :loading="generating" icon="Refresh" @click="handleGenerateMemberNo">生成编号</el-button>
+              <el-button v-hasPermi="['member:member:generateNo']" :loading="generating" icon="Refresh" @click="handleGenerateMemberNo"
+                >生成编号</el-button
+              >
             </div>
           </el-form-item>
         </div>
@@ -296,6 +332,7 @@ import {
 } from '@/api/member/member';
 import { listLevel } from '@/api/member/level';
 import UserSelect from '@/components/UserSelect/index.vue';
+import { getMemberBadgeImage, getMemberLevelImage } from '@/utils/memberVisual';
 
 const { proxy } = getCurrentInstance() as any;
 
@@ -640,7 +677,12 @@ function handleExport() {
 
 function getLevelName(levelId?: number | string) {
   const target = levelList.value.find((item) => String(item.id) === String(levelId));
-  return target?.levelName || '未分层';
+  return target?.levelName || '未分配';
+}
+
+function getLevelImage(levelId?: number | string) {
+  const target = levelList.value.find((item) => String(item.id) === String(levelId));
+  return getMemberLevelImage(target?.levelCode, target?.levelImage);
 }
 
 function getLevelType(levelId?: number | string) {
@@ -650,6 +692,38 @@ function getLevelType(levelId?: number | string) {
   if (['V4', 'V5'].includes(code)) return 'warning';
   if (['V2', 'V3'].includes(code)) return 'success';
   return 'info';
+}
+
+function getBadgeImage(badge: any) {
+  return getMemberBadgeImage(badge);
+}
+
+function getBadgeTooltipContent(badge: any) {
+  const name = badge?.badgeName || badge?.badgeCode || '会员徽章';
+  const desc = badge?.badgeDesc?.trim();
+  const conditionText = getBadgeConditionText(badge);
+  if (desc && conditionText) {
+    return `${name}：${desc}，${conditionText}`;
+  }
+  if (desc) {
+    return `${name}：${desc}`;
+  }
+  if (conditionText) {
+    return `${name}：${conditionText}`;
+  }
+  return `${name}：会员成就徽章`;
+}
+
+function getBadgeConditionText(badge: any) {
+  const conditionValue = Number(badge?.conditionValue || 0);
+  switch (badge?.conditionType) {
+    case 'checkin_streak':
+      return conditionValue > 0 ? `连续签到 ${conditionValue} 天可获得` : '连续签到达标后可获得';
+    case 'checkin_total':
+      return conditionValue > 0 ? `累计签到 ${conditionValue} 次可获得` : '累计签到达标后可获得';
+    default:
+      return '';
+  }
 }
 
 function getStatusLabel(status?: string) {
@@ -841,6 +915,11 @@ onMounted(async () => {
   font-weight: 700;
 }
 
+.level-cell {
+  display: flex;
+  justify-content: center;
+}
+
 .member-name-row {
   display: flex;
   align-items: center;
@@ -892,6 +971,62 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.visual-card__image {
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.visual-card__image--level {
+  width: 86px;
+  height: 46px;
+}
+
+.visual-card__image--badge {
+  width: 46px;
+  height: 46px;
+}
+
+.visual-card__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 4px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #eff6ff, #f8fafc);
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.visual-card__placeholder--badge {
+  color: #b45309;
+  background: linear-gradient(135deg, #fff7ed, #fffbeb);
+}
+
+.visual-card__name {
+  max-width: 100%;
+  overflow: hidden;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  word-break: break-word;
 }
 
 .empty-text {

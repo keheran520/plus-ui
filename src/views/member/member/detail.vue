@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-loading="pageLoading" class="member-detail-page">
     <section class="detail-shell">
       <header class="detail-header">
@@ -8,6 +8,8 @@
             返回会员列表
           </el-button>
           <div class="header-actions">
+            <el-button v-hasPermi="['member:member:changeLevel']" @click="openLevelDialog">调整等级</el-button>
+            <el-button v-hasPermi="['member:member:update']" @click="openBadgeDialog">发放徽章</el-button>
             <el-button v-hasPermi="['member:member:recharge']" type="primary" @click="openRechargeDialog">充值余额</el-button>
             <el-button v-hasPermi="['member:member:adjustPoints']" type="warning" @click="openPointsDialog">充值积分</el-button>
           </div>
@@ -34,14 +36,17 @@
           </div>
 
           <div class="hero-level">
-            <div class="level-image-card">
-              <el-image v-if="memberDetail.levelImage" :src="memberDetail.levelImage" class="level-image" fit="cover" preview-teleported />
-              <div v-else class="level-placeholder">{{ memberDetail.levelCode || 'LV' }}</div>
-            </div>
-            <div class="hero-level-meta">
-              <span class="hero-level-label">当前等级</span>
-              <strong>{{ levelLabel }}</strong>
-              <small>等级编码 {{ memberDetail.levelCode || '-' }}</small>
+            <div class="detail-level-card">
+              <img v-if="resolvedLevelImage" :src="resolvedLevelImage" alt="" class="detail-level-card__preview" />
+              <div v-else class="level-placeholder level-placeholder--hero">{{ memberDetail.levelCode || 'LV' }}</div>
+              <div class="detail-level-card__body">
+                <span class="hero-level-label">当前等级</span>
+                <strong>{{ levelLabel }}</strong>
+              </div>
+              <div class="detail-level-card__extra">
+                <span>达标成长值</span>
+                <strong>{{ formatCount(currentLevel?.requiredGrowth) }}</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -69,7 +74,9 @@
       <section class="content-grid">
         <article class="panel">
           <header class="panel-header">
-            <h3>会员资料</h3>
+            <div>
+              <h3>会员资料</h3>
+            </div>
           </header>
           <div class="info-grid">
             <div v-for="item in memberItems" :key="item.label" class="info-item">
@@ -89,7 +96,9 @@
 
         <article class="panel">
           <header class="panel-header">
-            <h3>用户资料</h3>
+            <div>
+              <h3>用户资料</h3>
+            </div>
           </header>
           <div class="info-grid">
             <div v-for="item in userItems" :key="item.label" class="info-item">
@@ -100,37 +109,62 @@
         </article>
       </section>
 
-      <section class="panel">
-        <header class="panel-header">
-          <h3>等级进度</h3>
-        </header>
-        <div class="level-box">
-          <div class="level-head">
+      <section class="side-grid">
+        <article class="panel">
+          <header class="panel-header">
             <div>
-              <span class="info-item__label">当前等级</span>
-              <strong class="level-title">{{ levelLabel }}</strong>
+              <h3>等级进度</h3>
             </div>
-            <div class="level-head-side">
-              <span class="info-item__label">达标成长值</span>
-              <strong>{{ formatCount(currentLevel?.requiredGrowth) }}</strong>
-            </div>
-          </div>
-          <el-progress :percentage="growthProgress" :stroke-width="10" />
-          <p class="level-tip">{{ levelProgressHint }}</p>
-          <div class="level-list">
-            <div
-              v-for="level in orderedLevels"
-              :key="level.id"
-              :class="['level-item', { 'level-item--active': Number(level.id) === Number(memberDetail.levelId) }]"
-            >
-              <div class="level-item__head">
-                <strong>{{ level.levelName }}</strong>
-                <span>{{ level.levelCode }}</span>
+          </header>
+          <div class="level-box">
+            <div class="level-head">
+              <div>
+                <span class="info-item__label">当前等级</span>
+                <strong class="level-title">{{ levelLabel }}</strong>
               </div>
-              <small>成长值 {{ formatCount(level.requiredGrowth) }}</small>
+              <div class="level-head-side">
+                <span class="info-item__label">达标成长值</span>
+                <strong>{{ formatCount(currentLevel?.requiredGrowth) }}</strong>
+              </div>
+            </div>
+            <el-progress :percentage="growthProgress" :stroke-width="10" />
+            <p class="level-tip">{{ levelProgressHint }}</p>
+            <div class="level-list">
+              <div
+                v-for="level in orderedLevels"
+                :key="level.id"
+                :class="['level-item', { 'level-item--active': Number(level.id) === Number(memberDetail.levelId) }]"
+              >
+                <div class="level-item__head">
+                  <strong>{{ level.levelName }}</strong>
+                  <span>{{ level.levelCode }}</span>
+                </div>
+                <small>达标成长值 {{ formatCount(level.requiredGrowth) }}</small>
+              </div>
             </div>
           </div>
-        </div>
+        </article>
+
+        <article class="panel">
+          <header class="panel-header">
+            <div>
+              <h3>会员徽章</h3>
+            </div>
+          </header>
+          <div v-if="memberDetail.badgeList?.length" class="badge-wall">
+            <div v-for="badge in memberDetail.badgeList" :key="badge.badgeId" class="detail-badge-card">
+              <img v-if="getBadgeImage(badge)" :src="getBadgeImage(badge)" alt="" class="detail-badge-card__image" />
+              <div v-else class="detail-badge-card__placeholder">
+                {{ (badge.badgeName || badge.badgeCode || '徽章').slice(0, 4) }}
+              </div>
+              <div class="detail-badge-card__body">
+                <strong>{{ badge.badgeName || badge.badgeCode || '未命名徽章' }}</strong>
+                <span>{{ badge.badgeDesc || '系统授予徽章' }}</span>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else :image-size="88" description="该会员暂未获得徽章" />
+        </article>
       </section>
 
       <section class="panel panel--logs">
@@ -243,6 +277,51 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="levelDialogVisible" title="手动调整等级" width="460px">
+      <el-form ref="levelFormRef" :model="levelForm" :rules="levelRules" label-position="top">
+        <el-form-item label="会员等级" prop="levelId">
+          <el-select v-model="levelForm.levelId" placeholder="请选择会员等级" style="width: 100%">
+            <el-option v-for="item in orderedLevels" :key="item.id" :label="item.levelName" :value="item.id">
+              <div class="dialog-option">
+                <el-image :src="getLevelImageByOption(item)" class="dialog-option__image" fit="cover" />
+                <span>{{ item.levelName }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="levelDialogVisible = false">取消</el-button>
+          <el-button :loading="levelLoading" type="primary" @click="submitLevelChange">确认调整</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="badgeDialogVisible" title="手动发放徽章" width="480px">
+      <el-form ref="badgeFormRef" :model="badgeForm" :rules="badgeRules" label-position="top">
+        <el-form-item label="选择徽章" prop="badgeId">
+          <el-select v-model="badgeForm.badgeId" placeholder="请选择徽章" style="width: 100%">
+            <el-option v-for="item in badgeOptions" :key="item.id" :label="item.badgeName" :value="item.id">
+              <div class="dialog-option">
+                <el-image :src="getBadgeImage(item)" class="dialog-option__image" fit="cover" />
+                <span>{{ item.badgeName }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="发放备注" prop="remark">
+          <el-input v-model="badgeForm.remark" :rows="3" maxlength="120" placeholder="可选填写发放原因" show-word-limit type="textarea" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="badgeDialogVisible = false">取消</el-button>
+          <el-button :loading="badgeLoading" type="primary" @click="submitBadgeGrant">确认发放</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -250,12 +329,14 @@
 import { ArrowLeft } from '@element-plus/icons-vue';
 import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { adjustPoints, getMemberDetailByUserId, recharge } from '@/api/member/member';
+import { adjustPoints, changeLevel, getMemberDetailByUserId, grantMemberBadge, recharge } from '@/api/member/member';
+import { listBadge } from '@/api/member/badge';
 import { getBalanceLogByMemberId } from '@/api/member/balanceLog';
 import { getGrowthLogByMemberId } from '@/api/member/growthLog';
 import { listLevel } from '@/api/member/level';
 import { getPointsLogByMemberId } from '@/api/member/pointsLog';
 import { formatContactDisplay } from '@/utils/contact';
+import { getMemberBadgeImage, getMemberLevelImage } from '@/utils/memberVisual';
 
 const { proxy } = getCurrentInstance() as any;
 const route = useRoute();
@@ -271,10 +352,17 @@ const levels = ref<any[]>([]);
 
 const rechargeDialogVisible = ref(false);
 const pointsDialogVisible = ref(false);
+const levelDialogVisible = ref(false);
+const badgeDialogVisible = ref(false);
 const rechargeLoading = ref(false);
 const pointsLoading = ref(false);
+const levelLoading = ref(false);
+const badgeLoading = ref(false);
 const rechargeFormRef = ref();
 const pointsFormRef = ref();
+const levelFormRef = ref();
+const badgeFormRef = ref();
+const badgeOptions = ref<any[]>([]);
 
 const rechargeForm = reactive({
   amount: 0.01,
@@ -284,6 +372,15 @@ const rechargeForm = reactive({
 const pointsForm = reactive({
   points: 1,
   remark: '系统调整积分'
+});
+
+const levelForm = reactive({
+  levelId: undefined as string | number | undefined
+});
+
+const badgeForm = reactive({
+  badgeId: undefined as string | number | undefined,
+  remark: ''
 });
 
 const rechargeRules = {
@@ -296,6 +393,14 @@ const pointsRules = {
   remark: [{ required: true, message: '请输入备注', trigger: 'blur' }]
 };
 
+const levelRules = {
+  levelId: [{ required: true, message: '请选择会员等级', trigger: 'change' }]
+};
+
+const badgeRules = {
+  badgeId: [{ required: true, message: '请选择徽章', trigger: 'change' }]
+};
+
 const memberDisplayName = computed(() => memberDetail.realName || memberDetail.user?.nickName || memberDetail.user?.userName || '会员详情');
 
 const statusLabel = computed(() => (memberDetail.status === '1' ? '冻结' : '正常'));
@@ -303,7 +408,8 @@ const statusTagType = computed(() => (memberDetail.status === '1' ? 'danger' : '
 const orderedLevels = computed(() => [...levels.value].sort((a, b) => Number(a.requiredGrowth || 0) - Number(b.requiredGrowth || 0)));
 const currentLevel = computed(() => orderedLevels.value.find((item) => Number(item.id) === Number(memberDetail.levelId)));
 const nextLevel = computed(() => orderedLevels.value.find((item) => Number(item.requiredGrowth || 0) > Number(memberDetail.growthValue || 0)));
-const levelLabel = computed(() => memberDetail.levelName || currentLevel.value?.levelName || '未分层');
+const levelLabel = computed(() => memberDetail.levelName || currentLevel.value?.levelName || '未分配');
+const resolvedLevelImage = computed(() => getMemberLevelImage(memberDetail.levelCode || currentLevel.value?.levelCode, memberDetail.levelImage));
 const levelTagType = computed(() => {
   const code = String(memberDetail.levelCode || currentLevel.value?.levelCode || '').toUpperCase();
   if (['V6', 'V7'].includes(code)) return 'danger';
@@ -352,6 +458,14 @@ const userItems = computed(() => [
 
 function goBack() {
   router.push('/member/member');
+}
+
+function getLevelImageByOption(level: any) {
+  return getMemberLevelImage(level?.levelCode, level?.levelImage);
+}
+
+function getBadgeImage(badge: any) {
+  return getMemberBadgeImage(badge);
 }
 
 function getSourceLabel(source?: string) {
@@ -418,6 +532,17 @@ function resetPointsForm() {
   pointsFormRef.value?.resetFields?.();
 }
 
+function resetLevelForm() {
+  levelForm.levelId = memberDetail.levelId;
+  levelFormRef.value?.resetFields?.();
+}
+
+function resetBadgeForm() {
+  badgeForm.badgeId = undefined;
+  badgeForm.remark = '';
+  badgeFormRef.value?.resetFields?.();
+}
+
 function openRechargeDialog() {
   resetRechargeForm();
   rechargeDialogVisible.value = true;
@@ -426,6 +551,20 @@ function openRechargeDialog() {
 function openPointsDialog() {
   resetPointsForm();
   pointsDialogVisible.value = true;
+}
+
+function openLevelDialog() {
+  resetLevelForm();
+  levelDialogVisible.value = true;
+}
+
+async function openBadgeDialog() {
+  if (!badgeOptions.value.length) {
+    const res = await listBadge({ pageNum: 1, pageSize: 100, status: '0' });
+    badgeOptions.value = res.rows || [];
+  }
+  resetBadgeForm();
+  badgeDialogVisible.value = true;
 }
 
 function submitRecharge() {
@@ -466,14 +605,57 @@ function submitPoints() {
   });
 }
 
+function submitLevelChange() {
+  levelFormRef.value?.validate(async (valid: boolean) => {
+    if (!valid || !memberDetail.id) return;
+    levelLoading.value = true;
+    try {
+      await changeLevel({
+        id: memberDetail.id,
+        levelId: Number(levelForm.levelId)
+      });
+      proxy.$modal.msgSuccess('会员等级调整成功');
+      levelDialogVisible.value = false;
+      await refreshPage();
+    } finally {
+      levelLoading.value = false;
+    }
+  });
+}
+
+function submitBadgeGrant() {
+  badgeFormRef.value?.validate(async (valid: boolean) => {
+    if (!valid || !memberDetail.id) return;
+    badgeLoading.value = true;
+    try {
+      await grantMemberBadge({
+        memberId: memberDetail.id,
+        badgeId: badgeForm.badgeId,
+        remark: badgeForm.remark
+      });
+      proxy.$modal.msgSuccess('会员徽章发放成功');
+      badgeDialogVisible.value = false;
+      await refreshPage();
+    } finally {
+      badgeLoading.value = false;
+    }
+  });
+}
+
 async function refreshPage() {
   pageLoading.value = true;
   try {
     const userId = route.params.id;
-    const [levelRes, detailRes] = await Promise.all([listLevel({ pageNum: 1, pageSize: 100 }), getMemberDetailByUserId(userId as string)]);
+    const [levelRes, detailRes, badgeRes] = await Promise.all([
+      listLevel({ pageNum: 1, pageSize: 100 }),
+      getMemberDetailByUserId(userId as string),
+      listBadge({ pageNum: 1, pageSize: 100, status: '0' })
+    ]);
     levels.value = levelRes.rows || [];
+    badgeOptions.value = badgeRes.rows || [];
     Object.keys(memberDetail).forEach((key) => delete memberDetail[key]);
     Object.assign(memberDetail, detailRes.data || {});
+    levelForm.levelId = memberDetail.levelId;
     if (memberDetail.id) {
       const [balanceRes, pointsRes, growthRes] = await Promise.all([
         getBalanceLogByMemberId(memberDetail.id),
@@ -503,6 +685,7 @@ onMounted(() => {
 
 .detail-shell {
   display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
   gap: 14px;
 }
 
@@ -516,6 +699,24 @@ onMounted(() => {
 
 .detail-header {
   padding: 16px;
+  grid-column: 1 / -1;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.side-grid {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.panel--logs {
+  grid-column: 1 / -1;
+  padding-bottom: 8px;
 }
 
 .header-top {
@@ -581,22 +782,24 @@ onMounted(() => {
 }
 
 .hero-level {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  min-width: 240px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  min-width: 300px;
 }
 
-.level-image,
-.level-placeholder {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+.detail-level-card {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
   border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 38%), linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.detail-level-card__preview,
+.level-placeholder--hero {
+  width: 100px;
+  object-fit: contain;
 }
 
 .level-placeholder {
@@ -605,12 +808,15 @@ onMounted(() => {
   justify-content: center;
   background: #eff6ff;
   color: #2563eb;
+  font-size: 18px;
   font-weight: 700;
 }
 
-.hero-level-meta {
+.detail-level-card__body {
   display: grid;
-  gap: 4px;
+  align-content: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .hero-level-label {
@@ -618,13 +824,32 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.hero-level-meta strong {
+.detail-level-card__body strong {
   color: #0f172a;
-  font-size: 18px;
+  font-size: 22px;
 }
 
-.hero-level-meta small {
+.detail-level-card__body small {
   color: #64748b;
+  white-space: nowrap;
+}
+
+.detail-level-card__extra {
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  gap: 6px;
+  min-width: 110px;
+  margin-left: auto;
+  color: #64748b;
+  font-size: 12px;
+  padding-left: 16px;
+  border-left: 1px solid #dbe7f5;
+}
+
+.detail-level-card__extra strong {
+  color: #0f172a;
+  font-size: 24px;
 }
 
 .metric-row {
@@ -653,18 +878,8 @@ onMounted(() => {
   font-size: 22px;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
 .panel {
-  padding: 16px;
-}
-
-.panel--logs {
-  padding-bottom: 8px;
+  padding: 14px;
 }
 
 .panel-header h3 {
@@ -676,13 +891,13 @@ onMounted(() => {
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .info-item {
-  padding: 12px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
 }
@@ -702,9 +917,9 @@ onMounted(() => {
 }
 
 .remark-box {
-  margin-top: 14px;
-  padding: 14px;
-  border-radius: 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
 }
@@ -716,7 +931,7 @@ onMounted(() => {
 }
 
 .level-box {
-  margin-top: 10px;
+  margin-top: 4px;
 }
 
 .level-head {
@@ -786,6 +1001,63 @@ onMounted(() => {
   background: #eff6ff;
 }
 
+.badge-wall {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.detail-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.detail-badge-card__image,
+.detail-badge-card__placeholder {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #fff;
+  object-fit: contain;
+}
+
+.detail-badge-card__placeholder {
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: linear-gradient(135deg, #fff7ed, #fffbeb);
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.detail-badge-card__body {
+  display: grid;
+  gap: 4px;
+}
+
+.detail-badge-card__body strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.detail-badge-card__body span {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .delta-text {
   font-weight: 600;
 }
@@ -804,10 +1076,24 @@ onMounted(() => {
   gap: 10px;
 }
 
+.dialog-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dialog-option__image {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
 @media (max-width: 992px) {
+  .detail-shell,
   .hero-panel,
   .metric-row,
-  .content-grid,
   .info-grid,
   .level-list {
     grid-template-columns: 1fr;
@@ -815,6 +1101,12 @@ onMounted(() => {
 
   .hero-panel {
     display: grid;
+  }
+
+  .content-grid,
+  .side-grid,
+  .panel--logs {
+    grid-column: 1;
   }
 }
 
@@ -825,14 +1117,9 @@ onMounted(() => {
 
   .header-top,
   .hero-profile,
-  .hero-level,
-  .level-head {
+  .hero-level {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .hero-level {
-    min-width: 0;
   }
 }
 </style>

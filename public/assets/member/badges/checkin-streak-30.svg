@@ -1,0 +1,15 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="b30-bg" x1="18" y1="18" x2="142" y2="142" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE7C0"/>
+      <stop offset="1" stop-color="#F4A336"/>
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="70" fill="url(#b30-bg)"/>
+  <circle cx="80" cy="80" r="62" stroke="white" stroke-opacity="0.44" stroke-width="4"/>
+  <path d="M46 53H114V70H46V53Z" fill="#FFF8EC"/>
+  <path d="M46 70H114V108C114 115.732 107.732 122 100 122H60C52.268 122 46 115.732 46 108V70Z" fill="#FFF8EC"/>
+  <path d="M64 41C64 33.82 69.82 28 77 28H83C90.18 28 96 33.82 96 41V53H85V43C85 40.791 83.209 39 81 39H79C76.791 39 75 40.791 75 43V53H64V41Z" fill="#FFEFD8"/>
+  <text x="80" y="95" text-anchor="middle" fill="#A45B00" font-size="34" font-family="Segoe UI, Arial" font-weight="800">30</text>
+  <text x="80" y="121" text-anchor="middle" fill="#A45B00" font-size="14" font-family="Segoe UI, Arial" font-weight="700">DAY STREAK</text>
+</svg>

@@ -1,11 +1,11 @@
 <template>
-  <el-image 
-    ref="imageRef" 
-    :src="`${realSrc}`" 
-    fit="cover" 
-    :style="`width:${realWidth};height:${realHeight};`" 
-    :preview-src-list="realSrcList" 
+  <el-image
+    ref="imageRef"
     :initial-index="computedInitialIndex"
+    :preview-src-list="realSrcList"
+    :src="`${realSrc}`"
+    :style="`width:${realWidth};height:${realHeight};`"
+    fit="cover"
     preview-teleported
   >
     <template #toolbar="{ actions, prev, next, reset, activeIndex, setActiveItem }">
@@ -47,8 +47,8 @@
   </el-image>
 </template>
 
-<script setup lang="ts">
-import { ref, type PropType } from 'vue';
+<script lang="ts" setup>
+import { type PropType, ref } from 'vue';
 import { propTypes } from '@/utils/propTypes';
 import type { ImageInstance } from 'element-plus';
 
@@ -93,7 +93,7 @@ const realSrc = computed(() => {
 // 计算初始索引：如果传入了 previewSrcList，则查找当前 src 在列表中的位置
 const computedInitialIndex = computed(() => {
   if (props.previewSrcList && props.previewSrcList.length > 0) {
-    const index = props.previewSrcList.findIndex(url => url === realSrc.value);
+    const index = props.previewSrcList.findIndex((url) => url === realSrc.value);
     return index >= 0 ? index : props.initialIndex;
   }
   return props.initialIndex;
@@ -104,7 +104,7 @@ const realSrcList = computed(() => {
   if (props.previewSrcList && props.previewSrcList.length > 0) {
     return props.previewSrcList;
   }
-  
+
   // 否则从 src 解析（逗号分隔）
   if (!props.src) {
     return [];

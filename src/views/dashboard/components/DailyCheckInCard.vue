@@ -75,10 +75,8 @@ import { computed, onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Calendar, Select, TrophyBase } from '@element-plus/icons-vue';
 import { useUserStore } from '@/store/modules/user';
-import { getMemberCheckinStatus, getMemberDetailByUserId, memberCheckin } from '@/api/member/member';
-import { getPointsLogByMemberId } from '@/api/member/pointsLog';
-import type { MemberDetailVO } from '@/api/member/member/types';
-import type { PointsLogVO } from '@/api/member/pointsLog/types';
+import { getMemberCheckinSummary, getMemberDetailByUserId, memberCheckin } from '@/api/member/member';
+import type { MemberCheckinSummaryVO, MemberDetailVO } from '@/api/member/member/types';
 
 type WeekDayItem = {
   label: string;
@@ -109,7 +107,7 @@ const text = {
   emptyDescription:
     '\u5f53\u524d\u767b\u5f55\u8d26\u53f7\u672a\u5173\u8054\u4f1a\u5458\u4fe1\u606f\uff0c\u6240\u4ee5\u8fd9\u91cc\u4e0d\u80fd\u76f4\u63a5\u7b7e\u5230\u3002',
   memberPrefix: '\u4f1a\u5458\u53f7 ',
-  memberDivider: ' · ',
+  memberDivider: ' | ',
   memberSuffix: '\u4eca\u5929\u4e5f\u522b\u65ad\u7b7e'
 };
 
@@ -118,8 +116,7 @@ const WEEK_DAY_LABELS = ['\u5468\u4e00', '\u5468\u4e8c', '\u5468\u4e09', '\u5468
 const loading = ref(true);
 const actionLoading = ref(false);
 const memberDetail = ref<MemberDetailVO | null>(null);
-const signedToday = ref(false);
-const signDates = ref<string[]>([]);
+const checkinSummary = ref<MemberCheckinSummaryVO | null>(null);
 const emptyDescription = ref(text.emptyDescription);
 const userStore = useUserStore();
 
@@ -127,6 +124,8 @@ const today = new Date();
 const todayKey = formatDate(today);
 
 const memberReady = computed(() => Boolean(memberDetail.value?.id));
+const signedToday = computed(() => Boolean(checkinSummary.value?.signedToday));
+const signDates = computed(() => checkinSummary.value?.checkedDates || []);
 const weekDays = computed<WeekDayItem[]>(() => {
   const monday = getStartOfWeek(today);
 
@@ -145,7 +144,7 @@ const weekDays = computed<WeekDayItem[]>(() => {
 });
 
 const checkedThisWeekCount = computed(() => weekDays.value.filter((item) => item.checked).length);
-const streakDays = computed(() => computeStreakDays(signDates.value));
+const streakDays = computed(() => checkinSummary.value?.continuousDays || 0);
 const memberSubtitle = computed(() => {
   const memberNo = memberDetail.value?.memberNo || '-';
   return `${text.memberPrefix}${memberNo}${text.memberDivider}${text.memberSuffix}`;
@@ -162,21 +161,16 @@ async function loadData() {
 
     const detailRes = await getMemberDetailByUserId(userStore.userId);
     const detail = detailRes.data || null;
-
     if (!detail?.id) {
       throw new Error(text.emptyDescription);
     }
 
     memberDetail.value = detail;
-
-    const [statusRes, logsRes] = await Promise.all([getMemberCheckinStatus(detail.id), getPointsLogByMemberId(Number(detail.id))]);
-
-    signedToday.value = Boolean(statusRes.data);
-    signDates.value = extractSignDates(logsRes.data || []);
+    const summaryRes = await getMemberCheckinSummary(detail.id);
+    checkinSummary.value = summaryRes.data || null;
   } catch (error: any) {
     memberDetail.value = null;
-    signedToday.value = false;
-    signDates.value = [];
+    checkinSummary.value = null;
     emptyDescription.value = error?.message || text.emptyDescription;
   } finally {
     loading.value = false;
@@ -190,53 +184,12 @@ async function handleCheckIn() {
 
   actionLoading.value = true;
   try {
-    await memberCheckin(memberDetail.value.id);
+    await memberCheckin(memberDetail.value!.id);
     ElMessage.success(text.checkinSuccess);
     await loadData();
   } finally {
     actionLoading.value = false;
   }
-}
-
-function extractSignDates(logs: PointsLogVO[]) {
-  const result = logs
-    .filter((log) => log.changeType === '1')
-    .map((log) => normalizeDateString(log.createTime))
-    .filter(Boolean) as string[];
-
-  return Array.from(new Set(result)).sort((left, right) => (left < right ? 1 : -1));
-}
-
-function computeStreakDays(dates: string[]) {
-  if (!dates.length) {
-    return 0;
-  }
-
-  const uniqueSorted = Array.from(new Set(dates)).sort((left, right) => (left < right ? 1 : -1));
-  let streak = 0;
-  let cursor = signedToday.value ? todayKey : formatDate(addDays(today, -1));
-
-  for (const date of uniqueSorted) {
-    if (date === cursor) {
-      streak += 1;
-      cursor = formatDate(addDays(parseDate(date), -1));
-      continue;
-    }
-
-    if (date < cursor) {
-      break;
-    }
-  }
-
-  return streak;
-}
-
-function normalizeDateString(value?: string) {
-  if (!value) {
-    return '';
-  }
-
-  return value.slice(0, 10);
 }
 
 function getStartOfWeek(date: Date) {
@@ -251,11 +204,6 @@ function addDays(date: Date, days: number) {
   const current = new Date(date);
   current.setDate(current.getDate() + days);
   return current;
-}
-
-function parseDate(value: string) {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, (month || 1) - 1, day || 1);
 }
 
 function formatDate(date: Date) {
