@@ -1,3 +1,6 @@
+import type { BrandVO } from '@/api/mall/brand/types';
+import type { CategoryVO } from '@/api/mall/category/types';
+
 export interface GoodsVO {
   /**
    * 主键
@@ -133,6 +136,16 @@ export interface GoodsVO {
    * 备注
    */
   remark: string;
+
+  /**
+   * 商品分类对象
+   */
+  category?: CategoryVO;
+
+  /**
+   * 商品品牌对象
+   */
+  brand?: BrandVO;
 }
 
 export interface GoodsForm extends BaseEntity {

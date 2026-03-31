@@ -70,6 +70,7 @@
         class="category-table"
         row-key="id"
       >
+        <el-table-column label="分类名称" min-width="120" prop="name" />
         <el-table-column label="分类信息" min-width="360">
           <template #default="{ row }">
             <div class="category-cell">

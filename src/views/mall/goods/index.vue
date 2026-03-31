@@ -33,9 +33,17 @@
             <el-input v-model="queryParams.name" class="field-md" clearable placeholder="请输入商品名称" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="分类" prop="categoryId">
-            <el-select v-model="queryParams.categoryId" class="field-sm" clearable filterable placeholder="全部分类">
-              <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.id" />
-            </el-select>
+            <!--            <el-select v-model="queryParams.categoryId" class="field-sm" clearable filterable placeholder="全部分类">-->
+            <!--              <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.id" />-->
+            <!--            </el-select>-->
+            <el-tree-select
+              v-model="queryParams.categoryId"
+              :data="categoryOptions"
+              :props="{ value: 'id', label: 'name', children: 'children' }"
+              check-strictly
+              placeholder="请选择父级分类"
+              value-key="id"
+            />
           </el-form-item>
           <el-form-item label="品牌" prop="brandId">
             <el-select v-model="queryParams.brandId" class="field-sm" clearable filterable placeholder="全部品牌">
@@ -133,8 +141,8 @@
                 <div class="goods-main__sub">{{ row.subTitle || '未设置副标题' }}</div>
                 <div class="goods-main__meta">编号：{{ row.goodsSn || '-' }}</div>
                 <div class="goods-main__tags">
-                  <el-tag effect="plain" size="small">{{ getCategoryName(row.categoryId) }}</el-tag>
-                  <el-tag effect="plain" size="small" type="success">{{ getBrandName(row.brandId) }}</el-tag>
+                  <el-tag effect="plain" size="small">{{ getCategoryName(row) }}</el-tag>
+                  <el-tag effect="plain" size="small" type="success">{{ getBrandName(row) }}</el-tag>
                 </div>
               </div>
             </div>
@@ -258,9 +266,17 @@
             <el-input v-model="form.keywords" maxlength="120" placeholder="多个关键字请用英文逗号分隔" />
           </el-form-item>
           <el-form-item label="商品分类" prop="categoryId">
-            <el-select v-model="form.categoryId" filterable placeholder="请选择商品分类" style="width: 100%">
-              <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.id" />
-            </el-select>
+            <!--            <el-select v-model="form.categoryId" filterable placeholder="请选择商品分类" style="width: 100%">-->
+            <!--              <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.id" />-->
+            <!--            </el-select>-->
+            <el-tree-select
+              v-model="form.categoryId"
+              :data="categoryOptions"
+              :props="{ value: 'id', label: 'name', children: 'children' }"
+              check-strictly
+              placeholder="请选择父级分类"
+              value-key="id"
+            />
           </el-form-item>
           <el-form-item label="商品品牌" prop="brandId">
             <el-select v-model="form.brandId" clearable filterable placeholder="请选择商品品牌" style="width: 100%">
@@ -402,15 +418,22 @@ import { listBrand } from '@/api/mall/brand';
 import { listTag } from '@/api/mall/tag';
 import type { GoodsForm, GoodsQuery, GoodsVO } from '@/api/mall/goods/types';
 import type { OrderForm } from '@/api/mall/order/types';
-import type { CategoryVO } from '@/api/mall/category/types';
 import type { BrandVO } from '@/api/mall/brand/types';
 import type { TagVO } from '@/api/mall/tag/types';
 import ImageUpload from '@/components/ImageUpload/index.vue';
 import { FormRules } from 'element-plus';
 
+type CategoryOption = {
+  id: string | number;
+  name: string;
+  children?: CategoryOption[];
+};
+
 interface GoodsEditorForm extends GoodsForm {
   messageContent?: string;
 }
+
+type GoodsSubmitPayload = Omit<GoodsEditorForm, 'messageContent'>;
 
 interface SummaryState {
   total: number;
@@ -433,7 +456,7 @@ const { mall_goods_sale_status, mall_goods_audit_status, mall_goods_service_type
 );
 
 const goodsList = ref<GoodsVO[]>([]);
-const categoryOptions = ref<CategoryVO[]>([]);
+const categoryOptions = ref<CategoryOption[]>([]);
 const brandOptions = ref<BrandVO[]>([]);
 const serviceTagOptions = ref<TagVO[]>([]);
 const serviceRegionOptions = ref<TagVO[]>([]);
@@ -587,7 +610,7 @@ const summary = ref<SummaryState>({
 
 const { queryParams, form, rules, orderForm, orderRules } = toRefs(data);
 
-const categoryMap = computed(() => new Map(categoryOptions.value.map((item) => [String(item.id), item.name])));
+// const categoryMap = computed(() => new Map(categoryOptions.value.map((item) => [String(item.id), item.name])));
 const brandMap = computed(() => new Map(brandOptions.value.map((item) => [String(item.id), item.name])));
 const quickTabs = computed(() => [
   { label: '全部商品', value: 'all' as QuickTabValue, count: formatCount(summary.value.total) },
@@ -634,13 +657,28 @@ const splitCommaText = (value?: string) => {
 };
 
 const getFirstImage = (value?: string) => splitCommaText(value)[0] || '';
-const getCategoryName = (id?: string | number) => categoryMap.value.get(String(id ?? '')) || `分类#${id ?? '-'}`;
+const getCategoryName = (goods?: GoodsVO) => {
+  const categoryName = goods?.category?.name?.trim();
+  if (categoryName) {
+    return categoryName;
+  }
+  const categoryId = goods?.categoryId;
+  if (categoryId === undefined || categoryId === null || categoryId === '') {
+    return '未设置分类';
+  }
+  return `分类#${categoryId}`;
+};
 
-const getBrandName = (id?: string | number) => {
-  if (id === undefined || id === null || id === '') {
+const getBrandName = (goods?: GoodsVO) => {
+  const brandName = goods?.brand?.name?.trim();
+  if (brandName) {
+    return brandName;
+  }
+  const brandId = goods?.brandId;
+  if (brandId === undefined || brandId === null || brandId === '') {
     return '未设置品牌';
   }
-  return brandMap.value.get(String(id)) || `品牌#${id}`;
+  return brandMap.value.get(String(brandId)) || `品牌#${brandId}`;
 };
 
 const getDictLabel = (options: DictDataOption[], value?: string | number, defaultLabel = '-') => {
@@ -687,7 +725,11 @@ const loadOptions = async () => {
     listTag({ pageNum: 1, pageSize: 1000, tagType: 'service_tag', status: '0' }),
     listTag({ pageNum: 1, pageSize: 1000, tagType: 'service_region', status: '0' })
   ]);
-  categoryOptions.value = categoryRes.data || categoryRes.rows || [];
+  // categoryOptions.value = categoryRes.data || categoryRes.rows || [];
+  const root: CategoryOption = { id: 0, name: '顶级分类', children: [] };
+  root.children = proxy?.handleTree<CategoryOption>(categoryRes.data, 'id', 'parentId') || [];
+  categoryOptions.value = [root];
+
   brandOptions.value = brandRes.rows || brandRes.data || [];
   serviceTagOptions.value = serviceTagRes.rows || serviceTagRes.data || [];
   serviceRegionOptions.value = serviceRegionRes.rows || serviceRegionRes.data || [];
@@ -807,6 +849,11 @@ const buildGalleryUrls = async () => {
   form.value.galleryUrls = urls.join(',');
 };
 
+const buildSubmitPayload = (): GoodsSubmitPayload => {
+  const { messageContent, ...rest } = form.value;
+  return { ...rest };
+};
+
 const submitForm = () => {
   syncServiceTags();
   syncServiceRegions();
@@ -818,10 +865,11 @@ const submitForm = () => {
     try {
       await buildGalleryUrls();
       form.value.detail = form.value.messageContent || '';
+      const payload = buildSubmitPayload();
       if (form.value.id) {
-        await updateGoods(form.value);
+        await updateGoods(payload);
       } else {
-        await addGoods(form.value);
+        await addGoods(payload);
       }
       proxy?.$modal.msgSuccess('保存成功');
       drawer.visible = false;
