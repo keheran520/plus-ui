@@ -1,5 +1,5 @@
 <template>
-  <div class="website-config-container">
+  <div class="mobile-config-container">
     <div class="form-section">
       <SettingForm
         ref="settingFormRef"
@@ -7,14 +7,14 @@
         :form-data="formData"
         :loading="loading"
         :rules="rules"
-        title="网站配置"
+        title="C端配置"
         @cancel="handleCancel"
         @reset="handleReset"
         @save="handleSave"
         @reset-default="handleResetToDefault"
       >
         <template #default="{ isEditing }">
-          <el-form-item label="站点 Logo" prop="logo">
+          <el-form-item label="移动端 Logo" prop="logo">
             <ImageUpload
               v-model="formData.logo"
               :disabled="!isEditing"
@@ -25,25 +25,14 @@
             />
           </el-form-item>
 
-          <el-form-item label="浏览器图标" prop="favicon">
+          <el-form-item label="首页背景图" prop="homeBanner">
             <ImageUpload
-              v-model="formData.favicon"
-              :disabled="!isEditing"
-              :file-size="2"
-              :file-type="['png', 'jpg', 'jpeg', 'ico']"
-              :limit="1"
-              @upload-success="handleFaviconUpload"
-            />
-          </el-form-item>
-
-          <el-form-item label="背景图" prop="backgroundImage">
-            <ImageUpload
-              v-model="formData.backgroundImage"
+              v-model="formData.homeBanner"
               :disabled="!isEditing"
               :file-size="5"
               :file-type="['png', 'jpg', 'jpeg', 'webp']"
               :limit="1"
-              @upload-success="handleBackgroundImageUpload"
+              @upload-success="handleHomeBannerUpload"
             />
           </el-form-item>
 
@@ -63,30 +52,12 @@
     </div>
 
     <div class="preview-section">
-      <div class="preview-title">预览效果</div>
-      <div class="preview-container">
-        <div class="preview-header">
-          <img v-if="logoUrl" :src="logoUrl" alt="logo" class="preview-logo" />
-          <span v-else class="text-gray-400">未上传 Logo</span>
-        </div>
-        <div class="preview-content">
-          <h2 class="preview-name">{{ formData.name || '站点名称' }}</h2>
-          <p class="preview-desc">{{ formData.description || '站点描述' }}</p>
-          <div class="preview-info">
-            <div v-if="formData.email" class="info-item">
-              <el-icon><Message /></el-icon>
-              <span>{{ formData.email }}</span>
-            </div>
-            <div v-if="formData.phone" class="info-item">
-              <el-icon><Phone /></el-icon>
-              <span>{{ formData.phone }}</span>
-            </div>
-            <div v-if="formData.address" class="info-item">
-              <el-icon><Location /></el-icon>
-              <span>{{ formData.address }}</span>
-            </div>
-          </div>
-        </div>
+      <div class="preview-title">C端预览</div>
+      <div class="preview-phone">
+        <img v-if="logoUrl" :src="logoUrl" alt="logo" class="preview-phone__logo" />
+        <div class="preview-phone__title">{{ formData.appName || '移动端名称' }}</div>
+        <div class="preview-phone__desc">{{ formData.appDesc || '移动端描述' }}</div>
+        <div class="preview-phone__notice">{{ formData.noticeText || '这里显示首页公告文案' }}</div>
       </div>
     </div>
   </div>
@@ -95,7 +66,6 @@
 <script lang="ts" setup>
 import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue'
 import type { ComponentInternalInstance } from 'vue'
-import { Location, Message, Phone } from '@element-plus/icons-vue'
 import SettingForm from '@/components/SettingForm/index.vue'
 import ImageUpload from '@/components/ImageUpload/index.vue'
 import { listConfig, updateConfigByKey } from '@/api/system/config'
@@ -103,18 +73,16 @@ import type { ConfigQuery } from '@/api/system/config/types'
 
 type FieldKey =
   | 'logo'
-  | 'favicon'
-  | 'name'
-  | 'nameEn'
-  | 'backgroundImage'
-  | 'description'
-  | 'copyright'
-  | 'icp'
-  | 'keywords'
-  | 'author'
-  | 'email'
-  | 'phone'
-  | 'address'
+  | 'homeBanner'
+  | 'appName'
+  | 'appDesc'
+  | 'noticeText'
+  | 'searchPlaceholder'
+  | 'serviceTitle'
+  | 'memberTitle'
+  | 'memberDesc'
+  | 'walletDesc'
+  | 'checkinDesc'
   | 'aboutTitle'
   | 'aboutContent'
   | 'helpTitle'
@@ -122,10 +90,6 @@ type FieldKey =
   | 'userAgreement'
   | 'privacyPolicy'
   | 'notificationGuide'
-  | 'customerServiceWechat'
-  | 'customerServicePhone'
-  | 'customerServiceEmail'
-  | 'siteUrl'
 
 type FieldItem = {
   key: FieldKey
@@ -142,30 +106,25 @@ const loading = ref(false)
 const logoUrl = ref('')
 
 const allFields: FieldItem[] = [
-  { key: 'name', label: '站点名称', placeholder: '请输入站点名称', maxlength: 50 },
-  { key: 'nameEn', label: '英文名称', placeholder: '请输入英文名称', maxlength: 50 },
-  { key: 'description', label: '站点描述', placeholder: '请输入站点描述', maxlength: 200, type: 'textarea', rows: 3 },
-  { key: 'copyright', label: '版权信息', placeholder: '请输入版权信息', maxlength: 200, type: 'textarea', rows: 2 },
-  { key: 'icp', label: 'ICP备案号', placeholder: '请输入 ICP 备案号', maxlength: 50 },
-  { key: 'keywords', label: '关键词', placeholder: '请输入关键词，多个以逗号分隔', maxlength: 200, type: 'textarea', rows: 2 },
-  { key: 'author', label: '作者', placeholder: '请输入作者名称', maxlength: 50 },
-  { key: 'email', label: '联系邮箱', placeholder: '请输入联系邮箱', maxlength: 100 },
-  { key: 'phone', label: '联系电话', placeholder: '请输入联系电话', maxlength: 20 },
-  { key: 'address', label: '联系地址', placeholder: '请输入联系地址', maxlength: 200 },
+  { key: 'appName', label: '应用名称', placeholder: '请输入应用名称', maxlength: 50 },
+  { key: 'appDesc', label: '应用描述', placeholder: '请输入应用描述', maxlength: 200, type: 'textarea', rows: 3 },
+  { key: 'noticeText', label: '首页公告', placeholder: '请输入首页公告文案', maxlength: 300, type: 'textarea', rows: 3 },
+  { key: 'searchPlaceholder', label: '搜索占位文案', placeholder: '请输入搜索框占位文案', maxlength: 80 },
+  { key: 'serviceTitle', label: '服务区标题', placeholder: '请输入服务区标题', maxlength: 80 },
+  { key: 'memberTitle', label: '会员区标题', placeholder: '请输入会员区标题', maxlength: 80 },
+  { key: 'memberDesc', label: '会员区描述', placeholder: '请输入会员区描述', maxlength: 200, type: 'textarea', rows: 3 },
+  { key: 'walletDesc', label: '钱包说明', placeholder: '请输入钱包说明', maxlength: 200, type: 'textarea', rows: 3 },
+  { key: 'checkinDesc', label: '签到说明', placeholder: '请输入签到说明', maxlength: 200, type: 'textarea', rows: 3 },
   { key: 'aboutTitle', label: '关于我们标题', placeholder: '请输入关于我们标题', maxlength: 100 },
   { key: 'aboutContent', label: '关于我们内容', placeholder: '请输入关于我们内容', maxlength: 1000, type: 'textarea', rows: 4 },
   { key: 'helpTitle', label: '帮助中心标题', placeholder: '请输入帮助中心标题', maxlength: 100 },
   { key: 'helpContent', label: '帮助中心内容', placeholder: '请输入帮助中心内容', maxlength: 1000, type: 'textarea', rows: 4 },
   { key: 'userAgreement', label: '用户协议', placeholder: '请输入用户协议内容', maxlength: 20000, type: 'textarea', rows: 8 },
   { key: 'privacyPolicy', label: '隐私政策', placeholder: '请输入隐私政策内容', maxlength: 20000, type: 'textarea', rows: 8 },
-  { key: 'notificationGuide', label: '通知指引', placeholder: '请输入通知指引内容', maxlength: 500, type: 'textarea', rows: 3 },
-  { key: 'customerServiceWechat', label: '客服微信', placeholder: '请输入客服微信', maxlength: 50 },
-  { key: 'customerServicePhone', label: '客服电话', placeholder: '请输入客服电话', maxlength: 50 },
-  { key: 'customerServiceEmail', label: '客服邮箱', placeholder: '请输入客服邮箱', maxlength: 100 },
-  { key: 'siteUrl', label: '站点地址', placeholder: '请输入站点地址', maxlength: 255 }
+  { key: 'notificationGuide', label: '通知指引', placeholder: '请输入通知指引内容', maxlength: 500, type: 'textarea', rows: 3 }
 ]
 
-const fieldKeys = allFields.map((item) => item.key).concat(['logo', 'favicon', 'backgroundImage'] as FieldKey[])
+const fieldKeys = allFields.map((item) => item.key).concat(['logo', 'homeBanner'] as FieldKey[])
 
 function createFieldState() {
   return fieldKeys.reduce(
@@ -182,36 +141,28 @@ const originalData = reactive(createFieldState())
 const defaultData = reactive(createFieldState())
 
 const rules = {
-  name: [{ required: true, message: '请输入站点名称', trigger: 'blur' }],
-  copyright: [{ required: true, message: '请输入版权信息', trigger: 'blur' }],
-  email: [{ type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }]
+  appName: [{ required: true, message: '请输入应用名称', trigger: 'blur' }]
 }
 
 const configKeyMap = computed<Record<FieldKey, string>>(() => ({
-  logo: 'website.logo',
-  favicon: 'website.favicon',
-  name: 'website.name',
-  nameEn: 'website.nameEn',
-  backgroundImage: 'website.backgroundImage',
-  description: 'website.description',
-  copyright: 'website.copyright',
-  icp: 'website.icp',
-  keywords: 'website.keywords',
-  author: 'website.author',
-  email: 'website.email',
-  phone: 'website.phone',
-  address: 'website.address',
-  aboutTitle: 'website.aboutTitle',
-  aboutContent: 'website.aboutContent',
-  helpTitle: 'website.helpTitle',
-  helpContent: 'website.helpContent',
-  userAgreement: 'website.userAgreement',
-  privacyPolicy: 'website.privacyPolicy',
-  notificationGuide: 'website.notificationGuide',
-  customerServiceWechat: 'website.customerServiceWechat',
-  customerServicePhone: 'website.customerServicePhone',
-  customerServiceEmail: 'website.customerServiceEmail',
-  siteUrl: 'website.siteUrl'
+  logo: 'mobile.logo',
+  homeBanner: 'mobile.homeBanner',
+  appName: 'mobile.appName',
+  appDesc: 'mobile.appDesc',
+  noticeText: 'mobile.noticeText',
+  searchPlaceholder: 'mobile.searchPlaceholder',
+  serviceTitle: 'mobile.serviceTitle',
+  memberTitle: 'mobile.memberTitle',
+  memberDesc: 'mobile.memberDesc',
+  walletDesc: 'mobile.walletDesc',
+  checkinDesc: 'mobile.checkinDesc',
+  aboutTitle: 'mobile.aboutTitle',
+  aboutContent: 'mobile.aboutContent',
+  helpTitle: 'mobile.helpTitle',
+  helpContent: 'mobile.helpContent',
+  userAgreement: 'mobile.userAgreement',
+  privacyPolicy: 'mobile.privacyPolicy',
+  notificationGuide: 'mobile.notificationGuide'
 }))
 
 const reverseKeyMap = computed(() =>
@@ -246,7 +197,7 @@ async function loadConfig() {
     const res = await listConfig({
       pageNum: 1,
       pageSize: 100,
-      configCategory: 'website'
+      configCategory: 'mobile'
     } as ConfigQuery)
 
     fieldKeys.forEach((key) => {
@@ -274,12 +225,8 @@ function handleLogoUpload(data: any) {
   logoUrl.value = data.url || ''
 }
 
-function handleFaviconUpload(data: any) {
-  formData.favicon = String(data.ossId || '')
-}
-
-function handleBackgroundImageUpload(data: any) {
-  formData.backgroundImage = String(data.ossId || '')
+function handleHomeBannerUpload(data: any) {
+  formData.homeBanner = String(data.ossId || '')
 }
 
 async function handleSave() {
@@ -301,7 +248,7 @@ async function handleSave() {
     settingFormRef.value?.exitEditMode?.()
     await syncPreview()
   } catch (error) {
-    console.error('save website config failed', error)
+    console.error('save mobile config failed', error)
     proxy?.$modal.msgError('保存失败')
   } finally {
     loading.value = false
@@ -330,79 +277,63 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.website-config-container {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-
-  @media (max-width: 1200px) {
-    flex-direction: column;
-  }
+.mobile-config-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
 }
 
-.form-section {
-  flex: 1;
-  min-width: 0;
+.form-section,
+.preview-section {
+  min-height: 100%;
 }
 
 .preview-section {
-  width: 360px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 20px;
-
-  @media (max-width: 1200px) {
-    width: 100%;
-    position: static;
-  }
+  padding: 20px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f3f7ff 0%, #ffffff 100%);
+  box-shadow: 0 8px 24px rgba(59, 91, 168, 0.08);
 }
 
 .preview-title {
   margin-bottom: 16px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #1f2d3d;
 }
 
-.preview-container {
-  padding: 24px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 12px;
-  background: var(--el-fill-color-blank);
+.preview-phone {
+  padding: 24px 20px;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #1b2f57 0%, #355ea4 46%, #76aaff 100%);
+  color: #fff;
 }
 
-.preview-header {
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--el-border-color);
+.preview-phone__logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.14);
 }
 
-.preview-logo {
-  height: 40px;
-  object-fit: contain;
-}
-
-.preview-name {
-  margin: 0;
-  font-size: 24px;
+.preview-phone__title {
+  margin-top: 18px;
+  font-size: 22px;
   font-weight: 700;
 }
 
-.preview-desc {
-  margin: 12px 0 0;
+.preview-phone__desc {
+  margin-top: 10px;
   line-height: 1.7;
-  color: var(--el-text-color-regular);
+  color: rgba(255, 255, 255, 0.78);
 }
 
-.preview-info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.preview-phone__notice {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  line-height: 1.6;
 }
 </style>
